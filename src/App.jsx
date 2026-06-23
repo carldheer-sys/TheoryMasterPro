@@ -18,7 +18,7 @@ export default function App() {
   const [range, setRange] = useState(DEFAULT_RANGE)
 
   // MIDI
-  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, playCorrectSound } = useMidi()
+  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff } = useMidi()
 
   const handleModeChange = useCallback((mode) => {
     setTrainingMode(mode)
@@ -73,7 +73,6 @@ export default function App() {
           <ScaleDegreesPractice
             activeNotes={activeNotes}
             midiSupported={midiSupported}
-            playCorrectSound={playCorrectSound}
             ensureAudioContext={ensureAudioContext}
           />
         )}
@@ -86,7 +85,7 @@ export default function App() {
 
       {/* Piano roll at bottom */}
       <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
-        <PianoRoll range={range} activeNotes={activeNotes} />
+        <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} />
       </div>
 
       {/* Modals */}

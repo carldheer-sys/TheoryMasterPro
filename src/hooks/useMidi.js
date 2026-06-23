@@ -50,6 +50,10 @@ export function useMidi() {
 
   // Handle a note-on message
   const handleNoteOn = useCallback((note, velocity) => {
+    // Try to start audio context on first MIDI input
+    if (Tone.getContext().state !== 'running') {
+      Tone.start().catch(() => {})
+    }
     // Play piano sound via Tone.js
     if (samplerRef.current && Tone.getContext().state === 'running') {
       const freq = Tone.Frequency(note, 'midi').toFrequency()
@@ -164,13 +168,34 @@ export function useMidi() {
     }
   }, [])
 
-  // Play a short success sound (ascending two-note chime)
-  const playCorrectSound = useCallback(() => {
-    if (!samplerRef.current || Tone.getContext().state !== 'running') return
-    const now = Tone.now()
-    samplerRef.current.triggerAttackRelease(Tone.Frequency(72, 'midi').toFrequency(), 0.3, now, 0.5)
-    samplerRef.current.triggerAttackRelease(Tone.Frequency(79, 'midi').toFrequency(), 0.4, now + 0.08, 0.4)
+  // Simulate a note-on from a click/touch (for on-screen keyboard)
+  const simulateNoteOn = useCallback((note) => {
+    if (Tone.getContext().state !== 'running') {
+      Tone.start().catch(() => {})
+    }
+    if (samplerRef.current && Tone.getContext().state === 'running') {
+      const freq = Tone.Frequency(note, 'midi').toFrequency()
+      samplerRef.current.triggerAttack(freq, undefined, 0.8)
+    }
+    setActiveNotes(prev => {
+      const next = new Set(prev)
+      next.add(note)
+      return next
+    })
   }, [])
 
-  return { supported, devices, activeNotes, connectionStatus, clearAllNotes, ensureAudioContext, playCorrectSound }
+  // Simulate a note-off from a click/touch release
+  const simulateNoteOff = useCallback((note) => {
+    if (samplerRef.current && Tone.getContext().state === 'running') {
+      const freq = Tone.Frequency(note, 'midi').toFrequency()
+      samplerRef.current.triggerRelease(freq)
+    }
+    setActiveNotes(prev => {
+      const next = new Set(prev)
+      next.delete(note)
+      return next
+    })
+  }, [])
+
+  return { supported, devices, activeNotes, connectionStatus, clearAllNotes, ensureAudioContext, simulateNoteOn, simulateNoteOff }
 }

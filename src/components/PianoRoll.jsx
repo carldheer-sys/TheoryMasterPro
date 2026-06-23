@@ -18,7 +18,7 @@ import {
  *   - activeNotes: Set<number> of currently pressed MIDI notes
  *   - targetPCs: array of pitch classes to highlight as target (optional, green outline)
  */
-export default function PianoRoll({ range, activeNotes, targetPCs = [] }) {
+export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn, onNoteOff }) {
   const notes = useMemo(() => generateMidiRange(range.start, range.end), [range.start, range.end])
 
   const whiteKeys = useMemo(() => notes.filter(n => !isBlackKey(midiNoteToPC(n))), [notes])
@@ -52,11 +52,14 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [] }) {
           return (
             <div
               key={note}
+              onPointerDown={(e) => { e.preventDefault(); onNoteOn?.(note) }}
+              onPointerUp={() => onNoteOff?.(note)}
+              onPointerLeave={() => { if (activeNotes.has(note)) onNoteOff?.(note) }}
               className={`relative flex-1 rounded-b-md flex items-end justify-center pb-2
-                transition-colors duration-75
+                transition-colors duration-75 cursor-pointer touch-none
                 ${isActive
                   ? 'bg-keyred'
-                  : 'bg-keywhite'
+                  : 'bg-keywhite hover:bg-gray-200'
                 }
                 ${isTarget && !isActive ? 'ring-2 ring-green-400 ring-inset' : ''}
               `}
@@ -74,7 +77,7 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [] }) {
       </div>
 
       {/* Black keys — absolutely positioned overlay */}
-      <div className="absolute inset-x-2 top-1 pointer-events-none" style={{ height: '60%' }}>
+      <div className="absolute inset-x-2 top-1" style={{ height: '60%' }}>
         {blackKeyPositions.map(({ note, leftPct }) => {
           const pc = midiNoteToPC(note)
           const isActive = activeNotes.has(note)
@@ -82,10 +85,13 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [] }) {
           return (
             <div
               key={note}
-              className={`absolute rounded-b-md transition-colors duration-75
+              onPointerDown={(e) => { e.preventDefault(); onNoteOn?.(note) }}
+              onPointerUp={() => onNoteOff?.(note)}
+              onPointerLeave={() => { if (activeNotes.has(note)) onNoteOff?.(note) }}
+              className={`absolute rounded-b-md transition-colors duration-75 cursor-pointer touch-none
                 ${isActive
                   ? 'bg-keyred'
-                  : 'bg-keyblack'
+                  : 'bg-keyblack hover:bg-gray-800'
                 }
                 ${isTarget && !isActive ? 'ring-2 ring-green-400 ring-inset' : ''}
               `}

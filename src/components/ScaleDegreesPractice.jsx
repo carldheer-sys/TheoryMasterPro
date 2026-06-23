@@ -27,7 +27,7 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, playCorrectSound, ensureAudioContext }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext }) {
   // Settings
   const [tonic, setTonic] = useState('C')
   const [tonality, setTonality] = useState('major')
@@ -37,7 +37,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
   const [hasStarted, setHasStarted] = useState(false)
   const [currentDegree, setCurrentDegree] = useState(null)
   const [lastDegree, setLastDegree] = useState(null)
-  const [result, setResult] = useState(null) // null | 'correct' | 'wrong'
+  const [result, setResult] = useState(null) // null | 'correct' | 'wrong' | 'revealed'
   const [attemptedNote, setAttemptedNote] = useState(null)
   const [score, setScore] = useState({ correct: 0, total: 0 })
 
@@ -76,7 +76,6 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
       if (playedPC === targetPC) {
         setResult('correct')
         setScore(s => ({ correct: s.correct + 1, total: s.total + 1 }))
-        if (playCorrectSound) playCorrectSound()
         // Auto-advance to next degree after showing the correct animation
         setTimeout(() => {
           const nextPick = pickRandomDegree(degrees, currentDegree)
@@ -95,19 +94,29 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
         }, 300)
       }
     }
-  }, [activeNotes, currentDegree, targetPC, result, degrees, playCorrectSound])
+  }, [activeNotes, currentDegree, targetPC, result, degrees])
 
-  // Spacebar = GENERATE/NEXT
+  // Spacebar behavior:
+  // - If no question active (not started or result is 'correct'/'revealed'): generate next
+  // - If question active and not yet answered: reveal the correct answer
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault()
-        handleGenerate()
+        if (ensureAudioContext) ensureAudioContext()
+        // If there's an active unanswered question, reveal it
+        if (hasStarted && currentDegree && result === null) {
+          setResult('revealed')
+          setScore(s => ({ ...s, total: s.total + 1 }))
+        } else {
+          // Otherwise generate next
+          handleGenerate()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleGenerate])
+  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext])
 
   // Reset practice when key settings change
   const handleSettingChange = () => {
@@ -203,6 +212,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
               className={`text-7xl sm:text-8xl font-extrabold transition-all duration-300
                 ${result === 'correct' ? 'text-green-400 correct-pulse' : ''}
                 ${result === 'wrong' ? 'text-keyred shake' : ''}
+                ${result === 'revealed' ? 'text-yellow-400 correct-pulse' : ''}
                 ${result === null ? 'text-white' : ''}
               `}
             >
@@ -219,6 +229,14 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
                   Correct! That was {targetNoteName}
                 </div>
               )}
+              {result === 'revealed' && (
+                <div className="text-yellow-400 text-lg font-bold flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Answer: {targetNoteName} — press SPACE for next
+                </div>
+              )}
               {result === 'wrong' && attemptedNote !== null && (
                 <div className="text-keyred text-lg font-bold flex items-center gap-2">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -229,7 +247,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
               )}
               {result === null && (
                 <div className="text-gray-500 text-sm">
-                  Play the note on your MIDI keyboard
+                  Play the note on your MIDI keyboard or tap a key
                 </div>
               )}
             </div>
@@ -239,7 +257,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, playC
         {/* MIDI status warning for unsupported devices */}
         {!midiSupported && (
           <div className="text-yellow-500/70 text-xs text-center max-w-md">
-            MIDI input not available on this device. Practice visually or connect a MIDI keyboard.
+            MIDI input not available on this device. Tap the on-screen keys to practice.
           </div>
         )}
       </div>
