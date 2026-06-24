@@ -7,7 +7,9 @@ export default function DroneToggle({ tonic, ensureAudioContext, droneVolume = 0
   useEffect(() => {
     if (!enabled) return
 
-    const fundamental = Tone.Frequency(tonic + '1').toFrequency()
+    const lowTonics = new Set(['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb'])
+    const octave = lowTonics.has(tonic) ? '2' : '1'
+    const fundamental = Tone.Frequency(tonic + octave).toFrequency()
 
     const filter = new Tone.Filter(500, 'lowpass', -12)
     const volNode = new Tone.Volume(droneVolume).toDestination()

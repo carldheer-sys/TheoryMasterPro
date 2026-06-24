@@ -5,7 +5,7 @@ const PRACTICE_MODES = [
   { label: 'Mental Practice', value: 'mental-practice', locked: true },
   { label: 'Scale Degrees', value: 'scale-degrees', locked: false },
   { label: 'Chords', value: 'chords', locked: false },
-  { label: 'Chord Progressions', value: 'chord-progressions', locked: true },
+  { label: 'Chord Progressions', value: 'chord-progressions', locked: false },
   { label: 'Constrained Improvisation', value: 'constrained-improvisation', locked: true }
 ]
 

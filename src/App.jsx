@@ -3,6 +3,7 @@ import MenuBar from './components/MenuBar'
 import PianoRoll from './components/PianoRoll'
 import ScaleDegreesPractice from './components/ScaleDegreesPractice'
 import ChordsPractice from './components/ChordsPractice'
+import ChordProgressionsPractice from './components/ChordProgressionsPractice'
 import TheoryOverview from './components/TheoryOverview'
 import Modal from './components/Modal'
 import KeyboardRangeModal from './components/KeyboardRangeModal'
@@ -104,6 +105,16 @@ export default function App() {
             droneVolume={droneVolume}
           />
         )}
+        {trainingMode === 'chord-progressions' && (
+          <ChordProgressionsPractice
+            activeNotes={activeNotes}
+            midiSupported={midiSupported}
+            ensureAudioContext={ensureAudioContext}
+            autoAdvanceDelay={autoAdvanceDelay}
+            onClearAllNotes={clearAllNotes}
+            droneVolume={droneVolume}
+          />
+        )}
         {trainingMode === 'theory-overview' && (
           <TheoryOverview
             range={range}
@@ -112,7 +123,7 @@ export default function App() {
             droneVolume={droneVolume}
           />
         )}
-        {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'theory-overview' && (
+        {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'chord-progressions' && trainingMode !== 'theory-overview' && (
           <div className="flex items-center justify-center h-full text-gray-600">
             <p className="text-lg">This mode is not yet implemented.</p>
           </div>
@@ -122,7 +133,7 @@ export default function App() {
       {/* Piano roll at bottom (hidden in theory-overview mode which has its own keyboard) */}
       {trainingMode !== 'theory-overview' && (
         <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
-          <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords'} />
+          <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords' || trainingMode === 'chord-progressions'} />
         </div>
       )}
 
