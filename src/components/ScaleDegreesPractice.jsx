@@ -27,7 +27,7 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 1200 }) {
   // Settings
   const [tonic, setTonic] = useState('C')
   const [tonality, setTonality] = useState('major')
@@ -39,7 +39,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
   const [lastDegree, setLastDegree] = useState(null)
   const [result, setResult] = useState(null) // null | 'correct' | 'wrong' | 'revealed'
   const [attemptedNote, setAttemptedNote] = useState(null)
-  const [score, setScore] = useState({ correct: 0, total: 0 })
+  const [score, setScore] = useState({ correct: 0, answered: 0 })
 
   // Track which notes we've already checked for this round
   const checkedNotesRef = useRef(new Set())
@@ -75,7 +75,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
       if (playedPC === targetPC) {
         setResult('correct')
-        setScore(s => ({ correct: s.correct + 1, total: s.total + 1 }))
+        setScore(s => ({ correct: s.correct + 1, answered: s.answered + 1 }))
         // Auto-advance to next degree after showing the correct animation
         setTimeout(() => {
           const nextPick = pickRandomDegree(degrees, currentDegree)
@@ -84,17 +84,17 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
           setResult(null)
           setAttemptedNote(null)
           checkedNotesRef.current = new Set()
-        }, 1200)
+        }, autoAdvanceDelay)
       } else {
         setResult('wrong')
-        setScore(s => ({ ...s, total: s.total + 1 }))
+        setScore(s => ({ ...s, answered: s.answered + 1 }))
         // Reset checked notes so user can try again
         setTimeout(() => {
           checkedNotesRef.current = new Set()
         }, 300)
       }
     }
-  }, [activeNotes, currentDegree, targetPC, result, degrees])
+  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay])
 
   // Spacebar behavior:
   // - If no question active (not started or result is 'correct'/'revealed'): generate next
@@ -107,7 +107,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         // If there's an active unanswered question, reveal it
         if (hasStarted && currentDegree && result === null) {
           setResult('revealed')
-          setScore(s => ({ ...s, total: s.total + 1 }))
+          setScore(s => ({ ...s, answered: s.answered + 1 }))
         } else {
           // Otherwise generate next
           handleGenerate()
@@ -125,6 +125,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       setCurrentDegree(null)
       setResult(null)
       setAttemptedNote(null)
+      setScore({ correct: 0, answered: 0 })
     }
   }
 
@@ -177,9 +178,9 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         {hasStarted && (
           <div className="flex items-center gap-4 pb-2.5">
             <div className="text-sm text-gray-400">
-              Score: <span className="text-green-400 font-bold">{score.correct}</span>
+              Score: <span className="text-white font-bold">{score.correct}</span>
               <span className="text-gray-600"> / </span>
-              <span className="text-white font-bold">{score.total}</span>
+              <span className="text-white font-bold">{score.answered}</span>
             </div>
           </div>
         )}

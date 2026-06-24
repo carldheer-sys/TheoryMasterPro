@@ -222,6 +222,122 @@ export function midiNoteToName(note, tonic, mode) {
   return pitchClassToName(midiNoteToPC(note)) + midiNoteToOctave(note)
 }
 
+// ─── Diatonic chord definitions (from naming conventions §5) ────────────
+
+// Triad intervals from root by quality
+export const TRIAD_INTERVALS = {
+  major: [0, 4, 7],
+  minor: [0, 3, 7],
+  diminished: [0, 3, 6],
+  augmented: [0, 4, 8],
+}
+
+// Seventh chord intervals from root by quality
+export const SEVENTH_INTERVALS = {
+  major7:          [0, 4, 7, 11],
+  dominant7:       [0, 4, 7, 10],
+  minor7:          [0, 3, 7, 10],
+  'half-diminished': [0, 3, 6, 10],
+  diminished7:     [0, 3, 6, 9],
+}
+
+// Diatonic triads for major and minor keys
+// Each entry: { roman, semitones (from tonic), quality, intervals (from root) }
+export const DIATONIC_TRIADS = {
+  major: [
+    { roman: 'I',    semitones: 0,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'ii',   semitones: 2,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iii',  semitones: 4,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'IV',   semitones: 5,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'V',    semitones: 7,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'vi',   semitones: 9,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'viio', semitones: 11, quality: 'diminished', intervals: [0, 3, 6] },
+  ],
+  minor: [
+    { roman: 'i',     semitones: 0,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iio',   semitones: 2,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'bIII',  semitones: 3,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'iv',    semitones: 5,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'v',     semitones: 7,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'bVI',   semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bVII',  semitones: 10, quality: 'major',      intervals: [0, 4, 7] },
+  ],
+}
+
+// Diatonic seventh chords for major and minor keys (from naming conventions §5.5)
+export const DIATONIC_SEVENTHS = {
+  major: [
+    { roman: 'Imaj7',  semitones: 0,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'ii7',    semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iii7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'IVmaj7', semitones: 5,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'V7',     semitones: 7,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'vi7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'viiø7',  semitones: 11, quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+  ],
+  minor: [
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iiø7',     semitones: 2,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'bIIImaj7', semitones: 3,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'iv7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'bVII7',    semitones: 10, quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+  ],
+}
+
+// Chord label suffixes by quality (jazz/pop notation from §4.1)
+const CHORD_LABEL_SUFFIXES = {
+  major: '',
+  minor: 'm',
+  diminished: 'dim',
+  augmented: 'aug',
+  major7: 'maj7',
+  dominant7: '7',
+  minor7: 'm7',
+  'half-diminished': 'm7b5',
+  diminished7: 'o7',
+}
+
+// Get diatonic triads for a tonality
+export function getDiatonicTriads(tonality) {
+  return DIATONIC_TRIADS[tonality] || DIATONIC_TRIADS.major
+}
+
+// Get diatonic sevenths for a tonality
+export function getDiatonicSevenths(tonality) {
+  return DIATONIC_SEVENTHS[tonality] || DIATONIC_SEVENTHS.major
+}
+
+// Get the pitch classes for a chord given the tonic pitch class
+export function getChordPitchClasses(tonicPC, chord) {
+  const rootPC = (tonicPC + chord.semitones) % 12
+  return chord.intervals.map(iv => (rootPC + iv) % 12)
+}
+
+// Get the root note name for a chord (key-aware spelling)
+export function getChordRootName(tonicPC, chord, tonic, tonality) {
+  const rootPC = (tonicPC + chord.semitones) % 12
+  return spellNoteName(rootPC, tonic, tonality)
+}
+
+// Get the chord label (e.g. "Ab", "Cm", "Bdim", "G7", "Cmaj7", "Bm7b5") with key-aware spelling
+export function getChordLabel(tonicPC, chord, tonic, tonality) {
+  const rootName = getChordRootName(tonicPC, chord, tonic, tonality)
+  const suffix = CHORD_LABEL_SUFFIXES[chord.quality] ?? ''
+  return rootName + suffix
+}
+
+// Pick a random chord, guaranteeing no direct repeat
+export function pickRandomChord(chords, lastChord = null) {
+  if (chords.length <= 1) return chords[0]
+  const candidates = lastChord
+    ? chords.filter(c => c.roman !== lastChord.roman)
+    : [...chords]
+  if (candidates.length === 0) return chords[secureRandomInt(chords.length)]
+  return candidates[secureRandomInt(candidates.length)]
+}
+
 // ─── Piano keyboard helpers ──────────────────────────────────────────────
 
 // Black key positions within an octave (relative to C)

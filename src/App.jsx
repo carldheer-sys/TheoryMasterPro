@@ -1,15 +1,19 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import MenuBar from './components/MenuBar'
 import PianoRoll from './components/PianoRoll'
 import ScaleDegreesPractice from './components/ScaleDegreesPractice'
+import ChordsPractice from './components/ChordsPractice'
+import TheoryOverview from './components/TheoryOverview'
 import Modal from './components/Modal'
 import KeyboardRangeModal from './components/KeyboardRangeModal'
+import AutoAdvanceDelayModal from './components/AutoAdvanceDelayModal'
 import { useMidi } from './hooks/useMidi'
 import { DEFAULT_RANGE } from './utils/musicTheory'
 
 export default function App() {
   // Training mode
   const [trainingMode, setTrainingMode] = useState('scale-degrees')
+  const lastPracticeModeRef = useRef('scale-degrees')
 
   // Modal state
   const [activeModal, setActiveModal] = useState(null) // null | 'keyboard-range' | 'edit-catalog' | 'theory-overview'
@@ -17,21 +21,37 @@ export default function App() {
   // Keyboard range
   const [range, setRange] = useState(DEFAULT_RANGE)
 
+  // Auto-advance delay (ms)
+  const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(600)
+
   // MIDI
-  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff } = useMidi()
+  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, clearAllNotes } = useMidi()
 
   const handleModeChange = useCallback((mode) => {
     setTrainingMode(mode)
-  }, [])
+    lastPracticeModeRef.current = mode
+    clearAllNotes()
+  }, [clearAllNotes])
 
   const handleSettingsSelect = useCallback((value) => {
     if (value === 'keyboard-range') setActiveModal('keyboard-range')
+    if (value === 'auto-advance-delay') setActiveModal('auto-advance-delay')
     if (value === 'edit-catalog') setActiveModal('edit-catalog')
   }, [])
 
   const handleTheoryOverview = useCallback(() => {
-    setActiveModal('theory-overview')
-  }, [])
+    setTrainingMode(prev => {
+      if (prev === 'theory-overview') {
+        clearAllNotes()
+        return lastPracticeModeRef.current
+      }
+      if (prev !== 'theory-overview') {
+        lastPracticeModeRef.current = prev
+      }
+      clearAllNotes()
+      return 'theory-overview'
+    })
+  }, [clearAllNotes])
 
   return (
     <div className="flex flex-col h-screen bg-bg-900 overflow-hidden">
@@ -74,19 +94,36 @@ export default function App() {
             activeNotes={activeNotes}
             midiSupported={midiSupported}
             ensureAudioContext={ensureAudioContext}
+            autoAdvanceDelay={autoAdvanceDelay}
           />
         )}
-        {trainingMode !== 'scale-degrees' && (
+        {trainingMode === 'chords' && (
+          <ChordsPractice
+            activeNotes={activeNotes}
+            midiSupported={midiSupported}
+            ensureAudioContext={ensureAudioContext}
+            autoAdvanceDelay={autoAdvanceDelay}
+            onClearAllNotes={clearAllNotes}
+          />
+        )}
+        {trainingMode === 'theory-overview' && (
+          <TheoryOverview
+            activeNotes={activeNotes}
+          />
+        )}
+        {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'theory-overview' && (
           <div className="flex items-center justify-center h-full text-gray-600">
             <p className="text-lg">This mode is not yet implemented.</p>
           </div>
         )}
       </main>
 
-      {/* Piano roll at bottom */}
-      <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
-        <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} />
-      </div>
+      {/* Piano roll at bottom (hidden in theory-overview mode which has its own keyboard) */}
+      {trainingMode !== 'theory-overview' && (
+        <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
+          <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords'} />
+        </div>
+      )}
 
       {/* Modals */}
       {activeModal === 'keyboard-range' && (
@@ -94,6 +131,16 @@ export default function App() {
           <KeyboardRangeModal
             range={range}
             onRangeChange={setRange}
+            onClose={() => setActiveModal(null)}
+          />
+        </Modal>
+      )}
+
+      {activeModal === 'auto-advance-delay' && (
+        <Modal title="Auto-Advance Delay" onClose={() => setActiveModal(null)}>
+          <AutoAdvanceDelayModal
+            delay={autoAdvanceDelay}
+            onDelayChange={setAutoAdvanceDelay}
             onClose={() => setActiveModal(null)}
           />
         </Modal>
@@ -107,13 +154,6 @@ export default function App() {
         </Modal>
       )}
 
-      {activeModal === 'theory-overview' && (
-        <Modal title="Theory Overview" onClose={() => setActiveModal(null)}>
-          <div className="text-gray-400 text-sm py-8 text-center">
-            The theory overview page will be available in a future update.
-          </div>
-        </Modal>
-      )}
     </div>
   )
 }

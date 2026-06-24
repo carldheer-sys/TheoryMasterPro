@@ -12,6 +12,7 @@ import {
   NOTE_NAMES_FLAT,
   NOTE_NAMES_SHARP,
   TONICS,
+  TONALITIES,
   DEGREE_MAP,
   DIATONIC_MAJOR,
   DIATONIC_MINOR,
@@ -22,6 +23,11 @@ import {
   MINOR_TO_RELATIVE_MAJOR,
   FLAT_MAJOR_KEYS,
   FLAT_MINOR_KEYS,
+  DIATONIC_TRIADS,
+  TRIAD_INTERVALS,
+  DIATONIC_SEVENTHS,
+  SEVENTH_INTERVALS,
+  getDiatonicSevenths,
   tonicToPC,
   getScaleDegrees,
   pickRandomDegree,
@@ -33,7 +39,12 @@ import {
   pitchClassToName,
   midiNoteToPC,
   midiNoteToOctave,
-  midiNoteToName
+  midiNoteToName,
+  getDiatonicTriads,
+  getChordPitchClasses,
+  getChordRootName,
+  getChordLabel,
+  pickRandomChord
 } from './musicTheory.js'
 
 // ─── Test helpers ────────────────────────────────────────────────────────
@@ -573,6 +584,833 @@ test('18b. Integration: all chromatic degrees in all 12 keys (minor)', () => {
       assertEqual(result.scale_degree, d.degree, `${tonic} minor: ${d.degree} → PC ${pc} → ${result.scale_degree}`)
     })
   })
+})
+
+// ── Chord Tests ──────────────────────────────────────────────────────────
+
+test('19. Diatonic triads: major key has 7 chords with correct Roman numerals', () => {
+  const triads = getDiatonicTriads('major')
+  assertEqual(triads.length, 7, 'Major key should have 7 diatonic triads')
+  const expectedRomans = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'viio']
+  triads.forEach((t, i) => {
+    assertEqual(t.roman, expectedRomans[i], `Major triad ${i}: expected ${expectedRomans[i]}, got ${t.roman}`)
+  })
+})
+
+test('20. Diatonic triads: minor key has 7 chords with correct Roman numerals', () => {
+  const triads = getDiatonicTriads('minor')
+  assertEqual(triads.length, 7, 'Minor key should have 7 diatonic triads')
+  const expectedRomans = ['i', 'iio', 'bIII', 'iv', 'v', 'bVI', 'bVII']
+  triads.forEach((t, i) => {
+    assertEqual(t.roman, expectedRomans[i], `Minor triad ${i}: expected ${expectedRomans[i]}, got ${t.roman}`)
+  })
+})
+
+test('21. Diatonic triads: major key chord qualities', () => {
+  const triads = getDiatonicTriads('major')
+  const expectedQualities = ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished']
+  triads.forEach((t, i) => {
+    assertEqual(t.quality, expectedQualities[i], `Major triad ${t.roman}: expected ${expectedQualities[i]}, got ${t.quality}`)
+  })
+})
+
+test('22. Diatonic triads: minor key chord qualities', () => {
+  const triads = getDiatonicTriads('minor')
+  const expectedQualities = ['minor', 'diminished', 'major', 'minor', 'minor', 'major', 'major']
+  triads.forEach((t, i) => {
+    assertEqual(t.quality, expectedQualities[i], `Minor triad ${t.roman}: expected ${expectedQualities[i]}, got ${t.quality}`)
+  })
+})
+
+test('23. Diatonic triads: triad intervals match quality', () => {
+  const majorTriads = getDiatonicTriads('major')
+  const minorTriads = getDiatonicTriads('minor')
+  const allTriads = [...majorTriads, ...minorTriads]
+  allTriads.forEach(t => {
+    assert(
+      JSON.stringify(t.intervals) === JSON.stringify(TRIAD_INTERVALS[t.quality]),
+      `Triad ${t.roman} (${t.quality}): intervals ${t.intervals} should match ${TRIAD_INTERVALS[t.quality]}`
+    )
+  })
+})
+
+test('24. Chord pitch classes: C major I = C-E-G (0,4,7)', () => {
+  const triads = getDiatonicTriads('major')
+  const tonicPC = tonicToPC('C')
+  const I = triads[0]
+  const pcs = getChordPitchClasses(tonicPC, I)
+  assertEqual(pcs.length, 3, 'I chord should have 3 pitch classes')
+  assert(pcs.includes(0), 'C major I should include C (pc=0)')
+  assert(pcs.includes(4), 'C major I should include E (pc=4)')
+  assert(pcs.includes(7), 'C major I should include G (pc=7)')
+})
+
+test('25. Chord pitch classes: C major viio = B-D-F (11,2,5)', () => {
+  const triads = getDiatonicTriads('major')
+  const tonicPC = tonicToPC('C')
+  const viio = triads[6]
+  const pcs = getChordPitchClasses(tonicPC, viio)
+  assert(pcs.includes(11), 'C major viio should include B (pc=11)')
+  assert(pcs.includes(2), 'C major viio should include D (pc=2)')
+  assert(pcs.includes(5), 'C major viio should include F (pc=5)')
+})
+
+test('26. Chord pitch classes: C minor bVI = Ab-C-Eb (8,0,3)', () => {
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('C')
+  const bVI = triads[5]
+  const pcs = getChordPitchClasses(tonicPC, bVI)
+  assert(pcs.includes(8), 'C minor bVI should include Ab (pc=8)')
+  assert(pcs.includes(0), 'C minor bVI should include C (pc=0)')
+  assert(pcs.includes(3), 'C minor bVI should include Eb (pc=3)')
+})
+
+test('27. Chord label: C major I = "C"', () => {
+  const triads = getDiatonicTriads('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, triads[0], 'C', 'major'), 'C', 'C major I should be labeled "C"')
+})
+
+test('28. Chord label: C major vi = "Am"', () => {
+  const triads = getDiatonicTriads('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, triads[5], 'C', 'major'), 'Am', 'C major vi should be labeled "Am"')
+})
+
+test('29. Chord label: C major viio = "Bdim"', () => {
+  const triads = getDiatonicTriads('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, triads[6], 'C', 'major'), 'Bdim', 'C major viio should be labeled "Bdim"')
+})
+
+test('30. Chord label: C minor bVI = "Ab" (flat key spelling)', () => {
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, triads[5], 'C', 'minor'), 'Ab', 'C minor bVI should be labeled "Ab"')
+})
+
+test('31. Chord label: C minor i = "Cm"', () => {
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, triads[0], 'C', 'minor'), 'Cm', 'C minor i should be labeled "Cm"')
+})
+
+test('32. Chord label: C minor iio = "Ddim"', () => {
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, triads[1], 'C', 'minor'), 'Ddim', 'C minor iio should be labeled "Ddim"')
+})
+
+test('33. Chord root name: Ab major bVI in C minor = "Ab"', () => {
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordRootName(tonicPC, triads[5], 'C', 'minor'), 'Ab', 'C minor bVI root should be "Ab"')
+})
+
+test('34. Chord pitch classes: all 12 major keys, all 7 triads', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    const triads = getDiatonicTriads('major')
+    triads.forEach(t => {
+      const pcs = getChordPitchClasses(tonicPC, t)
+      assertEqual(pcs.length, 3, `${tonic} major ${t.roman}: should have 3 pitch classes`)
+      // Verify root is correct
+      const rootPC = (tonicPC + t.semitones) % 12
+      assert(pcs.includes(rootPC), `${tonic} major ${t.roman}: root PC ${rootPC} should be in chord`)
+      // Verify all intervals from root are correct
+      t.intervals.forEach(iv => {
+        assert(pcs.includes((rootPC + iv) % 12), `${tonic} major ${t.roman}: interval ${iv} from root should be in chord`)
+      })
+    })
+  })
+})
+
+test('35. Chord pitch classes: all 12 minor keys, all 7 triads', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    const triads = getDiatonicTriads('minor')
+    triads.forEach(t => {
+      const pcs = getChordPitchClasses(tonicPC, t)
+      assertEqual(pcs.length, 3, `${tonic} minor ${t.roman}: should have 3 pitch classes`)
+      const rootPC = (tonicPC + t.semitones) % 12
+      assert(pcs.includes(rootPC), `${tonic} minor ${t.roman}: root PC ${rootPC} should be in chord`)
+      t.intervals.forEach(iv => {
+        assert(pcs.includes((rootPC + iv) % 12), `${tonic} minor ${t.roman}: interval ${iv} from root should be in chord`)
+      })
+    })
+  })
+})
+
+test('36. Chord label: key-aware spelling in sharp keys', () => {
+  // D major I should be "D" (sharp key, no flats needed)
+  const triads = getDiatonicTriads('major')
+  const dTonicPC = tonicToPC('D')
+  assertEqual(getChordLabel(dTonicPC, triads[0], 'D', 'major'), 'D', 'D major I should be "D"')
+  // D major ii should be "Em" (E is natural in D major)
+  assertEqual(getChordLabel(dTonicPC, triads[1], 'D', 'major'), 'Em', 'D major ii should be "Em"')
+  // D major V should be "A" (A is natural in D major)
+  assertEqual(getChordLabel(dTonicPC, triads[4], 'D', 'major'), 'A', 'D major V should be "A"')
+})
+
+test('37. Chord label: key-aware spelling in flat keys', () => {
+  // Eb major I should be "Eb"
+  const triads = getDiatonicTriads('major')
+  const ebTonicPC = tonicToPC('Eb')
+  assertEqual(getChordLabel(ebTonicPC, triads[0], 'Eb', 'major'), 'Eb', 'Eb major I should be "Eb"')
+  // Eb major vi should be "Cm" (C is natural in Eb major)
+  assertEqual(getChordLabel(ebTonicPC, triads[5], 'Eb', 'major'), 'Cm', 'Eb major vi should be "Cm"')
+  // Eb major IV should be "Ab" (Ab is in Eb major key signature)
+  assertEqual(getChordLabel(ebTonicPC, triads[3], 'Eb', 'major'), 'Ab', 'Eb major IV should be "Ab"')
+})
+
+test('38. Chord label: minor key flat spelling', () => {
+  // C minor bVI should be "Ab" (C minor uses flats)
+  const triads = getDiatonicTriads('minor')
+  const cTonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(cTonicPC, triads[5], 'C', 'minor'), 'Ab', 'C minor bVI should be "Ab"')
+  // C minor bIII should be "Eb"
+  assertEqual(getChordLabel(cTonicPC, triads[2], 'C', 'minor'), 'Eb', 'C minor bIII should be "Eb"')
+  // C minor bVII should be "Bb"
+  assertEqual(getChordLabel(cTonicPC, triads[6], 'C', 'minor'), 'Bb', 'C minor bVII should be "Bb"')
+})
+
+test('39. Chord label: minor key sharp spelling', () => {
+  // E minor iv should be "Am" (E minor is a sharp key, A is natural)
+  const triads = getDiatonicTriads('minor')
+  const eTonicPC = tonicToPC('E')
+  assertEqual(getChordLabel(eTonicPC, triads[3], 'E', 'minor'), 'Am', 'E minor iv should be "Am"')
+  // E minor bVI should be "C" (C is natural in E minor / G major relative)
+  assertEqual(getChordLabel(eTonicPC, triads[5], 'E', 'minor'), 'C', 'E minor bVI should be "C"')
+  // E minor v should be "Bm" (v in E minor has root B, which is the 5th degree)
+  assertEqual(getChordLabel(eTonicPC, triads[4], 'E', 'minor'), 'Bm', 'E minor v should be "Bm"')
+})
+
+test('40. pickRandomChord: does not repeat immediately', () => {
+  const triads = getDiatonicTriads('major')
+  let last = null
+  for (let i = 0; i < 100; i++) {
+    const pick = pickRandomChord(triads, last)
+    assert(pick !== undefined, 'pickRandomChord should always return a chord')
+    if (last) {
+      assert(pick.roman !== last.roman, `pickRandomChord should not repeat: got ${pick.roman} twice in a row`)
+    }
+    last = pick
+  }
+})
+
+test('41. pickRandomChord: returns from the provided list', () => {
+  const triads = getDiatonicTriads('major')
+  const romans = new Set(triads.map(t => t.roman))
+  for (let i = 0; i < 50; i++) {
+    const pick = pickRandomChord(triads)
+    assert(romans.has(pick.roman), `pickRandomChord should return a valid chord, got ${pick.roman}`)
+  }
+})
+
+test('42. Chord pitch classes: no duplicates within a chord', () => {
+  const majorTriads = getDiatonicTriads('major')
+  const minorTriads = getDiatonicTriads('minor')
+  const allTriads = [...majorTriads, ...minorTriads]
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    allTriads.forEach(t => {
+      const pcs = getChordPitchClasses(tonicPC, t)
+      const unique = new Set(pcs)
+      assertEqual(unique.size, pcs.length, `${tonic} ${t.roman}: chord should have no duplicate pitch classes`)
+    })
+  })
+})
+
+test('43. Integration: C major full diatonic triad set matches naming conventions', () => {
+  const triads = getDiatonicTriads('major')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'I',    label: 'C',    pcs: [0, 4, 7] },
+    { roman: 'ii',   label: 'Dm',   pcs: [2, 5, 9] },
+    { roman: 'iii',  label: 'Em',   pcs: [4, 7, 11] },
+    { roman: 'IV',   label: 'F',    pcs: [5, 9, 0] },
+    { roman: 'V',    label: 'G',    pcs: [7, 11, 2] },
+    { roman: 'vi',   label: 'Am',   pcs: [9, 0, 4] },
+    { roman: 'viio', label: 'Bdim', pcs: [11, 2, 5] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `C major triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'C', 'major')
+    assertEqual(label, exp.label, `C major ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C major ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('44. Integration: A minor full diatonic triad set matches naming conventions', () => {
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('A')
+  const expected = [
+    { roman: 'i',     label: 'Am',   pcs: [9, 0, 4] },
+    { roman: 'iio',   label: 'Bdim', pcs: [11, 2, 5] },
+    { roman: 'bIII',  label: 'C',    pcs: [0, 4, 7] },
+    { roman: 'iv',    label: 'Dm',   pcs: [2, 5, 9] },
+    { roman: 'v',     label: 'Em',   pcs: [4, 7, 11] },
+    { roman: 'bVI',   label: 'F',    pcs: [5, 9, 0] },
+    { roman: 'bVII',  label: 'G',    pcs: [7, 11, 2] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `A minor triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'A', 'minor')
+    assertEqual(label, exp.label, `A minor ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `A minor ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('45. Integration: Ab major bVI in C minor (user example)', () => {
+  // User's example: bVI chord with tonic C corresponds to Ab major triad with notes Ab, C, and Eb
+  const triads = getDiatonicTriads('minor')
+  const tonicPC = tonicToPC('C')
+  const bVI = triads[5]
+  assertEqual(bVI.roman, 'bVI', 'Should be bVI')
+  assertEqual(bVI.quality, 'major', 'bVI in minor should be major quality')
+  const label = getChordLabel(tonicPC, bVI, 'C', 'minor')
+  assertEqual(label, 'Ab', 'C minor bVI should be labeled "Ab"')
+  const pcs = getChordPitchClasses(tonicPC, bVI).sort((a, b) => a - b)
+  // Ab=8, C=0, Eb=3
+  assert(pcs.includes(8), 'Ab major should include Ab (pc=8)')
+  assert(pcs.includes(0), 'Ab major should include C (pc=0)')
+  assert(pcs.includes(3), 'Ab major should include Eb (pc=3)')
+  // Verify note names
+  const noteNames = pcs.map(pc => spellNoteName(pc, 'C', 'minor'))
+  assert(noteNames.includes('Ab'), `Note names should include Ab, got ${noteNames}`)
+  assert(noteNames.includes('C'), `Note names should include C, got ${noteNames}`)
+  assert(noteNames.includes('Eb'), `Note names should include Eb, got ${noteNames}`)
+})
+
+test('46. Integration: all diatonic triads in all 12 keys produce valid chord labels', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    TONALITIES.forEach(({ value: tonality }) => {
+      const triads = getDiatonicTriads(tonality)
+      triads.forEach(t => {
+        const label = getChordLabel(tonicPC, t, tonic, tonality)
+        assert(label.length > 0, `${tonic} ${tonality} ${t.roman}: label should not be empty`)
+        // Label should start with a valid note name (A-G with optional # or b)
+        assert(/^[A-G][#b]?/.test(label), `${tonic} ${tonality} ${t.roman}: label "${label}" should start with valid note name`)
+      })
+    })
+  })
+})
+
+test('47. Chord pitch classes: diminished triad has minor third and diminished fifth', () => {
+  const majorTriads = getDiatonicTriads('major')
+  const minorTriads = getDiatonicTriads('minor')
+  // viio in major
+  const viio = majorTriads[6]
+  assertEqual(viio.quality, 'diminished', 'viio in major should be diminished')
+  assertEqual(viio.intervals[1], 3, 'Diminished triad should have minor third (3 semitones)')
+  assertEqual(viio.intervals[2], 6, 'Diminished triad should have diminished fifth (6 semitones)')
+  // iio in minor
+  const iio = minorTriads[1]
+  assertEqual(iio.quality, 'diminished', 'iio in minor should be diminished')
+  assertEqual(iio.intervals[1], 3, 'Diminished triad should have minor third (3 semitones)')
+  assertEqual(iio.intervals[2], 6, 'Diminished triad should have diminished fifth (6 semitones)')
+})
+
+test('48. Chord pitch classes: major triad has major third and perfect fifth', () => {
+  const triads = getDiatonicTriads('major')
+  const I = triads[0]
+  assertEqual(I.quality, 'major', 'I in major should be major quality')
+  assertEqual(I.intervals[1], 4, 'Major triad should have major third (4 semitones)')
+  assertEqual(I.intervals[2], 7, 'Major triad should have perfect fifth (7 semitones)')
+})
+
+test('49. Chord pitch classes: minor triad has minor third and perfect fifth', () => {
+  const triads = getDiatonicTriads('major')
+  const vi = triads[5]
+  assertEqual(vi.quality, 'minor', 'vi in major should be minor quality')
+  assertEqual(vi.intervals[1], 3, 'Minor triad should have minor third (3 semitones)')
+  assertEqual(vi.intervals[2], 7, 'Minor triad should have perfect fifth (7 semitones)')
+})
+
+// ── Seventh Chord Tests ──────────────────────────────────────────────────
+
+test('50. Diatonic sevenths: major key has 7 chords with correct Roman numerals', () => {
+  const sevenths = getDiatonicSevenths('major')
+  assertEqual(sevenths.length, 7, 'Major key should have 7 diatonic sevenths')
+  const expectedRomans = ['Imaj7', 'ii7', 'iii7', 'IVmaj7', 'V7', 'vi7', 'viiø7']
+  sevenths.forEach((s, i) => {
+    assertEqual(s.roman, expectedRomans[i], `Major 7th ${i}: expected ${expectedRomans[i]}, got ${s.roman}`)
+  })
+})
+
+test('51. Diatonic sevenths: minor key has 7 chords with correct Roman numerals', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  assertEqual(sevenths.length, 7, 'Minor key should have 7 diatonic sevenths')
+  const expectedRomans = ['i7', 'iiø7', 'bIIImaj7', 'iv7', 'v7', 'bVImaj7', 'bVII7']
+  sevenths.forEach((s, i) => {
+    assertEqual(s.roman, expectedRomans[i], `Minor 7th ${i}: expected ${expectedRomans[i]}, got ${s.roman}`)
+  })
+})
+
+test('52. Diatonic sevenths: major key chord qualities', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const expectedQualities = ['major7', 'minor7', 'minor7', 'major7', 'dominant7', 'minor7', 'half-diminished']
+  sevenths.forEach((s, i) => {
+    assertEqual(s.quality, expectedQualities[i], `Major 7th ${s.roman}: expected ${expectedQualities[i]}, got ${s.quality}`)
+  })
+})
+
+test('53. Diatonic sevenths: minor key chord qualities', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const expectedQualities = ['minor7', 'half-diminished', 'major7', 'minor7', 'minor7', 'major7', 'dominant7']
+  sevenths.forEach((s, i) => {
+    assertEqual(s.quality, expectedQualities[i], `Minor 7th ${s.roman}: expected ${expectedQualities[i]}, got ${s.quality}`)
+  })
+})
+
+test('54. Diatonic sevenths: intervals match SEVENTH_INTERVALS for each quality', () => {
+  const major7s = getDiatonicSevenths('major')
+  const minor7s = getDiatonicSevenths('minor')
+  const all = [...major7s, ...minor7s]
+  all.forEach(s => {
+    assert(
+      JSON.stringify(s.intervals) === JSON.stringify(SEVENTH_INTERVALS[s.quality]),
+      `7th ${s.roman} (${s.quality}): intervals ${s.intervals} should match ${SEVENTH_INTERVALS[s.quality]}`
+    )
+  })
+})
+
+test('55. Diatonic sevenths: all chords have 4 pitch classes', () => {
+  const major7s = getDiatonicSevenths('major')
+  const minor7s = getDiatonicSevenths('minor')
+  const all = [...major7s, ...minor7s]
+  all.forEach(s => {
+    assertEqual(s.intervals.length, 4, `7th ${s.roman}: should have 4 intervals`)
+  })
+})
+
+test('56. Seventh pitch classes: C major Imaj7 = C-E-G-B (0,4,7,11)', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  const pcs = getChordPitchClasses(tonicPC, sevenths[0])
+  assertEqual(pcs.length, 4, 'Imaj7 should have 4 pitch classes')
+  assert(pcs.includes(0),  'C major Imaj7 should include C (pc=0)')
+  assert(pcs.includes(4),  'C major Imaj7 should include E (pc=4)')
+  assert(pcs.includes(7),  'C major Imaj7 should include G (pc=7)')
+  assert(pcs.includes(11), 'C major Imaj7 should include B (pc=11)')
+})
+
+test('57. Seventh pitch classes: C major V7 = G-B-D-F (7,11,2,5)', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  const V7 = sevenths[4]
+  const pcs = getChordPitchClasses(tonicPC, V7)
+  assert(pcs.includes(7),  'C major V7 should include G (pc=7)')
+  assert(pcs.includes(11), 'C major V7 should include B (pc=11)')
+  assert(pcs.includes(2),  'C major V7 should include D (pc=2)')
+  assert(pcs.includes(5),  'C major V7 should include F (pc=5)')
+})
+
+test('58. Seventh pitch classes: C major viiø7 = B-D-F-A (11,2,5,9)', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  const viiø7 = sevenths[6]
+  const pcs = getChordPitchClasses(tonicPC, viiø7)
+  assert(pcs.includes(11), 'C major viiø7 should include B (pc=11)')
+  assert(pcs.includes(2),  'C major viiø7 should include D (pc=2)')
+  assert(pcs.includes(5),  'C major viiø7 should include F (pc=5)')
+  assert(pcs.includes(9),  'C major viiø7 should include A (pc=9)')
+})
+
+test('59. Seventh pitch classes: C minor bVImaj7 = Ab-C-Eb-G (8,0,3,7)', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  const bVImaj7 = sevenths[5]
+  const pcs = getChordPitchClasses(tonicPC, bVImaj7)
+  assert(pcs.includes(8), 'C minor bVImaj7 should include Ab (pc=8)')
+  assert(pcs.includes(0), 'C minor bVImaj7 should include C (pc=0)')
+  assert(pcs.includes(3), 'C minor bVImaj7 should include Eb (pc=3)')
+  assert(pcs.includes(7), 'C minor bVImaj7 should include G (pc=7)')
+})
+
+test('60. Seventh pitch classes: C minor bVII7 = Bb-D-F-Ab (10,2,5,8)', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  const bVII7 = sevenths[6]
+  const pcs = getChordPitchClasses(tonicPC, bVII7)
+  assert(pcs.includes(10), 'C minor bVII7 should include Bb (pc=10)')
+  assert(pcs.includes(2),  'C minor bVII7 should include D (pc=2)')
+  assert(pcs.includes(5),  'C minor bVII7 should include F (pc=5)')
+  assert(pcs.includes(8),  'C minor bVII7 should include Ab (pc=8)')
+})
+
+test('61. Seventh chord label: C major Imaj7 = "Cmaj7"', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[0], 'C', 'major'), 'Cmaj7', 'C major Imaj7 should be labeled "Cmaj7"')
+})
+
+test('62. Seventh chord label: C major V7 = "G7"', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[4], 'C', 'major'), 'G7', 'C major V7 should be labeled "G7"')
+})
+
+test('63. Seventh chord label: C major viiø7 = "Bm7b5"', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[6], 'C', 'major'), 'Bm7b5', 'C major viiø7 should be labeled "Bm7b5"')
+})
+
+test('64. Seventh chord label: C major ii7 = "Dm7"', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[1], 'C', 'major'), 'Dm7', 'C major ii7 should be labeled "Dm7"')
+})
+
+test('65. Seventh chord label: C minor i7 = "Cm7"', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[0], 'C', 'minor'), 'Cm7', 'C minor i7 should be labeled "Cm7"')
+})
+
+test('66. Seventh chord label: C minor iiø7 = "Dm7b5"', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[1], 'C', 'minor'), 'Dm7b5', 'C minor iiø7 should be labeled "Dm7b5"')
+})
+
+test('67. Seventh chord label: C minor bVII7 = "Bb7" (flat key spelling)', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[6], 'C', 'minor'), 'Bb7', 'C minor bVII7 should be labeled "Bb7"')
+})
+
+test('68. Seventh chord label: C minor bIIImaj7 = "Ebmaj7"', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[2], 'C', 'minor'), 'Ebmaj7', 'C minor bIIImaj7 should be labeled "Ebmaj7"')
+})
+
+test('69. Seventh chord label: C minor bVImaj7 = "Abmaj7"', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('C')
+  assertEqual(getChordLabel(tonicPC, sevenths[5], 'C', 'minor'), 'Abmaj7', 'C minor bVImaj7 should be labeled "Abmaj7"')
+})
+
+test('70. Seventh pitch classes: all 12 major keys, all 7 sevenths', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    const sevenths = getDiatonicSevenths('major')
+    sevenths.forEach(s => {
+      const pcs = getChordPitchClasses(tonicPC, s)
+      assertEqual(pcs.length, 4, `${tonic} major ${s.roman}: should have 4 pitch classes`)
+      const rootPC = (tonicPC + s.semitones) % 12
+      assert(pcs.includes(rootPC), `${tonic} major ${s.roman}: root PC ${rootPC} should be in chord`)
+      s.intervals.forEach(iv => {
+        assert(pcs.includes((rootPC + iv) % 12), `${tonic} major ${s.roman}: interval ${iv} from root should be in chord`)
+      })
+    })
+  })
+})
+
+test('71. Seventh pitch classes: all 12 minor keys, all 7 sevenths', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    const sevenths = getDiatonicSevenths('minor')
+    sevenths.forEach(s => {
+      const pcs = getChordPitchClasses(tonicPC, s)
+      assertEqual(pcs.length, 4, `${tonic} minor ${s.roman}: should have 4 pitch classes`)
+      const rootPC = (tonicPC + s.semitones) % 12
+      assert(pcs.includes(rootPC), `${tonic} minor ${s.roman}: root PC ${rootPC} should be in chord`)
+      s.intervals.forEach(iv => {
+        assert(pcs.includes((rootPC + iv) % 12), `${tonic} minor ${s.roman}: interval ${iv} from root should be in chord`)
+      })
+    })
+  })
+})
+
+test('72. Seventh pitch classes: no duplicates within a chord', () => {
+  const major7s = getDiatonicSevenths('major')
+  const minor7s = getDiatonicSevenths('minor')
+  const all = [...major7s, ...minor7s]
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    all.forEach(s => {
+      const pcs = getChordPitchClasses(tonicPC, s)
+      const unique = new Set(pcs)
+      assertEqual(unique.size, pcs.length, `${tonic} ${s.roman}: 7th chord should have no duplicate pitch classes`)
+    })
+  })
+})
+
+test('73. Seventh chord label: key-aware spelling in sharp keys', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const dTonicPC = tonicToPC('D')
+  // D major Imaj7 = "Dmaj7"
+  assertEqual(getChordLabel(dTonicPC, sevenths[0], 'D', 'major'), 'Dmaj7', 'D major Imaj7 should be "Dmaj7"')
+  // D major V7 = "A7"
+  assertEqual(getChordLabel(dTonicPC, sevenths[4], 'D', 'major'), 'A7', 'D major V7 should be "A7"')
+  // D major viiø7 = "C#m7b5"
+  assertEqual(getChordLabel(dTonicPC, sevenths[6], 'D', 'major'), 'C#m7b5', 'D major viiø7 should be "C#m7b5"')
+})
+
+test('74. Seventh chord label: key-aware spelling in flat keys', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const ebTonicPC = tonicToPC('Eb')
+  // Eb major Imaj7 = "Ebmaj7"
+  assertEqual(getChordLabel(ebTonicPC, sevenths[0], 'Eb', 'major'), 'Ebmaj7', 'Eb major Imaj7 should be "Ebmaj7"')
+  // Eb major IVmaj7 = "Abmaj7"
+  assertEqual(getChordLabel(ebTonicPC, sevenths[3], 'Eb', 'major'), 'Abmaj7', 'Eb major IVmaj7 should be "Abmaj7"')
+  // Eb major V7 = "Bb7"
+  assertEqual(getChordLabel(ebTonicPC, sevenths[4], 'Eb', 'major'), 'Bb7', 'Eb major V7 should be "Bb7"')
+})
+
+test('75. Seventh chord label: minor key sharp spelling', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const eTonicPC = tonicToPC('E')
+  // E minor i7 = "Em7"
+  assertEqual(getChordLabel(eTonicPC, sevenths[0], 'E', 'minor'), 'Em7', 'E minor i7 should be "Em7"')
+  // E minor bVImaj7 = "Cmaj7"
+  assertEqual(getChordLabel(eTonicPC, sevenths[5], 'E', 'minor'), 'Cmaj7', 'E minor bVImaj7 should be "Cmaj7"')
+  // E minor bVII7 = "D7"
+  assertEqual(getChordLabel(eTonicPC, sevenths[6], 'E', 'minor'), 'D7', 'E minor bVII7 should be "D7"')
+})
+
+test('76. Seventh chord label: minor key flat spelling', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const cTonicPC = tonicToPC('C')
+  // C minor bVImaj7 = "Abmaj7"
+  assertEqual(getChordLabel(cTonicPC, sevenths[5], 'C', 'minor'), 'Abmaj7', 'C minor bVImaj7 should be "Abmaj7"')
+  // C minor bVII7 = "Bb7"
+  assertEqual(getChordLabel(cTonicPC, sevenths[6], 'C', 'minor'), 'Bb7', 'C minor bVII7 should be "Bb7"')
+  // C minor bIIImaj7 = "Ebmaj7"
+  assertEqual(getChordLabel(cTonicPC, sevenths[2], 'C', 'minor'), 'Ebmaj7', 'C minor bIIImaj7 should be "Ebmaj7"')
+})
+
+test('77. pickRandomChord: does not repeat immediately (sevenths)', () => {
+  const sevenths = getDiatonicSevenths('major')
+  let last = null
+  for (let i = 0; i < 100; i++) {
+    const pick = pickRandomChord(sevenths, last)
+    assert(pick !== undefined, 'pickRandomChord should always return a 7th chord')
+    if (last) {
+      assert(pick.roman !== last.roman, `pickRandomChord should not repeat: got ${pick.roman} twice in a row`)
+    }
+    last = pick
+  }
+})
+
+test('78. pickRandomChord: returns from the provided list (sevenths)', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const romans = new Set(sevenths.map(s => s.roman))
+  for (let i = 0; i < 50; i++) {
+    const pick = pickRandomChord(sevenths)
+    assert(romans.has(pick.roman), `pickRandomChord should return a valid 7th chord, got ${pick.roman}`)
+  }
+})
+
+test('79. Seventh intervals: major7 = [0,4,7,11]', () => {
+  assertEqual(JSON.stringify(SEVENTH_INTERVALS.major7), JSON.stringify([0, 4, 7, 11]), 'major7 intervals should be [0,4,7,11]')
+})
+
+test('80. Seventh intervals: dominant7 = [0,4,7,10]', () => {
+  assertEqual(JSON.stringify(SEVENTH_INTERVALS.dominant7), JSON.stringify([0, 4, 7, 10]), 'dominant7 intervals should be [0,4,7,10]')
+})
+
+test('81. Seventh intervals: minor7 = [0,3,7,10]', () => {
+  assertEqual(JSON.stringify(SEVENTH_INTERVALS.minor7), JSON.stringify([0, 3, 7, 10]), 'minor7 intervals should be [0,3,7,10]')
+})
+
+test('82. Seventh intervals: half-diminished = [0,3,6,10]', () => {
+  assertEqual(JSON.stringify(SEVENTH_INTERVALS['half-diminished']), JSON.stringify([0, 3, 6, 10]), 'half-diminished intervals should be [0,3,6,10]')
+})
+
+test('83. Seventh intervals: diminished7 = [0,3,6,9]', () => {
+  assertEqual(JSON.stringify(SEVENTH_INTERVALS.diminished7), JSON.stringify([0, 3, 6, 9]), 'diminished7 intervals should be [0,3,6,9]')
+})
+
+test('84. Integration: C major full diatonic 7th set matches naming conventions §5.5', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'Imaj7',  label: 'Cmaj7',  pcs: [0, 4, 7, 11] },
+    { roman: 'ii7',    label: 'Dm7',    pcs: [2, 5, 9, 0] },
+    { roman: 'iii7',   label: 'Em7',    pcs: [4, 7, 11, 2] },
+    { roman: 'IVmaj7', label: 'Fmaj7',  pcs: [5, 9, 0, 4] },
+    { roman: 'V7',     label: 'G7',     pcs: [7, 11, 2, 5] },
+    { roman: 'vi7',    label: 'Am7',    pcs: [9, 0, 4, 7] },
+    { roman: 'viiø7',  label: 'Bm7b5',  pcs: [11, 2, 5, 9] },
+  ]
+  expected.forEach((exp, i) => {
+    const s = sevenths[i]
+    assertEqual(s.roman, exp.roman, `C major 7th ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, s, 'C', 'major')
+    assertEqual(label, exp.label, `C major ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, s).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C major ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('85. Integration: A minor full diatonic 7th set', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('A')
+  const expected = [
+    { roman: 'i7',       label: 'Am7',    pcs: [9, 0, 4, 7] },
+    { roman: 'iiø7',     label: 'Bm7b5',  pcs: [11, 2, 5, 9] },
+    { roman: 'bIIImaj7', label: 'Cmaj7',  pcs: [0, 4, 7, 11] },
+    { roman: 'iv7',      label: 'Dm7',    pcs: [2, 5, 9, 0] },
+    { roman: 'v7',       label: 'Em7',    pcs: [4, 7, 11, 2] },
+    { roman: 'bVImaj7',  label: 'Fmaj7',  pcs: [5, 9, 0, 4] },
+    { roman: 'bVII7',    label: 'G7',     pcs: [7, 11, 2, 5] },
+  ]
+  expected.forEach((exp, i) => {
+    const s = sevenths[i]
+    assertEqual(s.roman, exp.roman, `A minor 7th ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, s, 'A', 'minor')
+    assertEqual(label, exp.label, `A minor ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, s).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `A minor ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('86. Integration: all diatonic 7ths in all 12 keys produce valid chord labels', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    TONALITIES.forEach(({ value: tonality }) => {
+      const sevenths = getDiatonicSevenths(tonality)
+      sevenths.forEach(s => {
+        const label = getChordLabel(tonicPC, s, tonic, tonality)
+        assert(label.length > 0, `${tonic} ${tonality} ${s.roman}: label should not be empty`)
+        assert(/^[A-G][#b]?/.test(label), `${tonic} ${tonality} ${s.roman}: label "${label}" should start with valid note name`)
+      })
+    })
+  })
+})
+
+test('87. Seventh chord: major7 has major triad + major 7th', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const Imaj7 = sevenths[0]
+  assertEqual(Imaj7.quality, 'major7', 'Imaj7 should be major7 quality')
+  assertEqual(Imaj7.intervals[0], 0, 'Root should be 0')
+  assertEqual(Imaj7.intervals[1], 4, 'Major third should be 4')
+  assertEqual(Imaj7.intervals[2], 7, 'Perfect fifth should be 7')
+  assertEqual(Imaj7.intervals[3], 11, 'Major seventh should be 11')
+})
+
+test('88. Seventh chord: dominant7 has major triad + minor 7th', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const V7 = sevenths[4]
+  assertEqual(V7.quality, 'dominant7', 'V7 should be dominant7 quality')
+  assertEqual(V7.intervals[0], 0, 'Root should be 0')
+  assertEqual(V7.intervals[1], 4, 'Major third should be 4')
+  assertEqual(V7.intervals[2], 7, 'Perfect fifth should be 7')
+  assertEqual(V7.intervals[3], 10, 'Minor seventh should be 10')
+})
+
+test('89. Seventh chord: minor7 has minor triad + minor 7th', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const ii7 = sevenths[1]
+  assertEqual(ii7.quality, 'minor7', 'ii7 should be minor7 quality')
+  assertEqual(ii7.intervals[0], 0, 'Root should be 0')
+  assertEqual(ii7.intervals[1], 3, 'Minor third should be 3')
+  assertEqual(ii7.intervals[2], 7, 'Perfect fifth should be 7')
+  assertEqual(ii7.intervals[3], 10, 'Minor seventh should be 10')
+})
+
+test('90. Seventh chord: half-diminished has diminished triad + minor 7th', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const viiø7 = sevenths[6]
+  assertEqual(viiø7.quality, 'half-diminished', 'viiø7 should be half-diminished quality')
+  assertEqual(viiø7.intervals[0], 0, 'Root should be 0')
+  assertEqual(viiø7.intervals[1], 3, 'Minor third should be 3')
+  assertEqual(viiø7.intervals[2], 6, 'Diminished fifth should be 6')
+  assertEqual(viiø7.intervals[3], 10, 'Minor seventh should be 10')
+})
+
+test('91. Seventh vs triad: same root, 7th adds one more pitch class', () => {
+  const triads = getDiatonicTriads('major')
+  const sevenths = getDiatonicSevenths('major')
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    triads.forEach((t, i) => {
+      const triadPCs = new Set(getChordPitchClasses(tonicPC, t))
+      const seventhPCs = getChordPitchClasses(tonicPC, sevenths[i])
+      // All triad pitch classes should be in the 7th
+      seventhPCs.forEach(pc => {
+        // The 7th has one extra pitch class not in the triad
+      })
+      const extraPCs = seventhPCs.filter(pc => !triadPCs.has(pc))
+      assertEqual(extraPCs.length, 1, `${tonic} major ${t.roman}→${sevenths[i].roman}: 7th should add exactly 1 pitch class to triad`)
+    })
+  })
+})
+
+test('92. Seventh vs triad: same root semitones', () => {
+  const triads = getDiatonicTriads('major')
+  const sevenths = getDiatonicSevenths('major')
+  triads.forEach((t, i) => {
+    assertEqual(t.semitones, sevenths[i].semitones, `Major degree ${i}: triad and 7th should have same root semitones`)
+  })
+  const triadsMin = getDiatonicTriads('minor')
+  const seventhsMin = getDiatonicSevenths('minor')
+  triadsMin.forEach((t, i) => {
+    assertEqual(t.semitones, seventhsMin[i].semitones, `Minor degree ${i}: triad and 7th should have same root semitones`)
+  })
+})
+
+test('93. Integration: D major V7 = A7 (A-C#-E-G)', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('D')
+  const V7 = sevenths[4]
+  assertEqual(V7.roman, 'V7', 'Should be V7')
+  const label = getChordLabel(tonicPC, V7, 'D', 'major')
+  assertEqual(label, 'A7', 'D major V7 should be labeled "A7"')
+  const pcs = getChordPitchClasses(tonicPC, V7).sort((a, b) => a - b)
+  // A=9, C#=1, E=4, G=7
+  assert(pcs.includes(9), 'A7 should include A (pc=9)')
+  assert(pcs.includes(1), 'A7 should include C# (pc=1)')
+  assert(pcs.includes(4), 'A7 should include E (pc=4)')
+  assert(pcs.includes(7), 'A7 should include G (pc=7)')
+  const noteNames = pcs.map(pc => spellNoteName(pc, 'D', 'major'))
+  assert(noteNames.includes('A'), `Note names should include A, got ${noteNames}`)
+  assert(noteNames.includes('C#'), `Note names should include C#, got ${noteNames}`)
+  assert(noteNames.includes('E'), `Note names should include E, got ${noteNames}`)
+  assert(noteNames.includes('G'), `Note names should include G, got ${noteNames}`)
+})
+
+test('94. Integration: Eb major viiø7 = Dm7b5 (D-F-Ab-C)', () => {
+  const sevenths = getDiatonicSevenths('major')
+  const tonicPC = tonicToPC('Eb')
+  const viiø7 = sevenths[6]
+  assertEqual(viiø7.roman, 'viiø7', 'Should be viiø7')
+  const label = getChordLabel(tonicPC, viiø7, 'Eb', 'major')
+  assertEqual(label, 'Dm7b5', 'Eb major viiø7 should be labeled "Dm7b5"')
+  const pcs = getChordPitchClasses(tonicPC, viiø7).sort((a, b) => a - b)
+  // D=2, F=5, Ab=8, C=0
+  assert(pcs.includes(2), 'Dm7b5 should include D (pc=2)')
+  assert(pcs.includes(5), 'Dm7b5 should include F (pc=5)')
+  assert(pcs.includes(8), 'Dm7b5 should include Ab (pc=8)')
+  assert(pcs.includes(0), 'Dm7b5 should include C (pc=0)')
+})
+
+test('95. Integration: E minor iiø7 = F#m7b5 (F#-A-C-E)', () => {
+  const sevenths = getDiatonicSevenths('minor')
+  const tonicPC = tonicToPC('E')
+  const iiø7 = sevenths[1]
+  assertEqual(iiø7.roman, 'iiø7', 'Should be iiø7')
+  const label = getChordLabel(tonicPC, iiø7, 'E', 'minor')
+  assertEqual(label, 'F#m7b5', 'E minor iiø7 should be labeled "F#m7b5"')
+  const pcs = getChordPitchClasses(tonicPC, iiø7).sort((a, b) => a - b)
+  // F#=6, A=9, C=0, E=4
+  assert(pcs.includes(6), 'F#m7b5 should include F# (pc=6)')
+  assert(pcs.includes(9), 'F#m7b5 should include A (pc=9)')
+  assert(pcs.includes(0), 'F#m7b5 should include C (pc=0)')
+  assert(pcs.includes(4), 'F#m7b5 should include E (pc=4)')
 })
 
 // ── Summary ──────────────────────────────────────────────────────────────

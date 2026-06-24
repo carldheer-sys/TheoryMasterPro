@@ -4,18 +4,22 @@ import Logo from './Logo'
 const TRAINING_MODES = [
   { label: 'Mental Practice', value: 'mental-practice', locked: true },
   { label: 'Scale Degrees', value: 'scale-degrees', locked: false },
-  { label: 'Chords', value: 'chords', locked: true },
+  { label: 'Chords', value: 'chords', locked: false },
   { label: 'Chord Progressions', value: 'chord-progressions', locked: true },
   { label: 'Constrained Improvisation', value: 'constrained-improvisation', locked: true }
 ]
 
 const SETTINGS_ITEMS = [
   { label: 'Keyboard Range', value: 'keyboard-range', locked: false },
+  { label: 'Auto-Advance Delay', value: 'auto-advance-delay', locked: false },
   { label: 'Edit Catalog', value: 'edit-catalog', locked: false }
 ]
 
 export default function MenuBar({ currentMode, onModeChange, onSettingsSelect, onTheoryOverview }) {
-  const currentModeLabel = TRAINING_MODES.find(m => m.value === currentMode)?.label || 'Training Mode'
+  const isTheoryOverview = currentMode === 'theory-overview'
+  const currentModeLabel = isTheoryOverview
+    ? 'Theory Overview'
+    : TRAINING_MODES.find(m => m.value === currentMode)?.label || 'Training Mode'
 
   return (
     <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-bg-800 border-b border-bg-600 z-40 relative">
@@ -39,7 +43,7 @@ export default function MenuBar({ currentMode, onModeChange, onSettingsSelect, o
           className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-bg-700 text-gray-300
             hover:bg-bg-600 hover:text-white transition-colors min-h-[44px]"
         >
-          Theory Overview
+          {isTheoryOverview ? 'Practice Modes' : 'Theory Overview'}
         </button>
         <Dropdown
           label="Settings"

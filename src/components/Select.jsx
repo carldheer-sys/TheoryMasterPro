@@ -24,7 +24,7 @@ export default function Select({ value, onChange, options, label }) {
             transition-colors min-h-[44px] cursor-pointer"
         >
           {options.map(opt => (
-            <option key={opt.value} value={opt.value} className="bg-bg-700 text-white">
+            <option key={opt.value} value={opt.value} className="bg-bg-700 text-white" disabled={opt.disabled}>
               {opt.label}
             </option>
           ))}
