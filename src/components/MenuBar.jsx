@@ -1,7 +1,7 @@
 import Dropdown from './Dropdown'
 import Logo from './Logo'
 
-const TRAINING_MODES = [
+const PRACTICE_MODES = [
   { label: 'Mental Practice', value: 'mental-practice', locked: true },
   { label: 'Scale Degrees', value: 'scale-degrees', locked: false },
   { label: 'Chords', value: 'chords', locked: false },
@@ -15,11 +15,11 @@ const SETTINGS_ITEMS = [
   { label: 'Edit Catalog', value: 'edit-catalog', locked: false }
 ]
 
+const PRACTICE_MODE_VALUES = new Set(PRACTICE_MODES.map(m => m.value))
+
 export default function MenuBar({ currentMode, onModeChange, onSettingsSelect, onTheoryOverview }) {
-  const isTheoryOverview = currentMode === 'theory-overview'
-  const currentModeLabel = isTheoryOverview
-    ? 'Theory Overview'
-    : TRAINING_MODES.find(m => m.value === currentMode)?.label || 'Training Mode'
+  const isPracticeMode = PRACTICE_MODE_VALUES.has(currentMode)
+  const currentModeLabel = PRACTICE_MODES.find(m => m.value === currentMode)?.label || 'Practice Modes'
 
   return (
     <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-bg-800 border-b border-bg-600 z-40 relative">
@@ -34,16 +34,19 @@ export default function MenuBar({ currentMode, onModeChange, onSettingsSelect, o
       {/* Menu buttons */}
       <nav className="flex items-center gap-2 sm:gap-3">
         <Dropdown
-          label={currentModeLabel}
-          items={TRAINING_MODES}
+          label={isPracticeMode ? currentModeLabel : 'Practice Modes'}
+          items={PRACTICE_MODES}
           onSelect={(value) => onModeChange(value)}
         />
         <button
           onClick={onTheoryOverview}
-          className="px-4 py-2.5 rounded-lg text-sm font-semibold bg-bg-700 text-gray-300
-            hover:bg-bg-600 hover:text-white transition-colors min-h-[44px]"
+          className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors min-h-[44px]
+            ${!isPracticeMode
+              ? 'bg-accent text-white'
+              : 'bg-bg-700 text-gray-300 hover:bg-bg-600 hover:text-white'
+            }`}
         >
-          {isTheoryOverview ? 'Practice Modes' : 'Theory Overview'}
+          Theory Overview
         </button>
         <Dropdown
           label="Settings"

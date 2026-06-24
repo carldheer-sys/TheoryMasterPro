@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import MenuBar from './components/MenuBar'
 import PianoRoll from './components/PianoRoll'
 import ScaleDegreesPractice from './components/ScaleDegreesPractice'
@@ -13,7 +13,6 @@ import { DEFAULT_RANGE } from './utils/musicTheory'
 export default function App() {
   // Training mode
   const [trainingMode, setTrainingMode] = useState('scale-degrees')
-  const lastPracticeModeRef = useRef('scale-degrees')
 
   // Modal state
   const [activeModal, setActiveModal] = useState(null) // null | 'keyboard-range' | 'edit-catalog' | 'theory-overview'
@@ -29,7 +28,6 @@ export default function App() {
 
   const handleModeChange = useCallback((mode) => {
     setTrainingMode(mode)
-    lastPracticeModeRef.current = mode
     clearAllNotes()
   }, [clearAllNotes])
 
@@ -40,17 +38,8 @@ export default function App() {
   }, [])
 
   const handleTheoryOverview = useCallback(() => {
-    setTrainingMode(prev => {
-      if (prev === 'theory-overview') {
-        clearAllNotes()
-        return lastPracticeModeRef.current
-      }
-      if (prev !== 'theory-overview') {
-        lastPracticeModeRef.current = prev
-      }
-      clearAllNotes()
-      return 'theory-overview'
-    })
+    setTrainingMode('theory-overview')
+    clearAllNotes()
   }, [clearAllNotes])
 
   return (
@@ -108,6 +97,7 @@ export default function App() {
         )}
         {trainingMode === 'theory-overview' && (
           <TheoryOverview
+            range={range}
             activeNotes={activeNotes}
           />
         )}

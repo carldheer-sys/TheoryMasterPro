@@ -33,7 +33,7 @@ const CHORD_VARIANT_OPTIONS = [
   { value: 'sevenths', label: 'Sevenths' }
 ]
 
-export default function TheoryOverview({ activeNotes }) {
+export default function TheoryOverview({ range, activeNotes }) {
   const [tonic, setTonic] = useState('C')
   const [tab, setTab] = useState('degrees')
   const [chordVariant, setChordVariant] = useState('triads')
@@ -41,25 +41,45 @@ export default function TheoryOverview({ activeNotes }) {
 
   const tonicPC = tonicToPC(tonic)
 
-  // Compute highlight pitch classes based on selection
-  const highlightPCs = useMemo(() => {
-    if (!selectedCell) return []
+  // Compute highlight MIDI notes (one per pitch class, closest to center)
+  const highlightNotes = useMemo(() => {
+    if (!selectedCell) return new Set()
     const { tonality, degreeIndex, type } = selectedCell
 
+    let pcs = []
     if (type === 'row') {
-      // Highlight all scale notes for this tonality
       const degrees = DIATONIC_DEGREES[tonality]
-      return degrees.map(d => degreeToPitchClass(tonicPC, d.semitones))
+      pcs = degrees.map(d => degreeToPitchClass(tonicPC, d.semitones))
     } else if (type === 'cell' && degreeIndex != null) {
-      // Highlight chord notes for this specific cell
       const chords = chordVariant === 'sevenths'
         ? getDiatonicSevenths(tonality)
         : getDiatonicTriads(tonality)
       const chord = chords[degreeIndex]
-      return getChordPitchClasses(tonicPC, chord)
+      pcs = getChordPitchClasses(tonicPC, chord)
     }
-    return []
-  }, [selectedCell, tonicPC, chordVariant])
+    if (pcs.length === 0) return new Set()
+
+    // Find center of keyboard range
+    const centerMidi = (range.start + range.end) / 2
+
+    // For each pitch class, pick the MIDI note closest to center
+    const result = new Set()
+    for (const pc of pcs) {
+      let bestNote = null
+      let bestDist = Infinity
+      for (let n = range.start; n <= range.end; n++) {
+        if (midiNoteToPC(n) === pc) {
+          const dist = Math.abs(n - centerMidi)
+          if (dist < bestDist) {
+            bestDist = dist
+            bestNote = n
+          }
+        }
+      }
+      if (bestNote != null) result.add(bestNote)
+    }
+    return result
+  }, [selectedCell, tonicPC, chordVariant, range.start, range.end])
 
   // Build degree data for the table
   const degreeData = useMemo(() => {
@@ -200,7 +220,8 @@ export default function TheoryOverview({ activeNotes }) {
 
       {/* Compact keyboard visualization */}
       <CompactKeyboard
-        highlightPCs={highlightPCs}
+        range={range}
+        highlightNotes={highlightNotes}
         activeNotes={activeNotes}
       />
     </div>
@@ -315,9 +336,8 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
 
 // ── Compact Keyboard ──────────────────────────────────────────────────────
 
-function CompactKeyboard({ highlightPCs = [], activeNotes }) {
-  // Fixed one-octave range C4–B4 (MIDI 60–71), each pitch class appears once, centered around F4
-  const notes = useMemo(() => generateMidiRange(60, 71), [])
+function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
+  const notes = useMemo(() => generateMidiRange(range.start, range.end), [range.start, range.end])
 
   const whiteKeys = useMemo(() => notes.filter(n => !isBlackKey(midiNoteToPC(n))), [notes])
   const blackKeys = useMemo(() => notes.filter(n => isBlackKey(midiNoteToPC(n))), [notes])
@@ -334,8 +354,6 @@ function CompactKeyboard({ highlightPCs = [], activeNotes }) {
     })
   }, [blackKeys, whiteKeys, whiteKeyWidth, blackKeyWidth])
 
-  const highlightSet = useMemo(() => new Set(highlightPCs), [highlightPCs])
-
   return (
     <div className="h-[140px] sm:h-[160px] flex-shrink-0 bg-bg-900 border-t border-bg-700 px-2 pb-2 pt-1 select-none">
       <div className="relative w-full h-full">
@@ -343,7 +361,7 @@ function CompactKeyboard({ highlightPCs = [], activeNotes }) {
         <div className="flex w-full h-full gap-[2px]">
           {whiteKeys.map(note => {
             const pc = midiNoteToPC(note)
-            const isHighlighted = highlightSet.has(pc)
+            const isHighlighted = highlightNotes.has(note)
             const isActive = activeNotes.has(note)
             const isC = pc === 0
             return (
@@ -372,8 +390,7 @@ function CompactKeyboard({ highlightPCs = [], activeNotes }) {
         {/* Black keys */}
         <div className="absolute inset-x-0 top-0" style={{ height: '60%' }}>
           {blackKeyPositions.map(({ note, leftPct }) => {
-            const pc = midiNoteToPC(note)
-            const isHighlighted = highlightSet.has(pc)
+            const isHighlighted = highlightNotes.has(note)
             const isActive = activeNotes.has(note)
             return (
               <div
@@ -382,7 +399,7 @@ function CompactKeyboard({ highlightPCs = [], activeNotes }) {
                   ${isActive
                     ? 'bg-keyred'
                     : isHighlighted
-                      ? 'bg-accent'
+                      ? 'bg-accent/70'
                       : 'bg-keyblack'
                   }`}
                 style={{
