@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Select from './Select'
+import DroneToggle from './DroneToggle'
 import {
   TONICS,
   TONALITIES,
@@ -27,9 +28,10 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 1200 }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 1200, onClearAllNotes, droneVolume = 0 }) {
   // Settings
-  const [tonic, setTonic] = useState('C')
+  const [tonic, setTonic] = useState('C') // 'C', 'Db', ..., or 'random'
+  const [effectiveTonic, setEffectiveTonic] = useState('C') // actual tonic for current question
   const [tonality, setTonality] = useState('major')
   const [degreeMode, setDegreeMode] = useState('diatonic')
 
@@ -45,9 +47,9 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
   const checkedNotesRef = useRef(new Set())
 
   const degrees = getScaleDegrees(degreeMode, tonality)
-  const tonicPC = tonicToPC(tonic)
+  const tonicPC = tonicToPC(effectiveTonic)
   const targetPC = currentDegree ? degreeToPitchClass(tonicPC, currentDegree.semitones) : null
-  const targetNoteName = targetPC !== null ? spellNoteName(targetPC, tonic, tonality) : null
+  const targetNoteName = targetPC !== null ? spellNoteName(targetPC, effectiveTonic, tonality) : null
 
   // Generate a new scale degree
   const handleGenerate = useCallback(() => {
@@ -59,7 +61,8 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
     setAttemptedNote(null)
     setHasStarted(true)
     checkedNotesRef.current = new Set()
-  }, [degrees, lastDegree, ensureAudioContext])
+    if (onClearAllNotes) onClearAllNotes()
+  }, [degrees, lastDegree, ensureAudioContext, onClearAllNotes])
 
   // Watch active notes and check against target
   useEffect(() => {
@@ -84,6 +87,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
           setResult(null)
           setAttemptedNote(null)
           checkedNotesRef.current = new Set()
+          if (onClearAllNotes) onClearAllNotes()
         }, autoAdvanceDelay)
       } else {
         setResult('wrong')
@@ -94,7 +98,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         }, 300)
       }
     }
-  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay])
+  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay, onClearAllNotes])
 
   // Spacebar behavior:
   // - If no question active (not started or result is 'correct'/'revealed'): generate next
@@ -130,7 +134,14 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
   }
 
   const handleTonicChange = (v) => {
-    setTonic(v)
+    if (v === 'random') {
+      const randomTonic = TONICS[Math.floor(Math.random() * TONICS.length)]
+      setTonic('random')
+      setEffectiveTonic(randomTonic)
+    } else {
+      setTonic(v)
+      setEffectiveTonic(v)
+    }
     handleSettingChange()
   }
   const handleTonalityChange = (v) => {
@@ -152,7 +163,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
             label="Tonic"
             value={tonic}
             onChange={handleTonicChange}
-            options={TONICS.map(t => ({ value: t, label: t }))}
+            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
           />
           <Select
             label="Tonality"
@@ -174,6 +185,9 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
         <div className="flex-1" />
 
+        {/* Drone toggle */}
+        <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
+
         {/* Score display */}
         {hasStarted && (
           <div className="flex items-center gap-4 pb-2.5">
@@ -192,7 +206,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
           /* Pre-generation state */
           <div className="text-center">
             <div className="text-gray-500 text-lg mb-2">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(tonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
               {' · '}
               <span className="capitalize">{degreeMode}</span>
             </div>
@@ -205,7 +219,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
           <div className="flex flex-col items-center gap-4">
             {/* Key display */}
             <div className="text-gray-500 text-sm">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(tonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
             </div>
 
             {/* Scale degree display */}

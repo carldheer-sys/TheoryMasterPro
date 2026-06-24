@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import Select from './Select'
+import DroneToggle from './DroneToggle'
 import {
   TONICS,
   TONALITIES,
@@ -33,7 +34,7 @@ const CHORD_VARIANT_OPTIONS = [
   { value: 'sevenths', label: 'Sevenths' }
 ]
 
-export default function TheoryOverview({ range, activeNotes }) {
+export default function TheoryOverview({ range, activeNotes, ensureAudioContext, droneVolume = 0 }) {
   const [tonic, setTonic] = useState('C')
   const [tab, setTab] = useState('degrees')
   const [chordVariant, setChordVariant] = useState('triads')
@@ -180,6 +181,9 @@ export default function TheoryOverview({ range, activeNotes }) {
         )}
 
         <div className="flex-1" />
+
+        {/* Drone toggle */}
+        <DroneToggle tonic={tonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
 
         {/* Key display */}
         <div className="pb-2.5">
@@ -399,7 +403,7 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
                   ${isActive
                     ? 'bg-keyred'
                     : isHighlighted
-                      ? 'bg-accent/70'
+                      ? 'bg-[#3d2d99]'
                       : 'bg-keyblack'
                   }`}
                 style={{

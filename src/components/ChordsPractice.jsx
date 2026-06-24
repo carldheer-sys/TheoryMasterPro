@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Select from './Select'
 import MultiSelect from './MultiSelect'
+import DroneToggle from './DroneToggle'
 import {
   TONICS,
   TONALITIES,
@@ -35,9 +36,10 @@ const CHROMATICISM_OPTIONS = [
  *   4. App checks: all chord pitch classes present, no extra pitch classes
  *   5. Correct → auto-advance after delay
  */
-export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, onClearAllNotes }) {
+export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, onClearAllNotes, droneVolume = 0 }) {
   // Settings
-  const [tonic, setTonic] = useState('C')
+  const [tonic, setTonic] = useState('C') // 'C', 'Db', ..., or 'random'
+  const [effectiveTonic, setEffectiveTonic] = useState('C') // actual tonic for current question
   const [tonality, setTonality] = useState('major')
   const [selectedChordTypes, setSelectedChordTypes] = useState(['triads'])
   const [chromaticism, setChromaticism] = useState('diatonic')
@@ -59,20 +61,20 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     )
     return lists.flat()
   }, [selectedChordTypes, tonality])
-  const tonicPC = tonicToPC(tonic)
+  const tonicPC = tonicToPC(effectiveTonic)
   const targetPCs = useMemo(() => {
     if (!currentChord) return null
     return new Set(getChordPitchClasses(tonicPC, currentChord))
   }, [tonicPC, currentChord])
   const targetChordLabel = useMemo(() => {
     if (!currentChord) return null
-    return getChordLabel(tonicPC, currentChord, tonic, tonality)
-  }, [tonicPC, currentChord, tonic, tonality])
+    return getChordLabel(tonicPC, currentChord, effectiveTonic, tonality)
+  }, [tonicPC, currentChord, effectiveTonic, tonality])
   const targetNoteNames = useMemo(() => {
     if (!currentChord) return null
     const pcs = getChordPitchClasses(tonicPC, currentChord)
-    return pcs.map(pc => spellNoteName(pc, tonic, tonality))
-  }, [tonicPC, currentChord, tonic, tonality])
+    return pcs.map(pc => spellNoteName(pc, effectiveTonic, tonality))
+  }, [tonicPC, currentChord, effectiveTonic, tonality])
 
   // Generate a new chord
   const handleGenerate = useCallback(() => {
@@ -168,7 +170,17 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     }
   }
 
-  const handleTonicChange = (v) => { setTonic(v); handleSettingChange() }
+  const handleTonicChange = (v) => {
+    if (v === 'random') {
+      const randomTonic = TONICS[Math.floor(Math.random() * TONICS.length)]
+      setTonic('random')
+      setEffectiveTonic(randomTonic)
+    } else {
+      setTonic(v)
+      setEffectiveTonic(v)
+    }
+    handleSettingChange()
+  }
   const handleTonalityChange = (v) => { setTonality(v); handleSettingChange() }
   const handleChordTypesChange = (v) => { setSelectedChordTypes(v); handleSettingChange() }
   const handleChromaticismChange = (v) => { setChromaticism(v); handleSettingChange() }
@@ -183,7 +195,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
             label="Tonic"
             value={tonic}
             onChange={handleTonicChange}
-            options={TONICS.map(t => ({ value: t, label: t }))}
+            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
           />
           <Select
             label="Tonality"
@@ -215,6 +227,9 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
         <div className="flex-1" />
 
+        {/* Drone toggle */}
+        <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
+
         {/* Score display */}
         {hasStarted && (
           <div className="flex items-center gap-4 pb-2.5">
@@ -232,7 +247,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         {!hasStarted ? (
           <div className="text-center">
             <div className="text-gray-500 text-lg mb-2">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(tonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
               {' · '}
               <span className="capitalize">{selectedChordTypes.join(' + ')}</span>
               {' · '}
@@ -246,7 +261,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
           <div className="flex flex-col items-center gap-4">
             {/* Key display */}
             <div className="text-gray-500 text-sm">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(tonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
             </div>
 
             {/* Roman numeral display */}

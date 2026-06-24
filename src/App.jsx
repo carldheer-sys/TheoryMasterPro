@@ -7,6 +7,7 @@ import TheoryOverview from './components/TheoryOverview'
 import Modal from './components/Modal'
 import KeyboardRangeModal from './components/KeyboardRangeModal'
 import AutoAdvanceDelayModal from './components/AutoAdvanceDelayModal'
+import VolumeModal from './components/VolumeModal'
 import { useMidi } from './hooks/useMidi'
 import { DEFAULT_RANGE } from './utils/musicTheory'
 
@@ -23,8 +24,12 @@ export default function App() {
   // Auto-advance delay (ms)
   const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(600)
 
+  // Volumes (dB)
+  const [pianoVolume, setPianoVolume] = useState(0)
+  const [droneVolume, setDroneVolume] = useState(0)
+
   // MIDI
-  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, clearAllNotes } = useMidi()
+  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, clearAllNotes, setPianoVolume: setMidiPianoVolume } = useMidi({ pianoVolume })
 
   const handleModeChange = useCallback((mode) => {
     setTrainingMode(mode)
@@ -34,6 +39,7 @@ export default function App() {
   const handleSettingsSelect = useCallback((value) => {
     if (value === 'keyboard-range') setActiveModal('keyboard-range')
     if (value === 'auto-advance-delay') setActiveModal('auto-advance-delay')
+    if (value === 'volume') setActiveModal('volume')
     if (value === 'edit-catalog') setActiveModal('edit-catalog')
   }, [])
 
@@ -84,6 +90,8 @@ export default function App() {
             midiSupported={midiSupported}
             ensureAudioContext={ensureAudioContext}
             autoAdvanceDelay={autoAdvanceDelay}
+            onClearAllNotes={clearAllNotes}
+            droneVolume={droneVolume}
           />
         )}
         {trainingMode === 'chords' && (
@@ -93,12 +101,15 @@ export default function App() {
             ensureAudioContext={ensureAudioContext}
             autoAdvanceDelay={autoAdvanceDelay}
             onClearAllNotes={clearAllNotes}
+            droneVolume={droneVolume}
           />
         )}
         {trainingMode === 'theory-overview' && (
           <TheoryOverview
             range={range}
             activeNotes={activeNotes}
+            ensureAudioContext={ensureAudioContext}
+            droneVolume={droneVolume}
           />
         )}
         {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'theory-overview' && (
@@ -131,6 +142,18 @@ export default function App() {
           <AutoAdvanceDelayModal
             delay={autoAdvanceDelay}
             onDelayChange={setAutoAdvanceDelay}
+            onClose={() => setActiveModal(null)}
+          />
+        </Modal>
+      )}
+
+      {activeModal === 'volume' && (
+        <Modal title="Volume" onClose={() => setActiveModal(null)}>
+          <VolumeModal
+            pianoVolume={pianoVolume}
+            droneVolume={droneVolume}
+            onPianoVolumeChange={setPianoVolume}
+            onDroneVolumeChange={setDroneVolume}
             onClose={() => setActiveModal(null)}
           />
         </Modal>

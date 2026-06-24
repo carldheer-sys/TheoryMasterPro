@@ -10,7 +10,7 @@ import * as Tone from 'tone'
  *   { supported, devices, activeNotes, connectionStatus }
  *   - activeNotes: Set of currently held MIDI note numbers
  */
-export function useMidi() {
+export function useMidi({ pianoVolume = 0 } = {}) {
   const [supported, setSupported] = useState(null) // null = unknown, true/false after check
   const [devices, setDevices] = useState([])
   const [activeNotes, setActiveNotes] = useState(() => new Set())
@@ -48,11 +48,18 @@ export function useMidi() {
     }
   }, [])
 
+  // Update sampler volume when pianoVolume changes
+  useEffect(() => {
+    if (samplerRef.current) {
+      samplerRef.current.volume.value = pianoVolume
+    }
+  }, [pianoVolume])
+
   // Handle a note-on message
-  const handleNoteOn = useCallback((note, velocity) => {
+  const handleNoteOn = useCallback(async (note, velocity) => {
     // Try to start audio context on first MIDI input
     if (Tone.getContext().state !== 'running') {
-      Tone.start().catch(() => {})
+      await Tone.start().catch(() => {})
     }
     // Play piano sound via Tone.js
     if (samplerRef.current && Tone.getContext().state === 'running') {
@@ -169,9 +176,9 @@ export function useMidi() {
   }, [])
 
   // Simulate a note-on from a click/touch (for on-screen keyboard)
-  const simulateNoteOn = useCallback((note) => {
+  const simulateNoteOn = useCallback(async (note) => {
     if (Tone.getContext().state !== 'running') {
-      Tone.start().catch(() => {})
+      await Tone.start().catch(() => {})
     }
     if (samplerRef.current && Tone.getContext().state === 'running') {
       const freq = Tone.Frequency(note, 'midi').toFrequency()
