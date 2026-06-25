@@ -1,0 +1,18 @@
+{
+  "major:triads": [
+    { "label": "vi – IV – I – V", "romans": ["vi", "IV", "I", "V"] },
+    { "label": "vi – ii – V – I", "romans": ["vi", "ii", "V", "I"] }
+  ],
+  "minor:triads": [
+    { "label": "bVI – iv – i – v", "romans": ["bVI", "iv", "i", "v"] },
+    { "label": "bVI – bIII – bVII – bIII", "romans": ["bVI", "bIII", "bVII", "bIII"] }
+  ],
+  "major:sevenths": [
+    { "label": "vi7 – IVmaj7 – Imaj7 – V7", "romans": ["vi7", "IVmaj7", "Imaj7", "V7"] },
+    { "label": "vi7 – ii7 – V7 – Imaj7", "romans": ["vi7", "ii7", "V7", "Imaj7"] }
+  ],
+  "minor:sevenths": [
+    { "label": "bVImaj7 – iv7 – i7 – v7", "romans": ["bVImaj7", "iv7", "i7", "v7"] },
+    { "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7", "romans": ["bVImaj7", "bIIImaj7", "bVII7", "bIIImaj7"] }
+  ]
+}

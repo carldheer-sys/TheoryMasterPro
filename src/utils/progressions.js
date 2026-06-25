@@ -1,25 +1,12 @@
 // Shared progressions catalog data
 // Keyed by `${tonality}:${chordType}` (e.g. 'major:triads')
 // Each entry is an array of { label, romans } where romans are Roman numeral strings
+//
+// To edit progressions, modify progressions.json in the project root and rebuild.
 
-export const DEFAULT_PROGRESSIONS = {
-  'major:triads': [
-    { label: 'vi – IV – I – V', romans: ['vi', 'IV', 'I', 'V'] },
-    { label: 'vi – ii – V – I', romans: ['vi', 'ii', 'V', 'I'] },
-  ],
-  'minor:triads': [
-    { label: 'bVI – iv – i – v', romans: ['bVI', 'iv', 'i', 'v'] },
-    { label: 'bVI – bIII – bVII – bIII', romans: ['bVI', 'bIII', 'bVII', 'bIII'] },
-  ],
-  'major:sevenths': [
-    { label: 'vi7 – IVmaj7 – Imaj7 – V7', romans: ['vi7', 'IVmaj7', 'Imaj7', 'V7'] },
-    { label: 'vi7 – ii7 – V7 – Imaj7', romans: ['vi7', 'ii7', 'V7', 'Imaj7'] },
-  ],
-  'minor:sevenths': [
-    { label: 'bVImaj7 – iv7 – i7 – v7', romans: ['bVImaj7', 'iv7', 'i7', 'v7'] },
-    { label: 'bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7', romans: ['bVImaj7', 'bIIImaj7', 'bVII7', 'bIIImaj7'] },
-  ],
-}
+import progressionsData from '../../progressions.json'
+
+export const DEFAULT_PROGRESSIONS = progressionsData
 
 // Section metadata for the catalog UI
 export const PROGRESSION_SECTIONS = [

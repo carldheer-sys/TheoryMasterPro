@@ -37,6 +37,10 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
   // Track which progression is being dragged for reordering
   const [dragState, setDragState] = useState(null)
 
+  // Export JSON modal state
+  const [showExport, setShowExport] = useState(false)
+  const [copied, setCopied] = useState(false)
+
   const enterEditMode = () => {
     const copy = {}
     for (const key of Object.keys(progressions)) {
@@ -165,6 +169,12 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
 
         {editMode ? (
           <div className="flex gap-2">
+            <button
+              onClick={() => setShowExport(true)}
+              className="px-5 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+            >
+              Export JSON
+            </button>
             <button
               onClick={handleCancel}
               className="px-5 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
@@ -342,6 +352,51 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
           )}
         </div>
       </div>
+
+      {/* Export JSON modal */}
+      {showExport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowExport(false)}>
+          <div
+            className="bg-bg-800 border border-bg-600 rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Export Progressions JSON</h3>
+              <button
+                onClick={() => setShowExport(false)}
+                className="text-gray-500 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-gray-400 text-sm mb-3">
+              Copy this JSON and paste it into <code className="text-accent">progressions.json</code> in the project root.
+              The changes will be included in the next build.
+            </p>
+            <div className="relative flex-1 overflow-hidden">
+              <textarea
+                readOnly
+                value={JSON.stringify(local, null, 2)}
+                className="w-full h-full min-h-[300px] bg-bg-900 text-gray-300 text-xs font-mono p-3 rounded-lg border border-bg-600 resize-none focus:outline-none"
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(local, null, 2))
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                }}
+                className="px-5 py-2.5 rounded-lg bg-accent text-white text-sm font-bold hover:bg-accent-hover transition-colors min-h-[44px]"
+              >
+                {copied ? 'Copied!' : 'Copy to clipboard'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
