@@ -9,15 +9,17 @@ import Modal from './components/Modal'
 import KeyboardRangeModal from './components/KeyboardRangeModal'
 import AutoAdvanceDelayModal from './components/AutoAdvanceDelayModal'
 import VolumeModal from './components/VolumeModal'
+import ProgressionsCatalog from './components/ProgressionsCatalog'
 import { useMidi } from './hooks/useMidi'
 import { DEFAULT_RANGE } from './utils/musicTheory'
+import { DEFAULT_PROGRESSIONS, cloneProgressions } from './utils/progressions'
 
 export default function App() {
   // Training mode
   const [trainingMode, setTrainingMode] = useState('scale-degrees')
 
   // Modal state
-  const [activeModal, setActiveModal] = useState(null) // null | 'keyboard-range' | 'edit-catalog' | 'theory-overview'
+  const [activeModal, setActiveModal] = useState(null) // null | 'keyboard-range' | 'auto-advance-delay' | 'volume'
 
   // Keyboard range
   const [range, setRange] = useState(DEFAULT_RANGE)
@@ -28,6 +30,9 @@ export default function App() {
   // Volumes (dB)
   const [pianoVolume, setPianoVolume] = useState(0)
   const [droneVolume, setDroneVolume] = useState(0)
+
+  // Progressions catalog (editable via settings)
+  const [progressions, setProgressions] = useState(() => cloneProgressions(DEFAULT_PROGRESSIONS))
 
   // MIDI
   const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, clearAllNotes, setPianoVolume: setMidiPianoVolume } = useMidi({ pianoVolume })
@@ -41,11 +46,15 @@ export default function App() {
     if (value === 'keyboard-range') setActiveModal('keyboard-range')
     if (value === 'auto-advance-delay') setActiveModal('auto-advance-delay')
     if (value === 'volume') setActiveModal('volume')
-    if (value === 'edit-catalog') setActiveModal('edit-catalog')
   }, [])
 
   const handleTheoryOverview = useCallback(() => {
     setTrainingMode('theory-overview')
+    clearAllNotes()
+  }, [clearAllNotes])
+
+  const handleProgressionsCatalog = useCallback(() => {
+    setTrainingMode('progressions-catalog')
     clearAllNotes()
   }, [clearAllNotes])
 
@@ -57,31 +66,10 @@ export default function App() {
         onModeChange={handleModeChange}
         onSettingsSelect={handleSettingsSelect}
         onTheoryOverview={handleTheoryOverview}
+        onProgressionsCatalog={handleProgressionsCatalog}
+        midiConnectionStatus={connectionStatus}
+        midiDevices={devices}
       />
-
-      {/* MIDI status indicator */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-1.5 bg-bg-800/50 border-b border-bg-700/50 text-xs">
-        <div className="flex items-center gap-2">
-          <span
-            className={`inline-block w-2 h-2 rounded-full ${
-              connectionStatus === 'connected' ? 'bg-green-400' :
-              connectionStatus === 'no-devices' ? 'bg-yellow-400' :
-              connectionStatus === 'unsupported' || connectionStatus === 'denied' ? 'bg-gray-600' :
-              'bg-gray-500 animate-pulse'
-            }`}
-          />
-          <span className="text-gray-500">
-            {connectionStatus === 'connected' && (devices.length > 0 ? `MIDI: ${devices[0].name}` : 'MIDI Connected')}
-            {connectionStatus === 'no-devices' && 'MIDI: No devices found'}
-            {connectionStatus === 'unsupported' && 'MIDI: Not supported on this device'}
-            {connectionStatus === 'denied' && 'MIDI: Access denied'}
-            {connectionStatus === 'checking' && 'MIDI: Checking...'}
-          </span>
-        </div>
-        {devices.length > 1 && (
-          <span className="text-gray-600">{devices.length} devices</span>
-        )}
-      </div>
 
       {/* Main practice space */}
       <main className="flex-1 overflow-y-auto bg-bg-900">
@@ -113,6 +101,13 @@ export default function App() {
             autoAdvanceDelay={autoAdvanceDelay}
             onClearAllNotes={clearAllNotes}
             droneVolume={droneVolume}
+            progressions={progressions}
+          />
+        )}
+        {trainingMode === 'progressions-catalog' && (
+          <ProgressionsCatalog
+            progressions={progressions}
+            onProgressionsChange={setProgressions}
           />
         )}
         {trainingMode === 'theory-overview' && (
@@ -123,15 +118,15 @@ export default function App() {
             droneVolume={droneVolume}
           />
         )}
-        {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'chord-progressions' && trainingMode !== 'theory-overview' && (
+        {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'chord-progressions' && trainingMode !== 'theory-overview' && trainingMode !== 'progressions-catalog' && (
           <div className="flex items-center justify-center h-full text-gray-600">
             <p className="text-lg">This mode is not yet implemented.</p>
           </div>
         )}
       </main>
 
-      {/* Piano roll at bottom (hidden in theory-overview mode which has its own keyboard) */}
-      {trainingMode !== 'theory-overview' && (
+      {/* Piano roll at bottom (hidden in theory-overview and progressions-catalog modes) */}
+      {trainingMode !== 'theory-overview' && trainingMode !== 'progressions-catalog' && (
         <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
           <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords' || trainingMode === 'chord-progressions'} />
         </div>
@@ -167,14 +162,6 @@ export default function App() {
             onDroneVolumeChange={setDroneVolume}
             onClose={() => setActiveModal(null)}
           />
-        </Modal>
-      )}
-
-      {activeModal === 'edit-catalog' && (
-        <Modal title="Edit Catalog" onClose={() => setActiveModal(null)}>
-          <div className="text-gray-400 text-sm py-8 text-center">
-            Catalog editing will be available in a future update.
-          </div>
         </Modal>
       )}
 

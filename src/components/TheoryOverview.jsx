@@ -4,6 +4,7 @@ import DroneToggle from './DroneToggle'
 import {
   TONICS,
   TONALITIES,
+  MODES,
   DIATONIC_DEGREES,
   getDiatonicTriads,
   getDiatonicSevenths,
@@ -12,7 +13,6 @@ import {
   getChordPitchClasses,
   getChordLabel,
   spellNoteName,
-  getKeyDisplay,
   midiNoteToPC,
   generateMidiRange,
   isBlackKey
@@ -34,15 +34,27 @@ const CHORD_VARIANT_OPTIONS = [
   { value: 'sevenths', label: 'Sevenths' }
 ]
 
+const VIEW_MODES = [
+  { value: 'major-minor', label: 'Major/Minor' },
+  { value: 'all-modes', label: 'All Modes' }
+]
+
 export default function TheoryOverview({ range, activeNotes, ensureAudioContext, droneVolume = 0 }) {
   const [tonic, setTonic] = useState('C')
   const [tab, setTab] = useState('degrees')
   const [chordVariant, setChordVariant] = useState('triads')
+  const [viewMode, setViewMode] = useState('major-minor')
   const [selectedCell, setSelectedCell] = useState(null) // { type: 'row'|'cell', tonality, degreeIndex? }
 
   const tonicPC = tonicToPC(tonic)
 
-  // Compute highlight MIDI notes (one per pitch class, closest to center)
+  // Fixed keyboard range: C3 → C6 (MIDI 48–96)
+  const tonicRange = useMemo(() => ({ start: 48, end: 96 }), [])
+
+  // Rows to display based on view mode
+  const rows = viewMode === 'all-modes' ? MODES : TONALITIES
+
+  // Compute highlight MIDI notes (one per pitch class, closest to center of tonic range)
   const highlightNotes = useMemo(() => {
     if (!selectedCell) return new Set()
     const { tonality, degreeIndex, type } = selectedCell
@@ -60,15 +72,15 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
     }
     if (pcs.length === 0) return new Set()
 
-    // Find center of keyboard range
-    const centerMidi = (range.start + range.end) / 2
+    // Find center of tonic-based keyboard range
+    const centerMidi = (tonicRange.start + tonicRange.end) / 2
 
     // For each pitch class, pick the MIDI note closest to center
     const result = new Set()
     for (const pc of pcs) {
       let bestNote = null
       let bestDist = Infinity
-      for (let n = range.start; n <= range.end; n++) {
+      for (let n = tonicRange.start; n <= tonicRange.end; n++) {
         if (midiNoteToPC(n) === pc) {
           const dist = Math.abs(n - centerMidi)
           if (dist < bestDist) {
@@ -80,11 +92,11 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
       if (bestNote != null) result.add(bestNote)
     }
     return result
-  }, [selectedCell, tonicPC, chordVariant, range.start, range.end])
+  }, [selectedCell, tonicPC, chordVariant, tonicRange.start, tonicRange.end])
 
   // Build degree data for the table
   const degreeData = useMemo(() => {
-    return TONALITIES.map(({ value: tonality, label }) => {
+    return rows.map(({ value: tonality, label }) => {
       const degrees = DIATONIC_DEGREES[tonality]
       const notes = degrees.map(d => ({
         degree: d.degree,
@@ -94,11 +106,11 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
       }))
       return { tonality, label, notes }
     })
-  }, [tonicPC, tonic])
+  }, [tonicPC, tonic, rows])
 
   // Build chord data for the table
   const chordData = useMemo(() => {
-    return TONALITIES.map(({ value: tonality, label }) => {
+    return rows.map(({ value: tonality, label }) => {
       const chords = chordVariant === 'sevenths'
         ? getDiatonicSevenths(tonality)
         : getDiatonicTriads(tonality)
@@ -112,7 +124,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
       }))
       return { tonality, label, cells }
     })
-  }, [tonicPC, tonic, chordVariant])
+  }, [tonicPC, tonic, chordVariant, rows])
 
   const handleTonicChange = (v) => {
     setTonic(v)
@@ -126,6 +138,11 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
 
   const handleChordVariantChange = (v) => {
     setChordVariant(v)
+    setSelectedCell(null)
+  }
+
+  const handleViewModeChange = (v) => {
+    setViewMode(v)
     setSelectedCell(null)
   }
 
@@ -145,6 +162,28 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
           onChange={handleTonicChange}
           options={TONICS.map(t => ({ value: t, label: t }))}
         />
+
+        <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
+
+        {/* View Mode toggle */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Modes</label>
+          <div className="flex bg-bg-700 rounded-xl border border-bg-500 p-1 min-h-[44px]">
+            {VIEW_MODES.map(m => (
+              <button
+                key={m.value}
+                onClick={() => handleViewModeChange(m.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap
+                  ${viewMode === m.value
+                    ? 'bg-accent text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-bg-600'
+                  }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
 
@@ -188,7 +227,8 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
         {/* Key display */}
         <div className="pb-2.5">
           <div className="text-sm text-gray-400">
-            Key: <span className="text-accent-light font-bold">{getKeyDisplay(tonic, tab === 'degrees' ? 'major/minor' : 'major/minor')}</span>
+            Key: <span className="text-accent-light font-bold">{tonic}</span>
+            <span className="text-gray-500 ml-1">{viewMode === 'all-modes' ? 'All Modes' : 'Major/Minor'}</span>
           </div>
         </div>
       </div>
@@ -222,11 +262,12 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
         )}
       </div>
 
-      {/* Compact keyboard visualization */}
+      {/* Compact keyboard visualization (tonic-based range) */}
       <CompactKeyboard
-        range={range}
+        range={tonicRange}
         highlightNotes={highlightNotes}
         activeNotes={activeNotes}
+        tonicPC={tonicPC}
       />
     </div>
   )
@@ -273,8 +314,8 @@ function DegreesTable({ degreeData, isRowSelected, onSelectRow }) {
                     ${isRowSelected(tonality) ? 'text-white' : 'text-gray-300'}
                   `}
                 >
-                  <div className="font-bold text-sm">{note.name}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{DEGREE_NAMES[note.degree] || ''}</div>
+                  <div className="font-bold text-sm text-white">{note.degree}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{note.name}</div>
                 </td>
               ))}
             </tr>
@@ -320,11 +361,10 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
                     ${isCellSelected(tonality, i) ? 'bg-accent/20' : 'hover:bg-bg-700/50'}
                   `}
                 >
-                  <div className={`font-bold text-sm ${isCellSelected(tonality, i) ? 'text-white' : 'text-gray-200'}`}>
+                  <div className={`font-bold text-sm text-white`}>
                     {cell.roman}
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">{cell.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{cell.notes.join('–')}</div>
                 </td>
               ))}
             </tr>
@@ -340,7 +380,7 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
 
 // ── Compact Keyboard ──────────────────────────────────────────────────────
 
-function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
+function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes, tonicPC }) {
   const notes = useMemo(() => generateMidiRange(range.start, range.end), [range.start, range.end])
 
   const whiteKeys = useMemo(() => notes.filter(n => !isBlackKey(midiNoteToPC(n))), [notes])
@@ -358,6 +398,8 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
     })
   }, [blackKeys, whiteKeys, whiteKeyWidth, blackKeyWidth])
 
+  const NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+
   return (
     <div className="h-[140px] sm:h-[160px] flex-shrink-0 bg-bg-900 border-t border-bg-700 px-2 pb-2 pt-1 select-none">
       <div className="relative w-full h-full">
@@ -367,7 +409,7 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
             const pc = midiNoteToPC(note)
             const isHighlighted = highlightNotes.has(note)
             const isActive = activeNotes.has(note)
-            const isC = pc === 0
+            const isTonic = pc === tonicPC
             return (
               <div
                 key={note}
@@ -381,9 +423,9 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
                   }`}
                 style={{ minWidth: 0 }}
               >
-                {isC && (
-                  <span className={`text-[10px] font-bold ${isActive || isHighlighted ? 'text-white' : 'text-gray-500'}`}>
-                    C{Math.floor(note / 12) - 1}
+                {isTonic && (
+                  <span className={`text-[10px] font-bold ${isActive || isHighlighted ? 'text-white' : 'text-gray-600'}`}>
+                    {NOTE_NAMES_FLAT[pc]}{Math.floor(note / 12) - 1}
                   </span>
                 )}
               </div>

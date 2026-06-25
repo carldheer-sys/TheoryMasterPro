@@ -211,7 +211,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
               <span className="capitalize">{degreeMode}</span>
             </div>
             <div className="text-gray-600 text-sm">
-              Press GENERATE to start practicing scale degrees
+              Press START to start practicing scale degrees
             </div>
           </div>
         ) : (
@@ -288,7 +288,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
             : 'bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/30'
             }`}
         >
-          {hasStarted ? 'NEXT →' : 'GENERATE'}
+          {hasStarted ? 'NEXT →' : 'START'}
         </button>
       </div>
     </div>

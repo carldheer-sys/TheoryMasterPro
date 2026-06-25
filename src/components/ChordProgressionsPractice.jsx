@@ -13,6 +13,7 @@ import {
   midiNoteToPC,
   getKeyDisplay
 } from '../utils/musicTheory'
+import { DEFAULT_PROGRESSIONS } from '../utils/progressions'
 
 const CHORD_TYPE_OPTIONS = [
   { value: 'triads', label: 'Triads' },
@@ -22,27 +23,6 @@ const CHORD_TYPE_OPTIONS = [
 const CHROMATICISM_OPTIONS = [
   { value: 'diatonic', label: 'Diatonic' }
 ]
-
-// Predefined progressions, keyed by `${tonality}:${chordType}`
-// Each progression is a list of roman numeral strings matching the diatonic chord arrays
-const PROGRESSIONS = {
-  'major:triads': [
-    { label: 'vi – IV – I – V', romans: ['vi', 'IV', 'I', 'V'] },
-    { label: 'vi – ii – V – I', romans: ['vi', 'ii', 'V', 'I'] },
-  ],
-  'minor:triads': [
-    { label: 'bVI – iv – i – v', romans: ['bVI', 'iv', 'i', 'v'] },
-    { label: 'bVI – bIII – bVII – bIII', romans: ['bVI', 'bIII', 'bVII', 'bIII'] },
-  ],
-  'major:sevenths': [
-    { label: 'vi7 – IVmaj7 – Imaj7 – V7', romans: ['vi7', 'IVmaj7', 'Imaj7', 'V7'] },
-    { label: 'vi7 – ii7 – V7 – Imaj7', romans: ['vi7', 'ii7', 'V7', 'Imaj7'] },
-  ],
-  'minor:sevenths': [
-    { label: 'bVImaj7 – iv7 – i7 – v7', romans: ['bVImaj7', 'iv7', 'i7', 'v7'] },
-    { label: 'bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7', romans: ['bVImaj7', 'bIIImaj7', 'bVII7', 'bIIImaj7'] },
-  ],
-}
 
 // Look up a chord by roman numeral from the diatonic chord list
 function findChordByRoman(chords, roman) {
@@ -69,7 +49,7 @@ function generateRandomProgression(chords, count) {
   return result
 }
 
-export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, onClearAllNotes, droneVolume = 0 }) {
+export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, onClearAllNotes, droneVolume = 0, progressions = DEFAULT_PROGRESSIONS }) {
   // Settings
   const [tonic, setTonic] = useState('C')
   const [effectiveTonic, setEffectiveTonic] = useState('C')
@@ -95,8 +75,8 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   // Available progressions for current settings
   const availableProgressions = useMemo(() => {
     const key = `${tonality}:${chordType}`
-    return PROGRESSIONS[key] || []
-  }, [tonality, chordType])
+    return progressions[key] || []
+  }, [tonality, chordType, progressions])
 
   // Progression dropdown options
   const progressionOptions = useMemo(() => {
@@ -212,17 +192,15 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   }
   const handleTonalityChange = (v) => {
     setTonality(v)
-    // Reset progression selection when tonality changes
     const key = `${v}:${chordType}`
-    const progs = PROGRESSIONS[key] || []
+    const progs = progressions[key] || []
     setProgressionKey(progs[0]?.label || 'random')
     handleSettingChange()
   }
   const handleChordTypeChange = (v) => {
     setChordType(v)
-    // Reset progression selection when chord type changes
     const key = `${tonality}:${v}`
-    const progs = PROGRESSIONS[key] || []
+    const progs = progressions[key] || []
     setProgressionKey(progs[0]?.label || 'random')
     handleSettingChange()
   }
@@ -332,7 +310,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
               <span className="capitalize">{progressionKey}</span>
             </div>
             <div className="text-gray-600 text-sm">
-              Press GENERATE to start the progression
+              Press START to start the progression
             </div>
           </div>
         ) : (
@@ -404,7 +382,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
             : 'bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/30'
             }`}
         >
-          {hasStarted ? 'RESTART' : 'GENERATE'}
+          {hasStarted ? 'RESTART' : 'START'}
         </button>
       </div>
     </div>

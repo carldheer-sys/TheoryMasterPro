@@ -254,7 +254,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
               <span className="capitalize">{chromaticism}</span>
             </div>
             <div className="text-gray-600 text-sm">
-              Press GENERATE to start practicing chords
+              Press START to start practicing chords
             </div>
           </div>
         ) : (
@@ -331,7 +331,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
             : 'bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/30'
             }`}
         >
-          {hasStarted ? 'NEXT →' : 'GENERATE'}
+          {hasStarted ? 'NEXT →' : 'START'}
         </button>
       </div>
     </div>

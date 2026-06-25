@@ -13,6 +13,36 @@ export const TONALITIES = [
   { value: 'minor', label: 'Minor' }
 ]
 
+// Modes — all 7 diatonic modes, ordered Ionian → Locrian
+export const MODES = [
+  { value: 'ionian',     label: 'Ionian' },
+  { value: 'dorian',     label: 'Dorian' },
+  { value: 'phrygian',   label: 'Phrygian' },
+  { value: 'lydian',     label: 'Lydian' },
+  { value: 'mixolydian', label: 'Mixolydian' },
+  { value: 'aeolian',    label: 'Aeolian' },
+  { value: 'locrian',    label: 'Locrian' },
+]
+
+// Offset (in semitones) from mode tonic to parent major tonic
+// Ionian = 0 (same), Dorian = -2, Phrygian = -4, Lydian = -5,
+// Mixolydian = -7, Aeolian = +3 (relative major), Locrian = +1
+export const MODE_PARENT_MAJOR_OFFSET = {
+  ionian: 0,
+  dorian: -2,
+  phrygian: -4,
+  lydian: -5,
+  mixolydian: -7,
+  aeolian: 3,
+  locrian: 1,
+}
+
+// Map old tonality names to mode names for backward compatibility
+export const TONALITY_TO_MODE = {
+  major: 'ionian',
+  minor: 'aeolian',
+}
+
 // ─── Key signature tables (from naming conventions §3.2) ────────────────
 
 export const KEY_SIGNATURES = {
@@ -58,6 +88,20 @@ export const DEGREE_MAP = {
 export const DIATONIC_MAJOR = new Set([0, 2, 4, 5, 7, 9, 11])
 export const DIATONIC_MINOR = new Set([0, 2, 3, 5, 7, 8, 10])
 
+// Diatonic pitch-class sets for all 7 modes (semitones from tonic)
+export const DIATONIC_PCS = {
+  ionian:     new Set([0, 2, 4, 5, 7, 9, 11]),
+  dorian:     new Set([0, 2, 3, 5, 7, 9, 10]),
+  phrygian:   new Set([0, 1, 3, 5, 7, 8, 10]),
+  lydian:     new Set([0, 2, 4, 6, 7, 9, 11]),
+  mixolydian: new Set([0, 2, 4, 5, 7, 9, 10]),
+  aeolian:    new Set([0, 2, 3, 5, 7, 8, 10]),
+  locrian:    new Set([0, 1, 3, 5, 6, 8, 10]),
+  // Backward compatibility
+  major: new Set([0, 2, 4, 5, 7, 9, 11]),
+  minor: new Set([0, 2, 3, 5, 7, 8, 10]),
+}
+
 // Diatonic scale degrees for major and minor
 export const DIATONIC_DEGREES = {
   major: [
@@ -75,6 +119,69 @@ export const DIATONIC_DEGREES = {
     { degree: 'b3', semitones: 3 },
     { degree: '4', semitones: 5 },
     { degree: '5', semitones: 7 },
+    { degree: 'b6', semitones: 8 },
+    { degree: 'b7', semitones: 10 }
+  ],
+  ionian: [
+    { degree: '1', semitones: 0 },
+    { degree: '2', semitones: 2 },
+    { degree: '3', semitones: 4 },
+    { degree: '4', semitones: 5 },
+    { degree: '5', semitones: 7 },
+    { degree: '6', semitones: 9 },
+    { degree: '7', semitones: 11 }
+  ],
+  dorian: [
+    { degree: '1', semitones: 0 },
+    { degree: '2', semitones: 2 },
+    { degree: 'b3', semitones: 3 },
+    { degree: '4', semitones: 5 },
+    { degree: '5', semitones: 7 },
+    { degree: '6', semitones: 9 },
+    { degree: 'b7', semitones: 10 }
+  ],
+  phrygian: [
+    { degree: '1', semitones: 0 },
+    { degree: 'b2', semitones: 1 },
+    { degree: 'b3', semitones: 3 },
+    { degree: '4', semitones: 5 },
+    { degree: '5', semitones: 7 },
+    { degree: 'b6', semitones: 8 },
+    { degree: 'b7', semitones: 10 }
+  ],
+  lydian: [
+    { degree: '1', semitones: 0 },
+    { degree: '2', semitones: 2 },
+    { degree: '3', semitones: 4 },
+    { degree: '#4', semitones: 6 },
+    { degree: '5', semitones: 7 },
+    { degree: '6', semitones: 9 },
+    { degree: '7', semitones: 11 }
+  ],
+  mixolydian: [
+    { degree: '1', semitones: 0 },
+    { degree: '2', semitones: 2 },
+    { degree: '3', semitones: 4 },
+    { degree: '4', semitones: 5 },
+    { degree: '5', semitones: 7 },
+    { degree: '6', semitones: 9 },
+    { degree: 'b7', semitones: 10 }
+  ],
+  aeolian: [
+    { degree: '1', semitones: 0 },
+    { degree: '2', semitones: 2 },
+    { degree: 'b3', semitones: 3 },
+    { degree: '4', semitones: 5 },
+    { degree: '5', semitones: 7 },
+    { degree: 'b6', semitones: 8 },
+    { degree: 'b7', semitones: 10 }
+  ],
+  locrian: [
+    { degree: '1', semitones: 0 },
+    { degree: 'b2', semitones: 1 },
+    { degree: 'b3', semitones: 3 },
+    { degree: '4', semitones: 5 },
+    { degree: 'b5', semitones: 6 },
     { degree: 'b6', semitones: 8 },
     { degree: 'b7', semitones: 10 }
   ]
@@ -109,7 +216,7 @@ export function tonicToPC(tonic) {
 // Get the list of scale degrees based on mode (diatonic/chromatic) and tonality
 export function getScaleDegrees(mode, tonality) {
   if (mode === 'chromatic') return CHROMATIC_DEGREES
-  return DIATONIC_DEGREES[tonality] || DIATONIC_DEGREES.major
+  return DIATONIC_DEGREES[tonality] || DIATONIC_DEGREES[TONALITY_TO_MODE[tonality]] || DIATONIC_DEGREES.ionian
 }
 
 // ─── Random picking (robust, no direct repeats) ─────────────────────────
@@ -153,11 +260,20 @@ export function pickRandomDegree(degrees, lastDegree = null) {
 export function getScaleDegree(midiNote, tonicPitchClass, mode) {
   const pc = midiNote % 12
   const chromaticDistance = (pc - tonicPitchClass + 12) % 12
-  const isDiatonic = mode === 'major'
-    ? DIATONIC_MAJOR.has(chromaticDistance)
-    : DIATONIC_MINOR.has(chromaticDistance)
+  const diatonicSet = DIATONIC_PCS[mode] || DIATONIC_PCS[TONALITY_TO_MODE[mode]] || DIATONIC_PCS.ionian
+  const isDiatonic = diatonicSet.has(chromaticDistance)
+  // For diatonic notes, use the mode-specific degree label (e.g. Locrian b5 vs #4)
+  let degreeLabel = DEGREE_MAP[chromaticDistance]
+  if (isDiatonic) {
+    const modeKey = DIATONIC_DEGREES[mode] ? mode : (TONALITY_TO_MODE[mode] || 'ionian')
+    const degrees = DIATONIC_DEGREES[modeKey]
+    if (degrees) {
+      const match = degrees.find(d => d.semitones === chromaticDistance)
+      if (match) degreeLabel = match.degree
+    }
+  }
   return {
-    scale_degree: DEGREE_MAP[chromaticDistance],
+    scale_degree: degreeLabel,
     chromatic_distance: chromaticDistance,
     is_diatonic: isDiatonic
   }
@@ -170,19 +286,27 @@ export function degreeToPitchClass(tonicPC, semitones) {
 
 // ─── Key-aware enharmonic spelling (from naming conventions §3) ─────────
 
-// Determine if a key (with mode) uses flats or sharps
-export function usesFlats(tonic, mode) {
-  if (mode === 'minor') return FLAT_MINOR_KEYS.has(tonic)
-  return FLAT_MAJOR_KEYS.has(tonic)
+// Compute the parent major tonic name for a given tonic + mode
+function getParentMajorTonic(tonic, mode) {
+  if (mode === 'major' || mode === 'ionian') return tonic
+  if (mode === 'minor' || mode === 'aeolian') return MINOR_TO_RELATIVE_MAJOR[tonic] || 'C'
+  const offset = MODE_PARENT_MAJOR_OFFSET[mode]
+  if (offset == null) return tonic
+  const tonicPC = tonicToPC(tonic)
+  const parentPC = (tonicPC + offset + 12) % 12
+  return NOTE_NAMES_FLAT[parentPC]
 }
 
-// Get the key signature for a tonic + mode (looking up relative major for minor)
+// Determine if a key (with mode) uses flats or sharps
+export function usesFlats(tonic, mode) {
+  const parentMajor = getParentMajorTonic(tonic, mode)
+  return FLAT_MAJOR_KEYS.has(parentMajor)
+}
+
+// Get the key signature for a tonic + mode (looking up parent major for non-ionian modes)
 export function getKeySignature(tonic, mode) {
-  if (mode === 'minor') {
-    const relativeMajor = MINOR_TO_RELATIVE_MAJOR[tonic]
-    return KEY_SIGNATURES[relativeMajor] || KEY_SIGNATURES['C']
-  }
-  return KEY_SIGNATURES[tonic] || KEY_SIGNATURES['C']
+  const parentMajor = getParentMajorTonic(tonic, mode)
+  return KEY_SIGNATURES[parentMajor] || KEY_SIGNATURES['C']
 }
 
 // Spell a pitch class as a note name, respecting the key's sharp/flat preference.
@@ -262,6 +386,69 @@ export const DIATONIC_TRIADS = {
     { roman: 'bVI',   semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
     { roman: 'bVII',  semitones: 10, quality: 'major',      intervals: [0, 4, 7] },
   ],
+  ionian: [
+    { roman: 'I',    semitones: 0,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'ii',   semitones: 2,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iii',  semitones: 4,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'IV',   semitones: 5,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'V',    semitones: 7,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'vi',   semitones: 9,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'viio', semitones: 11, quality: 'diminished', intervals: [0, 3, 6] },
+  ],
+  dorian: [
+    { roman: 'i',    semitones: 0,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'ii',   semitones: 2,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'bIII', semitones: 3,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'IV',   semitones: 5,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'v',    semitones: 7,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'vio',  semitones: 9,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'bVII', semitones: 10, quality: 'major',      intervals: [0, 4, 7] },
+  ],
+  phrygian: [
+    { roman: 'i',    semitones: 0,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'bII',  semitones: 1,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bIII', semitones: 3,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'iv',   semitones: 5,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'vo',   semitones: 7,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'bVI',  semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bvii', semitones: 10, quality: 'minor',      intervals: [0, 3, 7] },
+  ],
+  lydian: [
+    { roman: 'I',    semitones: 0,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'II',   semitones: 2,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'iii',  semitones: 4,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: '#ivo', semitones: 6,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'V',    semitones: 7,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'vi',   semitones: 9,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'vii',  semitones: 11, quality: 'minor',      intervals: [0, 3, 7] },
+  ],
+  mixolydian: [
+    { roman: 'I',    semitones: 0,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'ii',   semitones: 2,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iiio', semitones: 4,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'IV',   semitones: 5,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'v',    semitones: 7,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'vi',   semitones: 9,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'bVII', semitones: 10, quality: 'major',      intervals: [0, 4, 7] },
+  ],
+  aeolian: [
+    { roman: 'i',     semitones: 0,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iio',   semitones: 2,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'bIII',  semitones: 3,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'iv',    semitones: 5,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'v',     semitones: 7,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'bVI',   semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bVII',  semitones: 10, quality: 'major',      intervals: [0, 4, 7] },
+  ],
+  locrian: [
+    { roman: 'io',   semitones: 0,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'bII',  semitones: 1,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'biii', semitones: 3,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iv',   semitones: 5,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'bV',   semitones: 6,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bVI',  semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bvii', semitones: 10, quality: 'minor',      intervals: [0, 3, 7] },
+  ],
 }
 
 // Diatonic seventh chords for major and minor keys (from naming conventions §5.5)
@@ -284,6 +471,69 @@ export const DIATONIC_SEVENTHS = {
     { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'bVII7',    semitones: 10, quality: 'dominant7',       intervals: [0, 4, 7, 10] },
   ],
+  ionian: [
+    { roman: 'Imaj7',  semitones: 0,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'ii7',    semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iii7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'IVmaj7', semitones: 5,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'V7',     semitones: 7,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'vi7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'viiø7',  semitones: 11, quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+  ],
+  dorian: [
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'ii7',      semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bIIImaj7', semitones: 3,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'IV7',      semitones: 5,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'viø7',     semitones: 9,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'bVIImaj7', semitones: 10, quality: 'major7',          intervals: [0, 4, 7, 11] },
+  ],
+  phrygian: [
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bIImaj7',  semitones: 1,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'bIII7',    semitones: 3,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'iv7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vø7',      semitones: 7,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'bvii7',    semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
+  ],
+  lydian: [
+    { roman: 'Imaj7',  semitones: 0,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'II7',    semitones: 2,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'iii7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: '#ivø7',  semitones: 6,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'Vmaj7',  semitones: 7,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'vi7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vii7',   semitones: 11, quality: 'minor7',          intervals: [0, 3, 7, 10] },
+  ],
+  mixolydian: [
+    { roman: 'I7',       semitones: 0,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'ii7',      semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iiiø7',    semitones: 4,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'IVmaj7',   semitones: 5,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vi7',      semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bVIImaj7', semitones: 10, quality: 'major7',          intervals: [0, 4, 7, 11] },
+  ],
+  aeolian: [
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iiø7',     semitones: 2,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'bIIImaj7', semitones: 3,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'iv7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'bVII7',    semitones: 10, quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+  ],
+  locrian: [
+    { roman: 'iø7',     semitones: 0,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
+    { roman: 'bIImaj7', semitones: 1,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'biii7',   semitones: 3,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iv7',     semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bVmaj7',  semitones: 6,  quality: 'major7',          intervals: [0, 4, 7, 11] },
+    { roman: 'bVI7',    semitones: 8,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
+    { roman: 'bvii7',   semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
+  ],
 }
 
 // Chord label suffixes by quality (jazz/pop notation from §4.1)
@@ -299,14 +549,14 @@ const CHORD_LABEL_SUFFIXES = {
   diminished7: 'o7',
 }
 
-// Get diatonic triads for a tonality
+// Get diatonic triads for a tonality or mode
 export function getDiatonicTriads(tonality) {
-  return DIATONIC_TRIADS[tonality] || DIATONIC_TRIADS.major
+  return DIATONIC_TRIADS[tonality] || DIATONIC_TRIADS[TONALITY_TO_MODE[tonality]] || DIATONIC_TRIADS.ionian
 }
 
-// Get diatonic sevenths for a tonality
+// Get diatonic sevenths for a tonality or mode
 export function getDiatonicSevenths(tonality) {
-  return DIATONIC_SEVENTHS[tonality] || DIATONIC_SEVENTHS.major
+  return DIATONIC_SEVENTHS[tonality] || DIATONIC_SEVENTHS[TONALITY_TO_MODE[tonality]] || DIATONIC_SEVENTHS.ionian
 }
 
 // Get the pitch classes for a chord given the tonic pitch class
@@ -363,4 +613,24 @@ export const DEFAULT_RANGE = { start: 48, end: 84 }
 
 export function getKeyDisplay(tonic, tonality) {
   return `${tonic} ${tonality}`
+}
+
+// ─── Tonic-based keyboard range ──────────────────────────────────────────
+
+// Compute a keyboard range that starts on the tonic, displaying 3 octaves.
+// Placement rules:
+//   C  → C4 (MIDI 60) — middle of keyboard
+//   Db–Gb (PC 1–6) → octave 3 (lower than C4)
+//   G–B  (PC 7–11) → octave 4 (higher than C4)
+// Returns { start, end } covering the specified number of octaves.
+export function getTonicBasedRange(tonicPC, octaves = 3) {
+  let startMidi
+  if (tonicPC === 0) {
+    startMidi = 60 // C4
+  } else if (tonicPC <= 6) {
+    startMidi = 48 + tonicPC // Db3–Gb3
+  } else {
+    startMidi = 60 + tonicPC // G4–B4
+  }
+  return { start: startMidi, end: startMidi + octaves * 12 }
 }

@@ -13,6 +13,10 @@ import {
   NOTE_NAMES_SHARP,
   TONICS,
   TONALITIES,
+  MODES,
+  MODE_PARENT_MAJOR_OFFSET,
+  TONALITY_TO_MODE,
+  DIATONIC_PCS,
   DEGREE_MAP,
   DIATONIC_MAJOR,
   DIATONIC_MINOR,
@@ -44,7 +48,8 @@ import {
   getChordPitchClasses,
   getChordRootName,
   getChordLabel,
-  pickRandomChord
+  pickRandomChord,
+  getTonicBasedRange
 } from './musicTheory.js'
 
 // ─── Test helpers ────────────────────────────────────────────────────────
@@ -1411,6 +1416,661 @@ test('95. Integration: E minor iiø7 = F#m7b5 (F#-A-C-E)', () => {
   assert(pcs.includes(9), 'F#m7b5 should include A (pc=9)')
   assert(pcs.includes(0), 'F#m7b5 should include C (pc=0)')
   assert(pcs.includes(4), 'F#m7b5 should include E (pc=4)')
+})
+
+// ── All Modes Tests (Ionian → Locrian) ───────────────────────────────────
+
+// Expected scale degrees for each mode
+const MODE_DEGREE_EXPECTATIONS = {
+  ionian:     ['1', '2', '3', '4', '5', '6', '7'],
+  dorian:     ['1', '2', 'b3', '4', '5', '6', 'b7'],
+  phrygian:   ['1', 'b2', 'b3', '4', '5', 'b6', 'b7'],
+  lydian:     ['1', '2', '3', '#4', '5', '6', '7'],
+  mixolydian: ['1', '2', '3', '4', '5', '6', 'b7'],
+  aeolian:    ['1', '2', 'b3', '4', '5', 'b6', 'b7'],
+  locrian:    ['1', 'b2', 'b3', '4', 'b5', 'b6', 'b7'],
+}
+
+// Expected diatonic triad qualities for each mode
+const MODE_TRIAD_QUALITIES = {
+  ionian:     ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished'],
+  dorian:     ['minor', 'minor', 'major', 'major', 'minor', 'diminished', 'major'],
+  phrygian:   ['minor', 'major', 'major', 'minor', 'diminished', 'major', 'minor'],
+  lydian:     ['major', 'major', 'minor', 'diminished', 'major', 'minor', 'minor'],
+  mixolydian: ['major', 'minor', 'diminished', 'major', 'minor', 'minor', 'major'],
+  aeolian:    ['minor', 'diminished', 'major', 'minor', 'minor', 'major', 'major'],
+  locrian:    ['diminished', 'major', 'minor', 'minor', 'major', 'major', 'minor'],
+}
+
+// Expected diatonic seventh qualities for each mode
+const MODE_SEVENTH_QUALITIES = {
+  ionian:     ['major7', 'minor7', 'minor7', 'major7', 'dominant7', 'minor7', 'half-diminished'],
+  dorian:     ['minor7', 'minor7', 'major7', 'dominant7', 'minor7', 'half-diminished', 'major7'],
+  phrygian:   ['minor7', 'major7', 'dominant7', 'minor7', 'half-diminished', 'major7', 'minor7'],
+  lydian:     ['major7', 'dominant7', 'minor7', 'half-diminished', 'major7', 'minor7', 'minor7'],
+  mixolydian: ['dominant7', 'minor7', 'half-diminished', 'major7', 'minor7', 'minor7', 'major7'],
+  aeolian:    ['minor7', 'half-diminished', 'major7', 'minor7', 'minor7', 'major7', 'dominant7'],
+  locrian:    ['half-diminished', 'major7', 'minor7', 'minor7', 'major7', 'dominant7', 'minor7'],
+}
+
+// Expected diatonic pitch-class sets for each mode (semitones from tonic)
+const MODE_PCS_EXPECTATIONS = {
+  ionian:     [0, 2, 4, 5, 7, 9, 11],
+  dorian:     [0, 2, 3, 5, 7, 9, 10],
+  phrygian:   [0, 1, 3, 5, 7, 8, 10],
+  lydian:     [0, 2, 4, 6, 7, 9, 11],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10],
+  aeolian:    [0, 2, 3, 5, 7, 8, 10],
+  locrian:    [0, 1, 3, 5, 6, 8, 10],
+}
+
+test('96. All modes: DIATONIC_DEGREES has correct scale degree labels', () => {
+  MODES.forEach(({ value: mode }) => {
+    const degrees = DIATONIC_DEGREES[mode]
+    assertEqual(degrees.length, 7, `${mode}: should have 7 degrees`)
+    const expected = MODE_DEGREE_EXPECTATIONS[mode]
+    degrees.forEach((d, i) => {
+      assertEqual(d.degree, expected[i], `${mode}: degree ${i} should be ${expected[i]}`)
+    })
+  })
+})
+
+test('97. All modes: DIATONIC_PCS matches expected pitch-class sets', () => {
+  MODES.forEach(({ value: mode }) => {
+    const pcs = DIATONIC_PCS[mode]
+    const expected = MODE_PCS_EXPECTATIONS[mode]
+    expected.forEach(pc => {
+      assert(pcs.has(pc), `${mode}: should include PC ${pc}`)
+    })
+    assertEqual(pcs.size, 7, `${mode}: should have exactly 7 pitch classes`)
+  })
+})
+
+test('98. All modes: DIATONIC_DEGREES semitones match DIATONIC_PCS', () => {
+  MODES.forEach(({ value: mode }) => {
+    const degrees = DIATONIC_DEGREES[mode]
+    const pcs = DIATONIC_PCS[mode]
+    degrees.forEach(d => {
+      assert(pcs.has(d.semitones), `${mode}: degree ${d.degree} semitones ${d.semitones} should be in DIATONIC_PCS`)
+    })
+  })
+})
+
+test('99. All modes: getScaleDegrees returns correct diatonic degrees', () => {
+  MODES.forEach(({ value: mode }) => {
+    const degrees = getScaleDegrees('diatonic', mode)
+    assertEqual(degrees.length, 7, `${mode}: getScaleDegrees should return 7 degrees`)
+    const expected = MODE_DEGREE_EXPECTATIONS[mode]
+    degrees.forEach((d, i) => {
+      assertEqual(d.degree, expected[i], `${mode}: getScaleDegrees degree ${i} should be ${expected[i]}`)
+    })
+  })
+})
+
+test('100. All modes: getScaleDegree round-trip for all 12 tonics', () => {
+  MODES.forEach(({ value: mode }) => {
+    const degrees = DIATONIC_DEGREES[mode]
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      degrees.forEach(d => {
+        const pc = degreeToPitchClass(tonicPC, d.semitones)
+        const result = getScaleDegree(pc + 60, tonicPC, mode)
+        assertEqual(result.scale_degree, d.degree, `${tonic} ${mode}: ${d.degree} round-trip`)
+        assert(result.is_diatonic, `${tonic} ${mode}: ${d.degree} should be diatonic`)
+      })
+    })
+  })
+})
+
+test('101. All modes: getDiatonicTriads returns 7 chords with correct qualities', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    assertEqual(triads.length, 7, `${mode}: should have 7 diatonic triads`)
+    const expectedQualities = MODE_TRIAD_QUALITIES[mode]
+    triads.forEach((t, i) => {
+      assertEqual(t.quality, expectedQualities[i], `${mode}: triad ${i} quality should be ${expectedQualities[i]}`)
+    })
+  })
+})
+
+test('102. All modes: triad intervals match TRIAD_INTERVALS for each quality', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    triads.forEach(t => {
+      assert(
+        JSON.stringify(t.intervals) === JSON.stringify(TRIAD_INTERVALS[t.quality]),
+        `${mode} triad ${t.roman} (${t.quality}): intervals ${t.intervals} should match ${TRIAD_INTERVALS[t.quality]}`
+      )
+    })
+  })
+})
+
+test('103. All modes: getDiatonicSevenths returns 7 chords with correct qualities', () => {
+  MODES.forEach(({ value: mode }) => {
+    const sevenths = getDiatonicSevenths(mode)
+    assertEqual(sevenths.length, 7, `${mode}: should have 7 diatonic sevenths`)
+    const expectedQualities = MODE_SEVENTH_QUALITIES[mode]
+    sevenths.forEach((s, i) => {
+      assertEqual(s.quality, expectedQualities[i], `${mode}: 7th ${i} quality should be ${expectedQualities[i]}`)
+    })
+  })
+})
+
+test('104. All modes: seventh intervals match SEVENTH_INTERVALS for each quality', () => {
+  MODES.forEach(({ value: mode }) => {
+    const sevenths = getDiatonicSevenths(mode)
+    sevenths.forEach(s => {
+      assert(
+        JSON.stringify(s.intervals) === JSON.stringify(SEVENTH_INTERVALS[s.quality]),
+        `${mode} 7th ${s.roman} (${s.quality}): intervals ${s.intervals} should match ${SEVENTH_INTERVALS[s.quality]}`
+      )
+    })
+  })
+})
+
+test('105. All modes: triad and seventh share same root semitones', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    const sevenths = getDiatonicSevenths(mode)
+    triads.forEach((t, i) => {
+      assertEqual(t.semitones, sevenths[i].semitones, `${mode}: triad and 7th degree ${i} should have same root semitones`)
+    })
+  })
+})
+
+test('106. All modes: all 12 tonics, all 7 triads produce correct pitch classes', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      triads.forEach(t => {
+        const pcs = getChordPitchClasses(tonicPC, t)
+        assertEqual(pcs.length, 3, `${tonic} ${mode} ${t.roman}: should have 3 pitch classes`)
+        const rootPC = (tonicPC + t.semitones) % 12
+        assert(pcs.includes(rootPC), `${tonic} ${mode} ${t.roman}: root PC ${rootPC} should be in chord`)
+        t.intervals.forEach(iv => {
+          assert(pcs.includes((rootPC + iv) % 12), `${tonic} ${mode} ${t.roman}: interval ${iv} from root should be in chord`)
+        })
+      })
+    })
+  })
+})
+
+test('107. All modes: all 12 tonics, all 7 sevenths produce correct pitch classes', () => {
+  MODES.forEach(({ value: mode }) => {
+    const sevenths = getDiatonicSevenths(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      sevenths.forEach(s => {
+        const pcs = getChordPitchClasses(tonicPC, s)
+        assertEqual(pcs.length, 4, `${tonic} ${mode} ${s.roman}: should have 4 pitch classes`)
+        const rootPC = (tonicPC + s.semitones) % 12
+        assert(pcs.includes(rootPC), `${tonic} ${mode} ${s.roman}: root PC ${rootPC} should be in chord`)
+        s.intervals.forEach(iv => {
+          assert(pcs.includes((rootPC + iv) % 12), `${tonic} ${mode} ${s.roman}: interval ${iv} from root should be in chord`)
+        })
+      })
+    })
+  })
+})
+
+test('108. All modes: no duplicate pitch classes within triads', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      triads.forEach(t => {
+        const pcs = getChordPitchClasses(tonicPC, t)
+        const unique = new Set(pcs)
+        assertEqual(unique.size, pcs.length, `${tonic} ${mode} ${t.roman}: triad should have no duplicate pitch classes`)
+      })
+    })
+  })
+})
+
+test('109. All modes: no duplicate pitch classes within sevenths', () => {
+  MODES.forEach(({ value: mode }) => {
+    const sevenths = getDiatonicSevenths(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      sevenths.forEach(s => {
+        const pcs = getChordPitchClasses(tonicPC, s)
+        const unique = new Set(pcs)
+        assertEqual(unique.size, pcs.length, `${tonic} ${mode} ${s.roman}: 7th should have no duplicate pitch classes`)
+      })
+    })
+  })
+})
+
+test('110. All modes: all diatonic triads in all 12 keys produce valid chord labels', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      triads.forEach(t => {
+        const label = getChordLabel(tonicPC, t, tonic, mode)
+        assert(label.length > 0, `${tonic} ${mode} ${t.roman}: label should not be empty`)
+        assert(/^[A-G][#b]?/.test(label), `${tonic} ${mode} ${t.roman}: label "${label}" should start with valid note name`)
+      })
+    })
+  })
+})
+
+test('111. All modes: all diatonic sevenths in all 12 keys produce valid chord labels', () => {
+  MODES.forEach(({ value: mode }) => {
+    const sevenths = getDiatonicSevenths(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      sevenths.forEach(s => {
+        const label = getChordLabel(tonicPC, s, tonic, mode)
+        assert(label.length > 0, `${tonic} ${mode} ${s.roman}: label should not be empty`)
+        assert(/^[A-G][#b]?/.test(label), `${tonic} ${mode} ${s.roman}: label "${label}" should start with valid note name`)
+      })
+    })
+  })
+})
+
+test('112. Mode compatibility: ionian triads match major triads', () => {
+  const ionianTriads = getDiatonicTriads('ionian')
+  const majorTriads = getDiatonicTriads('major')
+  assertDeepEqual(JSON.stringify(ionianTriads), JSON.stringify(majorTriads), 'Ionian triads should match major triads')
+})
+
+test('113. Mode compatibility: aeolian triads match minor triads', () => {
+  const aeolianTriads = getDiatonicTriads('aeolian')
+  const minorTriads = getDiatonicTriads('minor')
+  assertDeepEqual(JSON.stringify(aeolianTriads), JSON.stringify(minorTriads), 'Aeolian triads should match minor triads')
+})
+
+test('114. Mode compatibility: ionian sevenths match major sevenths', () => {
+  const ionian7s = getDiatonicSevenths('ionian')
+  const major7s = getDiatonicSevenths('major')
+  assertDeepEqual(JSON.stringify(ionian7s), JSON.stringify(major7s), 'Ionian sevenths should match major sevenths')
+})
+
+test('115. Mode compatibility: aeolian sevenths match minor sevenths', () => {
+  const aeolian7s = getDiatonicSevenths('aeolian')
+  const minor7s = getDiatonicSevenths('minor')
+  assertDeepEqual(JSON.stringify(aeolian7s), JSON.stringify(minor7s), 'Aeolian sevenths should match minor sevenths')
+})
+
+test('116. Mode compatibility: ionian degrees match major degrees', () => {
+  const ionianDegrees = DIATONIC_DEGREES.ionian
+  const majorDegrees = DIATONIC_DEGREES.major
+  assertDeepEqual(JSON.stringify(ionianDegrees), JSON.stringify(majorDegrees), 'Ionian degrees should match major degrees')
+})
+
+test('117. Mode compatibility: aeolian degrees match minor degrees', () => {
+  const aeolianDegrees = DIATONIC_DEGREES.aeolian
+  const minorDegrees = DIATONIC_DEGREES.minor
+  assertDeepEqual(JSON.stringify(aeolianDegrees), JSON.stringify(minorDegrees), 'Aeolian degrees should match minor degrees')
+})
+
+test('118. All modes: getScaleDegree is_diatonic flag works correctly', () => {
+  // For each mode, diatonic notes should be flagged as diatonic
+  MODES.forEach(({ value: mode }) => {
+    const degrees = DIATONIC_DEGREES[mode]
+    const tonicPC = 0 // C
+    degrees.forEach(d => {
+      const pc = degreeToPitchClass(tonicPC, d.semitones)
+      const result = getScaleDegree(pc + 60, tonicPC, mode)
+      assert(result.is_diatonic, `C ${mode}: ${d.degree} (PC ${pc}) should be diatonic`)
+    })
+    // Non-diatonic notes should NOT be flagged
+    for (let semitone = 0; semitone < 12; semitone++) {
+      if (!degrees.some(d => d.semitones === semitone)) {
+        const pc = (tonicPC + semitone) % 12
+        const result = getScaleDegree(pc + 60, tonicPC, mode)
+        assert(!result.is_diatonic, `C ${mode}: semitone ${semitone} (PC ${pc}) should NOT be diatonic`)
+      }
+    }
+  })
+})
+
+test('119. All modes: MODES array has 7 modes in correct order', () => {
+  assertEqual(MODES.length, 7, 'Should have 7 modes')
+  const expectedOrder = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian']
+  MODES.forEach((m, i) => {
+    assertEqual(m.value, expectedOrder[i], `Mode ${i} should be ${expectedOrder[i]}`)
+  })
+})
+
+test('120. All modes: TONALITY_TO_MODE maps correctly', () => {
+  assertEqual(TONALITY_TO_MODE.major, 'ionian', 'major should map to ionian')
+  assertEqual(TONALITY_TO_MODE.minor, 'aeolian', 'minor should map to aeolian')
+})
+
+test('121. All modes: getDiatonicTriads works with old tonality names', () => {
+  const majorTriads = getDiatonicTriads('major')
+  const ionianTriads = getDiatonicTriads('ionian')
+  assertDeepEqual(JSON.stringify(majorTriads), JSON.stringify(ionianTriads), 'getDiatonicTriads(major) should equal getDiatonicTriads(ionian)')
+
+  const minorTriads = getDiatonicTriads('minor')
+  const aeolianTriads = getDiatonicTriads('aeolian')
+  assertDeepEqual(JSON.stringify(minorTriads), JSON.stringify(aeolianTriads), 'getDiatonicTriads(minor) should equal getDiatonicTriads(aeolian)')
+})
+
+test('122. All modes: getDiatonicSevenths works with old tonality names', () => {
+  const major7s = getDiatonicSevenths('major')
+  const ionian7s = getDiatonicSevenths('ionian')
+  assertDeepEqual(JSON.stringify(major7s), JSON.stringify(ionian7s), 'getDiatonicSevenths(major) should equal getDiatonicSevenths(ionian)')
+
+  const minor7s = getDiatonicSevenths('minor')
+  const aeolian7s = getDiatonicSevenths('aeolian')
+  assertDeepEqual(JSON.stringify(minor7s), JSON.stringify(aeolian7s), 'getDiatonicSevenths(minor) should equal getDiatonicSevenths(aeolian)')
+})
+
+test('123. All modes: seventh vs triad adds exactly 1 pitch class', () => {
+  MODES.forEach(({ value: mode }) => {
+    const triads = getDiatonicTriads(mode)
+    const sevenths = getDiatonicSevenths(mode)
+    TONICS.forEach(tonic => {
+      const tonicPC = tonicToPC(tonic)
+      triads.forEach((t, i) => {
+        const triadPCs = new Set(getChordPitchClasses(tonicPC, t))
+        const seventhPCs = getChordPitchClasses(tonicPC, sevenths[i])
+        const extraPCs = seventhPCs.filter(pc => !triadPCs.has(pc))
+        assertEqual(extraPCs.length, 1, `${tonic} ${mode} ${t.roman}→${sevenths[i].roman}: 7th should add exactly 1 pitch class to triad`)
+      })
+    })
+  })
+})
+
+test('124. All modes: D Dorian scale notes produce correct degrees', () => {
+  // D Dorian: D E F G A B C D
+  const dDorian = [62, 64, 65, 67, 69, 71, 72, 74]
+  const expected = ['1', '2', 'b3', '4', '5', '6', 'b7', '1']
+  dDorian.forEach((note, i) => {
+    const result = getScaleDegree(note, 2, 'dorian') // D = PC 2
+    assertEqual(result.scale_degree, expected[i], `D Dorian: MIDI ${note} → ${expected[i]}`)
+  })
+})
+
+test('125. All modes: E Phrygian scale notes produce correct degrees', () => {
+  // E Phrygian: E F G A B C D E
+  const ePhrygian = [64, 65, 67, 69, 71, 72, 74, 76]
+  const expected = ['1', 'b2', 'b3', '4', '5', 'b6', 'b7', '1']
+  ePhrygian.forEach((note, i) => {
+    const result = getScaleDegree(note, 4, 'phrygian') // E = PC 4
+    assertEqual(result.scale_degree, expected[i], `E Phrygian: MIDI ${note} → ${expected[i]}`)
+  })
+})
+
+test('126. All modes: F Lydian scale notes produce correct degrees', () => {
+  // F Lydian: F G A B C D E F
+  const fLydian = [65, 67, 69, 71, 72, 74, 76, 77]
+  const expected = ['1', '2', '3', '#4', '5', '6', '7', '1']
+  fLydian.forEach((note, i) => {
+    const result = getScaleDegree(note, 5, 'lydian') // F = PC 5
+    assertEqual(result.scale_degree, expected[i], `F Lydian: MIDI ${note} → ${expected[i]}`)
+  })
+})
+
+test('127. All modes: G Mixolydian scale notes produce correct degrees', () => {
+  // G Mixolydian: G A B C D E F G
+  const gMixolydian = [67, 69, 71, 72, 74, 76, 77, 79]
+  const expected = ['1', '2', '3', '4', '5', '6', 'b7', '1']
+  gMixolydian.forEach((note, i) => {
+    const result = getScaleDegree(note, 7, 'mixolydian') // G = PC 7
+    assertEqual(result.scale_degree, expected[i], `G Mixolydian: MIDI ${note} → ${expected[i]}`)
+  })
+})
+
+test('128. All modes: B Locrian scale notes produce correct degrees', () => {
+  // B Locrian: B C D E F G A B
+  const bLocrian = [71, 72, 74, 76, 77, 79, 81, 83]
+  const expected = ['1', 'b2', 'b3', '4', 'b5', 'b6', 'b7', '1']
+  bLocrian.forEach((note, i) => {
+    const result = getScaleDegree(note, 11, 'locrian') // B = PC 11
+    assertEqual(result.scale_degree, expected[i], `B Locrian: MIDI ${note} → ${expected[i]}`)
+  })
+})
+
+test('129. All modes: C Dorian diatonic triad set matches expected', () => {
+  const triads = getDiatonicTriads('dorian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'i',    label: 'Cm',    pcs: [0, 3, 7] },
+    { roman: 'ii',   label: 'Dm',    pcs: [2, 5, 9] },
+    { roman: 'bIII', label: 'Eb',    pcs: [3, 7, 10] },
+    { roman: 'IV',   label: 'F',     pcs: [5, 9, 0] },
+    { roman: 'v',    label: 'Gm',    pcs: [7, 10, 2] },
+    { roman: 'vio',  label: 'Adim',  pcs: [9, 0, 3] },
+    { roman: 'bVII', label: 'Bb',    pcs: [10, 2, 5] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `C Dorian triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'C', 'dorian')
+    assertEqual(label, exp.label, `C Dorian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Dorian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('130. All modes: C Phrygian diatonic triad set matches expected', () => {
+  const triads = getDiatonicTriads('phrygian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'i',    label: 'Cm',    pcs: [0, 3, 7] },
+    { roman: 'bII',  label: 'Db',    pcs: [1, 5, 8] },
+    { roman: 'bIII', label: 'Eb',    pcs: [3, 7, 10] },
+    { roman: 'iv',   label: 'Fm',    pcs: [5, 8, 0] },
+    { roman: 'vo',   label: 'Gdim',  pcs: [7, 10, 1] },
+    { roman: 'bVI',  label: 'Ab',    pcs: [8, 0, 3] },
+    { roman: 'bvii', label: 'Bbm',   pcs: [10, 1, 5] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `C Phrygian triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'C', 'phrygian')
+    assertEqual(label, exp.label, `C Phrygian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Phrygian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('131. All modes: C Lydian diatonic triad set matches expected', () => {
+  const triads = getDiatonicTriads('lydian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'I',    label: 'C',     pcs: [0, 4, 7] },
+    { roman: 'II',   label: 'D',     pcs: [2, 6, 9] },
+    { roman: 'iii',  label: 'Em',    pcs: [4, 7, 11] },
+    { roman: '#ivo', label: 'F#dim', pcs: [6, 9, 0] },
+    { roman: 'V',    label: 'G',     pcs: [7, 11, 2] },
+    { roman: 'vi',   label: 'Am',    pcs: [9, 0, 4] },
+    { roman: 'vii',  label: 'Bm',    pcs: [11, 2, 6] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `C Lydian triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'C', 'lydian')
+    assertEqual(label, exp.label, `C Lydian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Lydian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('132. All modes: C Mixolydian diatonic triad set matches expected', () => {
+  const triads = getDiatonicTriads('mixolydian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'I',    label: 'C',     pcs: [0, 4, 7] },
+    { roman: 'ii',   label: 'Dm',    pcs: [2, 5, 9] },
+    { roman: 'iiio', label: 'Edim',  pcs: [4, 7, 10] },
+    { roman: 'IV',   label: 'F',     pcs: [5, 9, 0] },
+    { roman: 'v',    label: 'Gm',    pcs: [7, 10, 2] },
+    { roman: 'vi',   label: 'Am',    pcs: [9, 0, 4] },
+    { roman: 'bVII', label: 'Bb',    pcs: [10, 2, 5] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `C Mixolydian triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'C', 'mixolydian')
+    assertEqual(label, exp.label, `C Mixolydian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Mixolydian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('133. All modes: C Locrian diatonic triad set matches expected', () => {
+  const triads = getDiatonicTriads('locrian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'io',   label: 'Cdim',  pcs: [0, 3, 6] },
+    { roman: 'bII',  label: 'Db',    pcs: [1, 5, 8] },
+    { roman: 'biii', label: 'Ebm',   pcs: [3, 6, 10] },
+    { roman: 'iv',   label: 'Fm',    pcs: [5, 8, 0] },
+    { roman: 'bV',   label: 'Gb',    pcs: [6, 10, 1] },
+    { roman: 'bVI',  label: 'Ab',    pcs: [8, 0, 3] },
+    { roman: 'bvii', label: 'Bbm',   pcs: [10, 1, 5] },
+  ]
+  expected.forEach((exp, i) => {
+    const t = triads[i]
+    assertEqual(t.roman, exp.roman, `C Locrian triad ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, t, 'C', 'locrian')
+    assertEqual(label, exp.label, `C Locrian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, t).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Locrian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('134. All modes: C Dorian diatonic seventh set matches expected', () => {
+  const sevenths = getDiatonicSevenths('dorian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'i7',       label: 'Cm7',    pcs: [0, 3, 7, 10] },
+    { roman: 'ii7',      label: 'Dm7',    pcs: [2, 5, 9, 0] },
+    { roman: 'bIIImaj7', label: 'Ebmaj7', pcs: [3, 7, 10, 2] },
+    { roman: 'IV7',      label: 'F7',     pcs: [5, 9, 0, 3] },
+    { roman: 'v7',       label: 'Gm7',    pcs: [7, 10, 2, 5] },
+    { roman: 'viø7',     label: 'Am7b5',  pcs: [9, 0, 3, 7] },
+    { roman: 'bVIImaj7', label: 'Bbmaj7', pcs: [10, 2, 5, 9] },
+  ]
+  expected.forEach((exp, i) => {
+    const s = sevenths[i]
+    assertEqual(s.roman, exp.roman, `C Dorian 7th ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, s, 'C', 'dorian')
+    assertEqual(label, exp.label, `C Dorian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, s).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Dorian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('135. All modes: C Locrian diatonic seventh set matches expected', () => {
+  const sevenths = getDiatonicSevenths('locrian')
+  const tonicPC = tonicToPC('C')
+  const expected = [
+    { roman: 'iø7',     label: 'Cm7b5',  pcs: [0, 3, 6, 10] },
+    { roman: 'bIImaj7', label: 'Dbmaj7', pcs: [1, 5, 8, 0] },
+    { roman: 'biii7',   label: 'Ebm7',   pcs: [3, 6, 10, 1] },
+    { roman: 'iv7',     label: 'Fm7',    pcs: [5, 8, 0, 3] },
+    { roman: 'bVmaj7',  label: 'Gbmaj7', pcs: [6, 10, 1, 5] },
+    { roman: 'bVI7',    label: 'Ab7',    pcs: [8, 0, 3, 6] },
+    { roman: 'bvii7',   label: 'Bbm7',   pcs: [10, 1, 5, 8] },
+  ]
+  expected.forEach((exp, i) => {
+    const s = sevenths[i]
+    assertEqual(s.roman, exp.roman, `C Locrian 7th ${i}: Roman numeral mismatch`)
+    const label = getChordLabel(tonicPC, s, 'C', 'locrian')
+    assertEqual(label, exp.label, `C Locrian ${exp.roman}: expected label ${exp.label}, got ${label}`)
+    const pcs = getChordPitchClasses(tonicPC, s).sort((a, b) => a - b)
+    const expPcs = [...exp.pcs].sort((a, b) => a - b)
+    assertEqual(JSON.stringify(pcs), JSON.stringify(expPcs), `C Locrian ${exp.roman}: pitch classes mismatch`)
+  })
+})
+
+test('136. All modes: MODE_PARENT_MAJOR_OFFSET values are correct', () => {
+  // D Dorian has parent major D + 2 = E... wait, Dorian mode starts on 2nd degree of major
+  // So D Dorian's parent major is C (D is the 2nd degree of C major)
+  // D + (-2 semitones) = C, so offset = -2 ✓
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.ionian, 0, 'Ionian offset should be 0')
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.dorian, -2, 'Dorian offset should be -2')
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.phrygian, -4, 'Phrygian offset should be -4')
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.lydian, -5, 'Lydian offset should be -5')
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.mixolydian, -7, 'Mixolydian offset should be -7')
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.aeolian, 3, 'Aeolian offset should be 3')
+  assertEqual(MODE_PARENT_MAJOR_OFFSET.locrian, 1, 'Locrian offset should be 1')
+})
+
+test('137. All modes: usesFlats works for all modes', () => {
+  // D Dorian: parent major = C → no flats
+  assert(!usesFlats('D', 'dorian'), 'D Dorian should NOT use flats (parent C major)')
+  // Bb Dorian: parent major = Ab → flats
+  assert(usesFlats('Bb', 'dorian'), 'Bb Dorian should use flats (parent Ab major)')
+  // E Phrygian: parent major = C → no flats
+  assert(!usesFlats('E', 'phrygian'), 'E Phrygian should NOT use flats (parent C major)')
+  // F Lydian: parent major = C → no flats
+  assert(!usesFlats('F', 'lydian'), 'F Lydian should NOT use flats (parent C major)')
+  // G Mixolydian: parent major = C → no flats
+  assert(!usesFlats('G', 'mixolydian'), 'G Mixolydian should NOT use flats (parent C major)')
+  // B Locrian: parent major = C → no flats
+  assert(!usesFlats('B', 'locrian'), 'B Locrian should NOT use flats (parent C major)')
+  // Eb Phrygian: parent major = B → no flats (B major has sharps)
+  assert(!usesFlats('Eb', 'phrygian'), 'Eb Phrygian should NOT use flats (parent B major)')
+})
+
+test('138. All modes: getKeySignature works for all modes', () => {
+  // D Dorian: parent major = C → no sharps/flats
+  const dDorianSig = getKeySignature('D', 'dorian')
+  assertEqual(dDorianSig.sharps.length, 0, 'D Dorian: 0 sharps')
+  assertEqual(dDorianSig.flats.length, 0, 'D Dorian: 0 flats')
+
+  // Bb Dorian: parent major = Ab → 4 flats
+  const bbDorianSig = getKeySignature('Bb', 'dorian')
+  assertEqual(bbDorianSig.flats.length, 4, 'Bb Dorian: 4 flats (parent Ab major)')
+
+  // F Lydian: parent major = C → no sharps/flats
+  const fLydianSig = getKeySignature('F', 'lydian')
+  assertEqual(fLydianSig.sharps.length, 0, 'F Lydian: 0 sharps')
+  assertEqual(fLydianSig.flats.length, 0, 'F Lydian: 0 flats')
+})
+
+test('139. Tonic-based range: getTonicBasedRange starts on tonic', () => {
+  // C tonic → C4 (MIDI 60), 3 octaves → end at C7 (96)
+  const cRange = getTonicBasedRange(0, 3)
+  assertEqual(cRange.start, 60, 'C tonic range should start at C4 (60)')
+  assertEqual(cRange.end, 96, 'C tonic range should end at C7 (96)')
+
+  // Db tonic → Db3 (MIDI 49), lower than C4
+  const dbRange = getTonicBasedRange(1, 3)
+  assertEqual(dbRange.start, 49, 'Db tonic range should start at Db3 (49)')
+
+  // Gb tonic → Gb3 (MIDI 54), lower than C4
+  const gbRange = getTonicBasedRange(6, 3)
+  assertEqual(gbRange.start, 54, 'Gb tonic range should start at Gb3 (54)')
+
+  // G tonic → G4 (MIDI 67), higher than C4
+  const gRange = getTonicBasedRange(7, 3)
+  assertEqual(gRange.start, 67, 'G tonic range should start at G4 (67)')
+
+  // Ab tonic → Ab4 (MIDI 68), higher than C4
+  const abRange = getTonicBasedRange(8, 3)
+  assertEqual(abRange.start, 68, 'Ab tonic range should start at Ab4 (68)')
+
+  // Bb tonic → Bb4 (MIDI 70), higher than C4
+  const bbRange = getTonicBasedRange(10, 3)
+  assertEqual(bbRange.start, 70, 'Bb tonic range should start at Bb4 (70)')
+
+  // B tonic → B4 (MIDI 71), higher than C4
+  const bRange = getTonicBasedRange(11, 3)
+  assertEqual(bRange.start, 71, 'B tonic range should start at B4 (71)')
+})
+
+test('140. Tonic-based range: all 12 tonics produce valid 3-octave ranges', () => {
+  TONICS.forEach(tonic => {
+    const tonicPC = tonicToPC(tonic)
+    const range = getTonicBasedRange(tonicPC, 3)
+    assertEqual(range.end - range.start, 36, `${tonic}: range should span 3 octaves (36 semitones)`)
+    assertEqual(midiNoteToPC(range.start), tonicPC, `${tonic}: range start should have tonic pitch class`)
+  })
 })
 
 // ── Summary ──────────────────────────────────────────────────────────────
