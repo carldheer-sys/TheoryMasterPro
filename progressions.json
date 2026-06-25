@@ -8,11 +8,11 @@
     { "label": "bVI – bIII – bVII – bIII", "romans": ["bVI", "bIII", "bVII", "bIII"] }
   ],
   "major:sevenths": [
-    { "label": "vi7 – IVmaj7 – Imaj7 – V7", "romans": ["vi7", "IVmaj7", "Imaj7", "V7"] },
-    { "label": "vi7 – ii7 – V7 – Imaj7", "romans": ["vi7", "ii7", "V7", "Imaj7"] }
+    { "label": "vim7 – IVmaj7 – Imaj7 – V7", "romans": ["vim7", "IVmaj7", "Imaj7", "V7"] },
+    { "label": "vim7 – iim7 – V7 – Imaj7", "romans": ["vim7", "iim7", "V7", "Imaj7"] }
   ],
   "minor:sevenths": [
-    { "label": "bVImaj7 – iv7 – i7 – v7", "romans": ["bVImaj7", "iv7", "i7", "v7"] },
+    { "label": "bVImaj7 – ivm7 – im7 – v7", "romans": ["bVImaj7", "ivm7", "im7", "vm7"] },
     { "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7", "romans": ["bVImaj7", "bIIImaj7", "bVII7", "bIIImaj7"] }
   ]
 }
