@@ -48,8 +48,8 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
 
   const tonicPC = tonicToPC(tonic)
 
-  // Fixed keyboard range: C3 → C6 (MIDI 48–96)
-  const tonicRange = useMemo(() => ({ start: 48, end: 96 }), [])
+  // Fixed keyboard range: C3 → C6 (MIDI 48–84)
+  const tonicRange = useMemo(() => ({ start: 48, end: 84 }), [])
 
   // Rows to display based on view mode
   const rows = viewMode === 'all-modes' ? MODES : TONALITIES
@@ -72,24 +72,38 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
     }
     if (pcs.length === 0) return new Set()
 
-    // Find center of tonic-based keyboard range
-    const centerMidi = (tonicRange.start + tonicRange.end) / 2
-
-    // For each pitch class, pick the MIDI note closest to center
     const result = new Set()
-    for (const pc of pcs) {
-      let bestNote = null
-      let bestDist = Infinity
-      for (let n = tonicRange.start; n <= tonicRange.end; n++) {
-        if (midiNoteToPC(n) === pc) {
-          const dist = Math.abs(n - centerMidi)
-          if (dist < bestDist) {
-            bestDist = dist
-            bestNote = n
-          }
+
+    if (type === 'row') {
+      // For scale degrees: start from the first tonic note at/after C4 (MIDI 60),
+      // then highlight each subsequent degree going up.
+      // This ensures the left-most highlighted note is always the tonic.
+      const degrees = DIATONIC_DEGREES[tonality]
+      let currentMidi = 60 + ((tonicPC - 0 + 12) % 12) // first tonic at/after C4
+      if (currentMidi < tonicRange.start) currentMidi += 12
+      for (const d of degrees) {
+        const noteMidi = currentMidi + d.semitones
+        if (noteMidi <= tonicRange.end) {
+          result.add(noteMidi)
         }
       }
-      if (bestNote != null) result.add(bestNote)
+    } else {
+      // For chord cells: pick notes closest to center of keyboard
+      const centerMidi = (tonicRange.start + tonicRange.end) / 2
+      for (const pc of pcs) {
+        let bestNote = null
+        let bestDist = Infinity
+        for (let n = tonicRange.start; n <= tonicRange.end; n++) {
+          if (midiNoteToPC(n) === pc) {
+            const dist = Math.abs(n - centerMidi)
+            if (dist < bestDist) {
+              bestDist = dist
+              bestNote = n
+            }
+          }
+        }
+        if (bestNote != null) result.add(bestNote)
+      }
     }
     return result
   }, [selectedCell, tonicPC, chordVariant, tonicRange.start, tonicRange.end])
@@ -267,7 +281,6 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
         range={tonicRange}
         highlightNotes={highlightNotes}
         activeNotes={activeNotes}
-        tonicPC={tonicPC}
       />
     </div>
   )
@@ -380,7 +393,7 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
 
 // ── Compact Keyboard ──────────────────────────────────────────────────────
 
-function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes, tonicPC }) {
+function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes }) {
   const notes = useMemo(() => generateMidiRange(range.start, range.end), [range.start, range.end])
 
   const whiteKeys = useMemo(() => notes.filter(n => !isBlackKey(midiNoteToPC(n))), [notes])
@@ -398,8 +411,6 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes, tonic
     })
   }, [blackKeys, whiteKeys, whiteKeyWidth, blackKeyWidth])
 
-  const NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-
   return (
     <div className="h-[140px] sm:h-[160px] flex-shrink-0 bg-bg-900 border-t border-bg-700 px-2 pb-2 pt-1 select-none">
       <div className="relative w-full h-full">
@@ -409,7 +420,6 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes, tonic
             const pc = midiNoteToPC(note)
             const isHighlighted = highlightNotes.has(note)
             const isActive = activeNotes.has(note)
-            const isTonic = pc === tonicPC
             return (
               <div
                 key={note}
@@ -423,9 +433,9 @@ function CompactKeyboard({ range, highlightNotes = new Set(), activeNotes, tonic
                   }`}
                 style={{ minWidth: 0 }}
               >
-                {isTonic && (
+                {pc === 0 && (
                   <span className={`text-[10px] font-bold ${isActive || isHighlighted ? 'text-white' : 'text-gray-600'}`}>
-                    {NOTE_NAMES_FLAT[pc]}{Math.floor(note / 12) - 1}
+                    C{Math.floor(note / 12) - 1}
                   </span>
                 )}
               </div>
