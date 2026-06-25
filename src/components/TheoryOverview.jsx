@@ -48,8 +48,8 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
 
   const tonicPC = tonicToPC(tonic)
 
-  // Fixed keyboard range: A4 → C6 (MIDI 69–84)
-  const tonicRange = useMemo(() => ({ start: 69, end: 84 }), [])
+  // Fixed keyboard range: A3 → C6 (MIDI 57–84)
+  const tonicRange = useMemo(() => ({ start: 57, end: 84 }), [])
 
   // Rows to display based on view mode
   const rows = viewMode === 'all-modes' ? MODES : TONALITIES
