@@ -3,11 +3,12 @@ import { useState, useRef, useEffect } from 'react'
 /**
  * Dropdown — a reusable dropdown menu component.
  * Props:
- *   - label: button text
+ *   - label: button text or node
  *   - items: [{ label, value, locked?, onClick? }]
  *   - onSelect: callback(value, item)
+ *   - showChevron: show dropdown chevron (default true)
  */
-export default function Dropdown({ label, items, onSelect, align = 'left' }) {
+export default function Dropdown({ label, items, onSelect, align = 'left', showChevron = true }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -35,14 +36,15 @@ export default function Dropdown({ label, items, onSelect, align = 'left' }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold
-          transition-colors duration-150 min-h-[44px]
+        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold
+          transition-colors duration-150 min-h-[40px] sm:min-h-[44px]
           ${open
             ? 'bg-bg-500 text-accent-light'
             : 'bg-bg-700 text-gray-300 hover:bg-bg-600 hover:text-white'
           }`}
       >
         {label}
+        {showChevron && (
         <svg
           className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none"
@@ -52,6 +54,7 @@ export default function Dropdown({ label, items, onSelect, align = 'left' }) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
+        )}
       </button>
 
       {open && (

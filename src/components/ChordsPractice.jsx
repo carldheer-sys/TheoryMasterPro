@@ -14,7 +14,8 @@ import {
   getChordRootName,
   spellNoteName,
   midiNoteToPC,
-  getKeyDisplay
+  getKeyDisplay,
+  displayNotation
 } from '../utils/musicTheory'
 
 const CHORD_TYPE_OPTIONS = [
@@ -36,11 +37,8 @@ const CHROMATICISM_OPTIONS = [
  *   4. App checks: all chord pitch classes present, no extra pitch classes
  *   5. Correct → auto-advance after delay
  */
-export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, onClearAllNotes, droneVolume = 0 }) {
+export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, mentalPractice = false, onMentalPracticeChange, simulateNoteOn }) {
   // Settings
-  const [tonic, setTonic] = useState('C') // 'C', 'Db', ..., or 'random'
-  const [effectiveTonic, setEffectiveTonic] = useState('C') // actual tonic for current question
-  const [tonality, setTonality] = useState('major')
   const [selectedChordTypes, setSelectedChordTypes] = useState(['triads'])
   const [chromaticism, setChromaticism] = useState('diatonic')
 
@@ -90,7 +88,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
   // Watch active notes and check against target chord
   useEffect(() => {
-    if (!currentChord || !targetPCs || result === 'correct' || result === 'revealed') return
+    if (!currentChord || !targetPCs || result === 'correct' || result === 'revealed' || mentalPractice) return
 
     // Extract unique pitch classes from active notes
     const activePCs = new Set()
@@ -117,14 +115,17 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       // Correct! All chord tones present, no extras
       setResult('correct')
       setScore(s => ({ correct: s.correct + 1, answered: s.answered + 1 }))
-      setTimeout(() => {
-        const nextPick = pickRandomChord(chords, currentChord)
-        setCurrentChord(nextPick)
-        setLastChord(nextPick)
-        setResult(null)
-        lastCheckedKeyRef.current = ''
-        if (onClearAllNotes) onClearAllNotes()
-      }, autoAdvanceDelay)
+      if (!holdOnCorrect) {
+        setTimeout(() => {
+          const nextPick = pickRandomChord(chords, currentChord)
+          setCurrentChord(nextPick)
+          setLastChord(nextPick)
+          setResult(null)
+          lastCheckedKeyRef.current = ''
+          if (onClearAllNotes) onClearAllNotes()
+        }, autoAdvanceDelay)
+      }
+      // If holdOnCorrect, the release-watcher effect will handle advancing
     } else if (hasExtra) {
       // Wrong: there are notes not in the chord
       setResult('wrong')
@@ -138,25 +139,82 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       }, 600)
     }
     // If subset (all notes are chord tones but not all present) → waiting, do nothing
-  }, [activeNotes, currentChord, targetPCs, result, chords, autoAdvanceDelay, onClearAllNotes])
+  }, [activeNotes, currentChord, targetPCs, result, chords, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, mentalPractice])
 
-  // Spacebar behavior: reveal answer or generate next
+  // Hold-on-correct: when result is 'correct' and all notes released, advance after delay
+  useEffect(() => {
+    if (!holdOnCorrect || result !== 'correct') return
+    if (activeNotes.size > 0) return
+    const timer = setTimeout(() => {
+      const nextPick = pickRandomChord(chords, currentChord)
+      setCurrentChord(nextPick)
+      setLastChord(nextPick)
+      setResult(null)
+      lastCheckedKeyRef.current = ''
+      if (onClearAllNotes) onClearAllNotes()
+    }, autoAdvanceDelay)
+    return () => clearTimeout(timer)
+  }, [holdOnCorrect, result, activeNotes, currentChord, chords, autoAdvanceDelay, onClearAllNotes])
+
+  // Press-and-hold NEXT: press reveals answer, release advances after delay
+  const advanceTimerRef = useRef(null)
+
+  const handlePress = useCallback(() => {
+    if (ensureAudioContext) ensureAudioContext()
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
+    if (hasStarted && currentChord && result === null) {
+      setResult('revealed')
+      if (mentalPractice) {
+        // Play all chord notes
+        const pcs = getChordPitchClasses(tonicPC, currentChord)
+        pcs.forEach(pc => {
+          if (simulateNoteOn) simulateNoteOn(pc + 60)
+        })
+      } else {
+        setScore(s => ({ ...s, answered: s.answered + 1 }))
+      }
+    } else if (!hasStarted) {
+      handleGenerate()
+    }
+  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext, mentalPractice, tonicPC, simulateNoteOn])
+
+  const handleRelease = useCallback(() => {
+    if (hasStarted && result === 'revealed') {
+      if (mentalPractice) {
+        handleGenerate()
+      } else {
+        advanceTimerRef.current = setTimeout(() => {
+          advanceTimerRef.current = null
+          handleGenerate()
+        }, autoAdvanceDelay)
+      }
+    }
+  }, [handleGenerate, hasStarted, result, autoAdvanceDelay, mentalPractice])
+
+  // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if ((e.code === 'Space' || e.key === ' ') && !e.repeat) {
+        e.preventDefault()
+        handlePress()
+      }
+    }
+    const handleKeyUp = (e) => {
       if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault()
-        if (ensureAudioContext) ensureAudioContext()
-        if (hasStarted && currentChord && result === null) {
-          setResult('revealed')
-          setScore(s => ({ ...s, answered: s.answered + 1 }))
-        } else {
-          handleGenerate()
-        }
+        handleRelease()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext])
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [handlePress, handleRelease])
 
   // Reset practice when key settings change
   const handleSettingChange = () => {
@@ -171,31 +229,24 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   }
 
   const handleTonicChange = (v) => {
-    if (v === 'random') {
-      const randomTonic = TONICS[Math.floor(Math.random() * TONICS.length)]
-      setTonic('random')
-      setEffectiveTonic(randomTonic)
-    } else {
-      setTonic(v)
-      setEffectiveTonic(v)
-    }
+    onTonicChange(v)
     handleSettingChange()
   }
-  const handleTonalityChange = (v) => { setTonality(v); handleSettingChange() }
+  const handleTonalityChange = (v) => { onTonalityChange(v); handleSettingChange() }
   const handleChordTypesChange = (v) => { setSelectedChordTypes(v); handleSettingChange() }
   const handleChromaticismChange = (v) => { setChromaticism(v); handleSettingChange() }
 
   return (
     <div className="flex flex-col h-full">
       {/* Settings bar */}
-      <div className="flex flex-wrap items-end gap-3 sm:gap-4 px-4 sm:px-8 pt-6 pb-4">
+      <div className="flex flex-wrap items-end gap-3 sm:gap-4 px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4">
         {/* Key section */}
         <div className="flex items-end gap-3">
           <Select
             label="Tonic"
             value={tonic}
             onChange={handleTonicChange}
-            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
+            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${displayNotation(effectiveTonic)}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: displayNotation(t) }))]}
           />
           <Select
             label="Tonality"
@@ -230,8 +281,21 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         {/* Drone toggle */}
         <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
 
-        {/* Score display */}
-        {hasStarted && (
+        {/* Mental Practice toggle */}
+        <button
+          onClick={() => onMentalPracticeChange(!mentalPractice)}
+          className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors min-h-[40px] sm:min-h-[44px] whitespace-nowrap
+            ${mentalPractice
+              ? 'bg-accent text-white'
+              : 'bg-bg-700 text-gray-300 hover:bg-bg-600 hover:text-white'
+            }`}
+        >
+          <span className="hidden sm:inline">Mental Practice</span>
+          <span className="sm:hidden">Mental</span>
+        </button>
+
+        {/* Score display (hidden in mental practice mode) */}
+        {hasStarted && !mentalPractice && (
           <div className="flex items-center gap-4 pb-2.5">
             <div className="text-sm text-gray-400">
               Score: <span className="text-white font-bold">{score.correct}</span>
@@ -243,11 +307,11 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       </div>
 
       {/* Main display area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-6">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-4 gap-6">
         {!hasStarted ? (
           <div className="text-center">
             <div className="text-gray-500 text-lg mb-2">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
               {' · '}
               <span className="capitalize">{selectedChordTypes.join(' + ')}</span>
               {' · '}
@@ -261,71 +325,74 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
           <div className="flex flex-col items-center gap-4">
             {/* Key display */}
             <div className="text-gray-500 text-sm">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
             </div>
 
             {/* Roman numeral display */}
             <div
-              className={`text-7xl sm:text-8xl font-extrabold transition-all duration-300
+              className={`music-notation text-7xl sm:text-8xl font-extrabold transition-all duration-300
                 ${result === 'correct' ? 'text-green-400 correct-pulse' : ''}
                 ${result === 'wrong' ? 'text-keyred shake' : ''}
                 ${result === 'revealed' ? 'text-yellow-400 correct-pulse' : ''}
                 ${result === null ? 'text-white' : ''}
               `}
             >
-              {currentChord?.roman}
+              {displayNotation(currentChord?.roman)}
             </div>
 
             {/* Feedback */}
             <div className="h-12 flex flex-col items-center gap-1">
               {result === 'correct' && (
-                <div className="text-green-400 text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-green-400 text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  Correct! That was {targetChordLabel} ({targetNoteNames?.join('–')})
+                  Correct! That was <span className="music-notation">{displayNotation(targetChordLabel)}</span> (<span className="music-notation">{targetNoteNames?.map(displayNotation).join('–')}</span>)
                 </div>
               )}
               {result === 'revealed' && (
-                <div className="text-yellow-400 text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-yellow-400 text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Answer: {targetChordLabel} ({targetNoteNames?.join('–')}) — press SPACE for next
+                  Answer: <span className="music-notation">{displayNotation(targetChordLabel)}</span> (<span className="music-notation">{targetNoteNames?.map(displayNotation).join('–')}</span>)
                 </div>
               )}
               {result === 'wrong' && (
-                <div className="text-keyred text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-keyred text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Not quite — try again
                 </div>
               )}
-              {result === null && (
-                <div className="text-gray-500 text-sm text-center">
-                  Play all chord notes simultaneously on your MIDI keyboard<br/>
-                  or hold Cmd/Ctrl while clicking keys to select multiple notes
+              {result === null && hasStarted && (
+                <div className="text-gray-600 text-xs text-center">
+                  {mentalPractice ? 'Press and hold NEXT to hear the chord' : 'Play all chord notes simultaneously on your MIDI keyboard or hold Cmd/Ctrl while clicking keys'}
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* MIDI status warning for unsupported devices */}
-        {!midiSupported && (
-          <div className="text-yellow-500/70 text-xs text-center max-w-md">
+        {/* MIDI status warning for unsupported devices (hidden in mental practice) */}
+        {!midiSupported && !mentalPractice && (
+          <div className="text-yellow-500/60 text-xs text-center max-w-md">
             MIDI input not available on this device. Hold Cmd/Ctrl and tap the on-screen keys to practice chords.
           </div>
         )}
       </div>
 
       {/* Generate / Next button */}
-      <div className="flex justify-center px-4 pb-6">
+      <div className="flex justify-center px-4 pb-4 sm:pb-6">
         <button
-          onClick={handleGenerate}
+          onMouseDown={handlePress}
+          onMouseUp={handleRelease}
+          onMouseLeave={handleRelease}
+          onTouchStart={(e) => { e.preventDefault(); handlePress() }}
+          onTouchEnd={(e) => { e.preventDefault(); handleRelease() }}
           className={`px-12 py-4 rounded-2xl text-lg font-extrabold tracking-wide
-            transition-all duration-200 active:scale-95 min-h-[56px] min-w-[200px]
+            transition-all duration-200 active:scale-95 min-h-[56px] min-w-[200px] select-none
             ${hasStarted
             ? 'bg-bg-600 text-white hover:bg-bg-500 border border-bg-500'
             : 'bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/30'

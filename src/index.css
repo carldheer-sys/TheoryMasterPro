@@ -78,3 +78,9 @@ body {
 .shake {
   animation: shake 0.3s ease-in-out;
 }
+
+/* Music notation font for scale degrees, notes, chords, and Roman numerals */
+.music-notation {
+  font-family: 'Noto Serif', 'Times New Roman', serif;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}

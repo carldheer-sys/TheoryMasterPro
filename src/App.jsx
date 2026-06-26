@@ -11,12 +11,32 @@ import AutoAdvanceDelayModal from './components/AutoAdvanceDelayModal'
 import VolumeModal from './components/VolumeModal'
 import ProgressionsCatalog from './components/ProgressionsCatalog'
 import { useMidi } from './hooks/useMidi'
-import { DEFAULT_RANGE } from './utils/musicTheory'
+import { DEFAULT_RANGE, TONICS } from './utils/musicTheory'
 import { DEFAULT_PROGRESSIONS, cloneProgressions } from './utils/progressions'
 
 export default function App() {
   // Training mode
   const [trainingMode, setTrainingMode] = useState('scale-degrees')
+
+  // Shared key state (persists across mode switches, resets only on reload)
+  const [tonic, setTonic] = useState('C')
+  const [effectiveTonic, setEffectiveTonic] = useState('C')
+  const [tonality, setTonality] = useState('major')
+
+  const handleTonicChange = useCallback((v) => {
+    if (v === 'random') {
+      const randomTonic = TONICS[Math.floor(Math.random() * TONICS.length)]
+      setTonic('random')
+      setEffectiveTonic(randomTonic)
+    } else {
+      setTonic(v)
+      setEffectiveTonic(v)
+    }
+  }, [])
+
+  const handleTonalityChange = useCallback((v) => {
+    setTonality(v)
+  }, [])
 
   // Modal state
   const [activeModal, setActiveModal] = useState(null) // null | 'keyboard-range' | 'auto-advance-delay' | 'volume'
@@ -26,6 +46,12 @@ export default function App() {
 
   // Auto-advance delay (ms)
   const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(600)
+
+  // Hold-on-correct: wait for all notes to be released before advancing
+  const [holdOnCorrect, setHoldOnCorrect] = useState(true)
+
+  // Mental practice mode (toggled within Scale Degrees and Chords)
+  const [mentalPractice, setMentalPractice] = useState(false)
 
   // Volumes (dB)
   const [pianoVolume, setPianoVolume] = useState(0)
@@ -79,8 +105,17 @@ export default function App() {
             midiSupported={midiSupported}
             ensureAudioContext={ensureAudioContext}
             autoAdvanceDelay={autoAdvanceDelay}
+            holdOnCorrect={holdOnCorrect}
             onClearAllNotes={clearAllNotes}
             droneVolume={droneVolume}
+            tonic={tonic}
+            effectiveTonic={effectiveTonic}
+            tonality={tonality}
+            onTonicChange={handleTonicChange}
+            onTonalityChange={handleTonalityChange}
+            mentalPractice={mentalPractice}
+            onMentalPracticeChange={setMentalPractice}
+            simulateNoteOn={simulateNoteOn}
           />
         )}
         {trainingMode === 'chords' && (
@@ -89,8 +124,17 @@ export default function App() {
             midiSupported={midiSupported}
             ensureAudioContext={ensureAudioContext}
             autoAdvanceDelay={autoAdvanceDelay}
+            holdOnCorrect={holdOnCorrect}
             onClearAllNotes={clearAllNotes}
             droneVolume={droneVolume}
+            tonic={tonic}
+            effectiveTonic={effectiveTonic}
+            tonality={tonality}
+            onTonicChange={handleTonicChange}
+            onTonalityChange={handleTonalityChange}
+            mentalPractice={mentalPractice}
+            onMentalPracticeChange={setMentalPractice}
+            simulateNoteOn={simulateNoteOn}
           />
         )}
         {trainingMode === 'chord-progressions' && (
@@ -99,9 +143,15 @@ export default function App() {
             midiSupported={midiSupported}
             ensureAudioContext={ensureAudioContext}
             autoAdvanceDelay={autoAdvanceDelay}
+            holdOnCorrect={holdOnCorrect}
             onClearAllNotes={clearAllNotes}
             droneVolume={droneVolume}
             progressions={progressions}
+            tonic={tonic}
+            effectiveTonic={effectiveTonic}
+            tonality={tonality}
+            onTonicChange={handleTonicChange}
+            onTonalityChange={handleTonalityChange}
           />
         )}
         {trainingMode === 'progressions-catalog' && (
@@ -116,6 +166,8 @@ export default function App() {
             activeNotes={activeNotes}
             ensureAudioContext={ensureAudioContext}
             droneVolume={droneVolume}
+            tonic={effectiveTonic}
+            onTonicChange={handleTonicChange}
           />
         )}
         {trainingMode !== 'scale-degrees' && trainingMode !== 'chords' && trainingMode !== 'chord-progressions' && trainingMode !== 'theory-overview' && trainingMode !== 'progressions-catalog' && (
@@ -125,7 +177,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Piano roll at bottom (hidden in theory-overview and progressions-catalog modes) */}
+      {/* Piano roll at bottom (hidden in theory-overview and progressions-catalog) */}
       {trainingMode !== 'theory-overview' && trainingMode !== 'progressions-catalog' && (
         <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
           <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords' || trainingMode === 'chord-progressions'} />
@@ -148,6 +200,8 @@ export default function App() {
           <AutoAdvanceDelayModal
             delay={autoAdvanceDelay}
             onDelayChange={setAutoAdvanceDelay}
+            holdOnCorrect={holdOnCorrect}
+            onHoldOnCorrectChange={setHoldOnCorrect}
             onClose={() => setActiveModal(null)}
           />
         </Modal>

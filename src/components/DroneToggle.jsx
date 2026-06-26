@@ -62,7 +62,7 @@ export default function DroneToggle({ tonic, ensureAudioContext, droneVolume = 0
   return (
     <button
       onClick={handleToggle}
-      className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors min-h-[36px]
+      className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors min-h-[40px] sm:min-h-[44px]
         flex items-center gap-1.5
         ${enabled
           ? 'bg-accent text-white'

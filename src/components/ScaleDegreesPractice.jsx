@@ -10,7 +10,8 @@ import {
   degreeToPitchClass,
   spellNoteName,
   midiNoteToPC,
-  getKeyDisplay
+  getKeyDisplay,
+  displayNotation
 } from '../utils/musicTheory'
 
 const DEGREE_MODES = [
@@ -28,11 +29,8 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 1200, onClearAllNotes, droneVolume = 0 }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 1200, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, mentalPractice = false, onMentalPracticeChange, simulateNoteOn }) {
   // Settings
-  const [tonic, setTonic] = useState('C') // 'C', 'Db', ..., or 'random'
-  const [effectiveTonic, setEffectiveTonic] = useState('C') // actual tonic for current question
-  const [tonality, setTonality] = useState('major')
   const [degreeMode, setDegreeMode] = useState('diatonic')
 
   // Practice state
@@ -66,7 +64,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
   // Watch active notes and check against target
   useEffect(() => {
-    if (!currentDegree || result === 'correct') return
+    if (!currentDegree || result === 'correct' || mentalPractice) return
 
     // Check each active note
     for (const note of activeNotes) {
@@ -79,16 +77,19 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       if (playedPC === targetPC) {
         setResult('correct')
         setScore(s => ({ correct: s.correct + 1, answered: s.answered + 1 }))
-        // Auto-advance to next degree after showing the correct animation
-        setTimeout(() => {
-          const nextPick = pickRandomDegree(degrees, currentDegree)
-          setCurrentDegree(nextPick)
-          setLastDegree(nextPick)
-          setResult(null)
-          setAttemptedNote(null)
-          checkedNotesRef.current = new Set()
-          if (onClearAllNotes) onClearAllNotes()
-        }, autoAdvanceDelay)
+        if (!holdOnCorrect) {
+          // Auto-advance to next degree after showing the correct animation
+          setTimeout(() => {
+            const nextPick = pickRandomDegree(degrees, currentDegree)
+            setCurrentDegree(nextPick)
+            setLastDegree(nextPick)
+            setResult(null)
+            setAttemptedNote(null)
+            checkedNotesRef.current = new Set()
+            if (onClearAllNotes) onClearAllNotes()
+          }, autoAdvanceDelay)
+        }
+        // If holdOnCorrect, the release-watcher effect will handle advancing
       } else {
         setResult('wrong')
         setScore(s => ({ ...s, answered: s.answered + 1 }))
@@ -98,29 +99,83 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         }, 300)
       }
     }
-  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay, onClearAllNotes])
+  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, mentalPractice])
 
-  // Spacebar behavior:
-  // - If no question active (not started or result is 'correct'/'revealed'): generate next
-  // - If question active and not yet answered: reveal the correct answer
+  // Hold-on-correct: when result is 'correct' and all notes released, advance after delay
+  useEffect(() => {
+    if (!holdOnCorrect || result !== 'correct') return
+    if (activeNotes.size > 0) return
+    // All notes released — start advance timer
+    const timer = setTimeout(() => {
+      const nextPick = pickRandomDegree(degrees, currentDegree)
+      setCurrentDegree(nextPick)
+      setLastDegree(nextPick)
+      setResult(null)
+      setAttemptedNote(null)
+      checkedNotesRef.current = new Set()
+      if (onClearAllNotes) onClearAllNotes()
+    }, autoAdvanceDelay)
+    return () => clearTimeout(timer)
+  }, [holdOnCorrect, result, activeNotes, currentDegree, degrees, autoAdvanceDelay, onClearAllNotes])
+
+  // Press-and-hold NEXT: press reveals answer, release advances after delay
+  const advanceTimerRef = useRef(null)
+
+  const handlePress = useCallback(() => {
+    if (ensureAudioContext) ensureAudioContext()
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
+    if (hasStarted && currentDegree && result === null) {
+      setResult('revealed')
+      if (mentalPractice) {
+        // Play the target note
+        const noteToPlay = targetPC + 60
+        if (simulateNoteOn) simulateNoteOn(noteToPlay)
+      } else {
+        setScore(s => ({ ...s, answered: s.answered + 1 }))
+      }
+    } else if (!hasStarted) {
+      handleGenerate()
+    }
+  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, mentalPractice, targetPC, simulateNoteOn])
+
+  const handleRelease = useCallback(() => {
+    if (hasStarted && result === 'revealed') {
+      if (mentalPractice) {
+        // In mental practice, advance immediately on release
+        handleGenerate()
+      } else {
+        advanceTimerRef.current = setTimeout(() => {
+          advanceTimerRef.current = null
+          handleGenerate()
+        }, autoAdvanceDelay)
+      }
+    }
+  }, [handleGenerate, hasStarted, result, autoAdvanceDelay, mentalPractice])
+
+  // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if ((e.code === 'Space' || e.key === ' ') && !e.repeat) {
+        e.preventDefault()
+        handlePress()
+      }
+    }
+    const handleKeyUp = (e) => {
       if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault()
-        if (ensureAudioContext) ensureAudioContext()
-        // If there's an active unanswered question, reveal it
-        if (hasStarted && currentDegree && result === null) {
-          setResult('revealed')
-          setScore(s => ({ ...s, answered: s.answered + 1 }))
-        } else {
-          // Otherwise generate next
-          handleGenerate()
-        }
+        handleRelease()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext])
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [handlePress, handleRelease])
 
   // Reset practice when key settings change
   const handleSettingChange = () => {
@@ -134,18 +189,11 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
   }
 
   const handleTonicChange = (v) => {
-    if (v === 'random') {
-      const randomTonic = TONICS[Math.floor(Math.random() * TONICS.length)]
-      setTonic('random')
-      setEffectiveTonic(randomTonic)
-    } else {
-      setTonic(v)
-      setEffectiveTonic(v)
-    }
+    onTonicChange(v)
     handleSettingChange()
   }
   const handleTonalityChange = (v) => {
-    setTonality(v)
+    onTonalityChange(v)
     handleSettingChange()
   }
   const handleDegreeModeChange = (v) => {
@@ -156,14 +204,14 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
   return (
     <div className="flex flex-col h-full">
       {/* Settings bar */}
-      <div className="flex flex-wrap items-end gap-3 sm:gap-4 px-4 sm:px-8 pt-6 pb-4">
+      <div className="flex flex-wrap items-end gap-3 sm:gap-4 px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4">
         {/* Key section */}
         <div className="flex items-end gap-3">
           <Select
             label="Tonic"
             value={tonic}
             onChange={handleTonicChange}
-            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
+            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${displayNotation(effectiveTonic)}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: displayNotation(t) }))]}
           />
           <Select
             label="Tonality"
@@ -188,8 +236,21 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         {/* Drone toggle */}
         <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
 
-        {/* Score display */}
-        {hasStarted && (
+        {/* Mental Practice toggle */}
+        <button
+          onClick={() => onMentalPracticeChange(!mentalPractice)}
+          className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors min-h-[40px] sm:min-h-[44px] whitespace-nowrap
+            ${mentalPractice
+              ? 'bg-accent text-white'
+              : 'bg-bg-700 text-gray-300 hover:bg-bg-600 hover:text-white'
+            }`}
+        >
+          <span className="hidden sm:inline">Mental Practice</span>
+          <span className="sm:hidden">Mental</span>
+        </button>
+
+        {/* Score display (hidden in mental practice mode) */}
+        {hasStarted && !mentalPractice && (
           <div className="flex items-center gap-4 pb-2.5">
             <div className="text-sm text-gray-400">
               Score: <span className="text-white font-bold">{score.correct}</span>
@@ -201,12 +262,12 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       </div>
 
       {/* Main display area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-6">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-4 gap-6">
         {!hasStarted ? (
           /* Pre-generation state */
           <div className="text-center">
             <div className="text-gray-500 text-lg mb-2">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
               {' · '}
               <span className="capitalize">{degreeMode}</span>
             </div>
@@ -219,70 +280,74 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
           <div className="flex flex-col items-center gap-4">
             {/* Key display */}
             <div className="text-gray-500 text-sm">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
             </div>
 
             {/* Scale degree display */}
             <div
-              className={`text-7xl sm:text-8xl font-extrabold transition-all duration-300
+              className={`music-notation text-7xl sm:text-8xl font-extrabold transition-all duration-300
                 ${result === 'correct' ? 'text-green-400 correct-pulse' : ''}
                 ${result === 'wrong' ? 'text-keyred shake' : ''}
                 ${result === 'revealed' ? 'text-yellow-400 correct-pulse' : ''}
                 ${result === null ? 'text-white' : ''}
               `}
             >
-              {currentDegree?.degree}
+              {displayNotation(currentDegree?.degree)}
             </div>
 
             {/* Feedback */}
-            <div className="h-8">
+            <div className="h-10">
               {result === 'correct' && (
-                <div className="text-green-400 text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-green-400 text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  Correct! That was {targetNoteName}
+                  Correct! That was <span className="music-notation">{displayNotation(targetNoteName)}</span>
                 </div>
               )}
               {result === 'revealed' && (
-                <div className="text-yellow-400 text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-yellow-400 text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Answer: {targetNoteName} — press SPACE for next
+                  Answer: <span className="music-notation">{displayNotation(targetNoteName)}</span>
                 </div>
               )}
               {result === 'wrong' && attemptedNote !== null && (
-                <div className="text-keyred text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-keyred text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Not quite — try again
                 </div>
               )}
-              {result === null && (
-                <div className="text-gray-500 text-sm">
-                  Play the note on your MIDI keyboard or tap a key
+              {result === null && hasStarted && (
+                <div className="text-gray-600 text-xs">
+                  {mentalPractice ? 'Press and hold NEXT to hear the answer' : 'Play the note on your MIDI keyboard or tap a key'}
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* MIDI status warning for unsupported devices */}
-        {!midiSupported && (
-          <div className="text-yellow-500/70 text-xs text-center max-w-md">
+        {/* MIDI status warning for unsupported devices (hidden in mental practice) */}
+        {!midiSupported && !mentalPractice && (
+          <div className="text-yellow-500/60 text-xs text-center max-w-md">
             MIDI input not available on this device. Tap the on-screen keys to practice.
           </div>
         )}
       </div>
 
       {/* Generate / Next button */}
-      <div className="flex justify-center px-4 pb-6">
+      <div className="flex justify-center px-4 pb-4 sm:pb-6">
         <button
-          onClick={handleGenerate}
+          onMouseDown={handlePress}
+          onMouseUp={handleRelease}
+          onMouseLeave={handleRelease}
+          onTouchStart={(e) => { e.preventDefault(); handlePress() }}
+          onTouchEnd={(e) => { e.preventDefault(); handleRelease() }}
           className={`px-12 py-4 rounded-2xl text-lg font-extrabold tracking-wide
-            transition-all duration-200 active:scale-95 min-h-[56px] min-w-[200px]
+            transition-all duration-200 active:scale-95 min-h-[56px] min-w-[200px] select-none
             ${hasStarted
             ? 'bg-bg-600 text-white hover:bg-bg-500 border border-bg-500'
             : 'bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/30'

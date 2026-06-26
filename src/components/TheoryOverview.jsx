@@ -15,7 +15,8 @@ import {
   spellNoteName,
   midiNoteToPC,
   generateMidiRange,
-  isBlackKey
+  isBlackKey,
+  displayNotation
 } from '../utils/musicTheory'
 
 const DEGREE_NAMES = {
@@ -39,8 +40,7 @@ const VIEW_MODES = [
   { value: 'all-modes', label: 'All Modes' }
 ]
 
-export default function TheoryOverview({ range, activeNotes, ensureAudioContext, droneVolume = 0 }) {
-  const [tonic, setTonic] = useState('C')
+export default function TheoryOverview({ range, activeNotes, ensureAudioContext, droneVolume = 0, tonic, onTonicChange }) {
   const [tab, setTab] = useState('degrees')
   const [chordVariant, setChordVariant] = useState('triads')
   const [viewMode, setViewMode] = useState('major-minor')
@@ -141,7 +141,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
   }, [tonicPC, tonic, chordVariant, rows])
 
   const handleTonicChange = (v) => {
-    setTonic(v)
+    onTonicChange(v)
     setSelectedCell(null)
   }
 
@@ -174,7 +174,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
           label="Tonic"
           value={tonic}
           onChange={handleTonicChange}
-          options={TONICS.map(t => ({ value: t, label: t }))}
+          options={TONICS.map(t => ({ value: t, label: displayNotation(t) }))}
         />
 
         <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
@@ -241,7 +241,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
         {/* Key display */}
         <div className="pb-2.5">
           <div className="text-sm text-gray-400">
-            Key: <span className="text-accent-light font-bold">{tonic}</span>
+            Key: <span className="text-accent-light font-bold music-notation">{tonic}</span>
             <span className="text-gray-500 ml-1">{viewMode === 'all-modes' ? 'All Modes' : 'Major/Minor'}</span>
           </div>
         </div>
@@ -300,7 +300,7 @@ function DegreesTable({ degreeData, isRowSelected, onSelectRow }) {
             </th>
             {Array.from({ length: degreeCount }, (_, i) => (
               <th key={i} className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 border-b border-bg-600">
-                {degreeData[0].notes[i]?.degree}
+                {degreeData[0].notes[i] && displayNotation(degreeData[0].notes[i].degree)}
               </th>
             ))}
           </tr>
@@ -327,8 +327,8 @@ function DegreesTable({ degreeData, isRowSelected, onSelectRow }) {
                     ${isRowSelected(tonality) ? 'text-white' : 'text-gray-300'}
                   `}
                 >
-                  <div className="font-bold text-sm text-white">{note.degree}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{note.name}</div>
+                  <div className="music-notation font-bold text-sm text-white">{displayNotation(note.degree)}</div>
+                  <div className="music-notation text-xs text-gray-400 mt-0.5">{displayNotation(note.name)}</div>
                 </td>
               ))}
             </tr>
@@ -374,10 +374,10 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
                     ${isCellSelected(tonality, i) ? 'bg-accent/20' : 'hover:bg-bg-700/50'}
                   `}
                 >
-                  <div className={`font-bold text-sm text-white`}>
-                    {cell.roman}
+                  <div className={`music-notation font-bold text-sm text-white`}>
+                    {displayNotation(cell.roman)}
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5">{cell.label}</div>
+                  <div className="music-notation text-xs text-gray-400 mt-0.5">{displayNotation(cell.label)}</div>
                 </td>
               ))}
             </tr>

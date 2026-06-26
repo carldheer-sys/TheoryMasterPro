@@ -11,7 +11,8 @@ import {
   getChordLabel,
   spellNoteName,
   midiNoteToPC,
-  getKeyDisplay
+  getKeyDisplay,
+  displayNotation
 } from '../utils/musicTheory'
 import { DEFAULT_PROGRESSIONS } from '../utils/progressions'
 
@@ -49,11 +50,8 @@ function generateRandomProgression(chords, count) {
   return result
 }
 
-export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, onClearAllNotes, droneVolume = 0, progressions = DEFAULT_PROGRESSIONS }) {
+export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, progressions = DEFAULT_PROGRESSIONS, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange }) {
   // Settings
-  const [tonic, setTonic] = useState('C')
-  const [effectiveTonic, setEffectiveTonic] = useState('C')
-  const [tonality, setTonality] = useState('major')
   const [chordType, setChordType] = useState('triads')
   const [chromaticism, setChromaticism] = useState('diatonic')
   const [progressionKey, setProgressionKey] = useState('vi – IV – I – V')
@@ -64,6 +62,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   const [progression, setProgression] = useState([])
   const [currentIdx, setCurrentIdx] = useState(0)
   const [flashGreen, setFlashGreen] = useState(false)
+  const [revealed, setRevealed] = useState(false)
 
   const lastCheckedKeyRef = useRef('')
 
@@ -116,6 +115,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     setProgression(prog)
     setCurrentIdx(0)
     setFlashGreen(false)
+    setRevealed(false)
     setHasStarted(true)
     lastCheckedKeyRef.current = ''
     if (onClearAllNotes) onClearAllNotes()
@@ -123,7 +123,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
 
   // Watch active notes and check against current chord
   useEffect(() => {
-    if (!hasStarted || !currentChord || !targetPCs || flashGreen) return
+    if (!hasStarted || !currentChord || !targetPCs || flashGreen || revealed) return
 
     const activePCs = new Set()
     for (const note of activeNotes) {
@@ -145,27 +145,83 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     if (allPresent && !hasExtra) {
       // Correct! Flash green, then advance
       setFlashGreen(true)
+      if (!holdOnCorrect) {
+        if (onClearAllNotes) onClearAllNotes()
+        setTimeout(() => {
+          setFlashGreen(false)
+          setCurrentIdx(idx => (idx + 1) % progression.length)
+          setRevealed(false)
+          lastCheckedKeyRef.current = ''
+        }, autoAdvanceDelay)
+      }
+      // If holdOnCorrect, the release-watcher effect will handle advancing
+    }
+  }, [activeNotes, currentChord, targetPCs, flashGreen, revealed, hasStarted, progression.length, autoAdvanceDelay, holdOnCorrect, onClearAllNotes])
+
+  // Hold-on-correct: when flashGreen and all notes released, advance after delay
+  useEffect(() => {
+    if (!holdOnCorrect || !flashGreen) return
+    if (activeNotes.size > 0) return
+    const timer = setTimeout(() => {
+      setFlashGreen(false)
+      setCurrentIdx(idx => (idx + 1) % progression.length)
+      setRevealed(false)
+      lastCheckedKeyRef.current = ''
       if (onClearAllNotes) onClearAllNotes()
-      setTimeout(() => {
+    }, autoAdvanceDelay)
+    return () => clearTimeout(timer)
+  }, [holdOnCorrect, flashGreen, activeNotes, progression.length, autoAdvanceDelay, onClearAllNotes])
+
+  // Press-and-hold NEXT: press reveals answer, release advances after delay
+  const advanceTimerRef = useRef(null)
+
+  const handlePress = useCallback(() => {
+    if (ensureAudioContext) ensureAudioContext()
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current)
+      advanceTimerRef.current = null
+    }
+    if (hasStarted && !flashGreen && !revealed) {
+      setRevealed(true)
+    } else if (!hasStarted) {
+      handleGenerate()
+    }
+  }, [handleGenerate, hasStarted, flashGreen, revealed, ensureAudioContext])
+
+  const handleRelease = useCallback(() => {
+    if (hasStarted && (revealed || flashGreen)) {
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
+        setRevealed(false)
         setFlashGreen(false)
         setCurrentIdx(idx => (idx + 1) % progression.length)
         lastCheckedKeyRef.current = ''
+        if (onClearAllNotes) onClearAllNotes()
       }, autoAdvanceDelay)
     }
-  }, [activeNotes, currentChord, targetPCs, flashGreen, hasStarted, progression.length, autoAdvanceDelay, onClearAllNotes])
+  }, [hasStarted, revealed, flashGreen, progression.length, autoAdvanceDelay, onClearAllNotes])
 
-  // Spacebar: generate / restart
+  // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if ((e.code === 'Space' || e.key === ' ') && !e.repeat) {
+        e.preventDefault()
+        handlePress()
+      }
+    }
+    const handleKeyUp = (e) => {
       if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault()
-        if (ensureAudioContext) ensureAudioContext()
-        handleGenerate()
+        handleRelease()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleGenerate, ensureAudioContext])
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [handlePress, handleRelease])
 
   // Reset when settings change
   const handleSettingChange = () => {
@@ -174,24 +230,18 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
       setProgression([])
       setCurrentIdx(0)
       setFlashGreen(false)
+      setRevealed(false)
       lastCheckedKeyRef.current = ''
       if (onClearAllNotes) onClearAllNotes()
     }
   }
 
   const handleTonicChange = (v) => {
-    if (v === 'random') {
-      const randomTonic = TONICS[Math.floor(Math.random() * TONICS.length)]
-      setTonic('random')
-      setEffectiveTonic(randomTonic)
-    } else {
-      setTonic(v)
-      setEffectiveTonic(v)
-    }
+    onTonicChange(v)
     handleSettingChange()
   }
   const handleTonalityChange = (v) => {
-    setTonality(v)
+    onTonalityChange(v)
     const key = `${v}:${chordType}`
     const progs = progressions[key] || []
     setProgressionKey(progs[0]?.label || 'random')
@@ -216,14 +266,14 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   return (
     <div className="flex flex-col h-full">
       {/* Settings bar */}
-      <div className="flex flex-wrap items-end gap-3 sm:gap-4 px-4 sm:px-8 pt-6 pb-4">
+      <div className="flex flex-wrap items-end gap-3 sm:gap-4 px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4">
         {/* Key section */}
         <div className="flex items-end gap-3">
           <Select
             label="Tonic"
             value={tonic}
             onChange={handleTonicChange}
-            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
+            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${displayNotation(effectiveTonic)}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: displayNotation(t) }))]}
           />
           <Select
             label="Tonality"
@@ -299,11 +349,11 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
       </div>
 
       {/* Main display area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 gap-6">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-4 gap-6">
         {!hasStarted ? (
           <div className="text-center">
             <div className="text-gray-500 text-lg mb-2">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
               {' · '}
               <span className="capitalize">{chordType}</span>
               {' · '}
@@ -317,7 +367,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
           <div className="flex flex-col items-center gap-6 w-full max-w-4xl">
             {/* Key display */}
             <div className="text-gray-500 text-sm">
-              Key: <span className="text-accent-light font-bold">{getKeyDisplay(effectiveTonic, tonality)}</span>
+              Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
             </div>
 
             {/* Progression display */}
@@ -330,14 +380,14 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
                   <div key={idx} className="flex items-center gap-3 sm:gap-4">
                     {idx > 0 && <span className="text-gray-600 text-2xl">→</span>}
                     <div
-                      className={`px-4 sm:px-6 py-3 sm:py-4 rounded-2xl text-2xl sm:text-3xl font-extrabold transition-all duration-300
+                      className={`music-notation px-4 sm:px-6 py-3 sm:py-4 rounded-2xl text-2xl sm:text-3xl font-extrabold transition-all duration-300
                         ${isCurrent && flashGreen ? 'bg-green-500/20 text-green-400 border-2 border-green-400 scale-110'
                           : isCurrent ? 'bg-accent/20 text-accent-light border-2 border-accent scale-110'
                           : isPast ? 'bg-bg-700/50 text-gray-600 border-2 border-transparent'
                           : 'bg-bg-700 text-gray-300 border-2 border-transparent'
                         }`}
                     >
-                      {chord.roman}
+                      {displayNotation(chord.roman)}
                     </div>
                   </div>
                 )
@@ -347,16 +397,22 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
             {/* Current chord details */}
             <div className="h-12 flex flex-col items-center gap-1">
               {flashGreen ? (
-                <div className="text-green-400 text-lg font-bold flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="text-green-400 text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  {currentChordLabel} ({currentNoteNames?.join('–')})
+                  <span className="music-notation">{displayNotation(currentChordLabel)}</span> (<span className="music-notation">{currentNoteNames?.map(displayNotation).join('–')}</span>)
+                </div>
+              ) : revealed ? (
+                <div className="text-yellow-400 text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Answer: <span className="music-notation">{displayNotation(currentChordLabel)}</span> (<span className="music-notation">{currentNoteNames?.map(displayNotation).join('–')}</span>)
                 </div>
               ) : (
-                <div className="text-gray-500 text-sm text-center">
-                  Play all chord notes simultaneously on your MIDI keyboard<br/>
-                  or hold Cmd/Ctrl while clicking keys to select multiple notes
+                <div className="text-gray-600 text-xs text-center">
+                  Play all chord notes simultaneously on your MIDI keyboard or hold Cmd/Ctrl while clicking keys
                 </div>
               )}
             </div>
@@ -365,24 +421,28 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
 
         {/* MIDI status warning */}
         {!midiSupported && (
-          <div className="text-yellow-500/70 text-xs text-center max-w-md">
+          <div className="text-yellow-500/60 text-xs text-center max-w-md">
             MIDI input not available on this device. Hold Cmd/Ctrl and tap the on-screen keys to practice chords.
           </div>
         )}
       </div>
 
-      {/* Generate / Restart button */}
-      <div className="flex justify-center px-4 pb-6">
+      {/* Generate / Next button */}
+      <div className="flex justify-center px-4 pb-4 sm:pb-6">
         <button
-          onClick={handleGenerate}
+          onMouseDown={handlePress}
+          onMouseUp={handleRelease}
+          onMouseLeave={handleRelease}
+          onTouchStart={(e) => { e.preventDefault(); handlePress() }}
+          onTouchEnd={(e) => { e.preventDefault(); handleRelease() }}
           className={`px-12 py-4 rounded-2xl text-lg font-extrabold tracking-wide
-            transition-all duration-200 active:scale-95 min-h-[56px] min-w-[200px]
+            transition-all duration-200 active:scale-95 min-h-[56px] min-w-[200px] select-none
             ${hasStarted
             ? 'bg-bg-600 text-white hover:bg-bg-500 border border-bg-500'
             : 'bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/30'
             }`}
         >
-          {hasStarted ? 'RESTART' : 'START'}
+          {hasStarted ? 'NEXT →' : 'START'}
         </button>
       </div>
     </div>

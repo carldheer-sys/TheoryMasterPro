@@ -9,7 +9,7 @@ const DELAY_PRESETS = [
   { value: 3000, label: '3.0s (Slow)' }
 ]
 
-export default function AutoAdvanceDelayModal({ delay, onDelayChange, onClose }) {
+export default function AutoAdvanceDelayModal({ delay, onDelayChange, holdOnCorrect, onHoldOnCorrectChange, onClose }) {
   const currentPreset = DELAY_PRESETS.find(p => p.value === delay)
   const presetValue = currentPreset?.value || delay
 
@@ -31,6 +31,19 @@ export default function AutoAdvanceDelayModal({ delay, onDelayChange, onClose })
         <div className="text-sm font-bold text-accent-light">
           {(delay / 1000).toFixed(1)}s
         </div>
+      </div>
+
+      <div className="flex items-center justify-between p-4 bg-bg-800 rounded-xl">
+        <div>
+          <div className="text-sm text-white font-semibold">Hold on Correct</div>
+          <div className="text-xs text-gray-500 mt-0.5">Wait for all keys to be released before showing the next question</div>
+        </div>
+        <button
+          onClick={() => onHoldOnCorrectChange(!holdOnCorrect)}
+          className={`relative w-12 h-6 rounded-full transition-colors ${holdOnCorrect ? 'bg-accent' : 'bg-bg-600'}`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${holdOnCorrect ? 'translate-x-6' : ''}`} />
+        </button>
       </div>
 
       <button
