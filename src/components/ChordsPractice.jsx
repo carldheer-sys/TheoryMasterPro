@@ -18,6 +18,7 @@ import {
   getKeyDisplay,
   displayNotation
 } from '../utils/musicTheory'
+import Notation from './Notation'
 
 const CHORD_TYPE_OPTIONS = [
   { value: 'triads', label: 'Triads' },
@@ -403,7 +404,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === null ? (currentChord?.isBorrowed ? 'text-blue-400' : 'text-white') : ''}
               `}
             >
-              {displayNotation(currentChord?.roman)}
+              <Notation text={displayNotation(currentChord?.roman)} />
             </div>
             {currentChord?.isBorrowed && (
               <div className={`text-xl sm:text-2xl font-bold transition-all duration-300
@@ -423,7 +424,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  Correct! That was <span className="music-notation">{displayNotation(targetChordLabel)}</span> (<span className="music-notation">{targetNoteNames?.map(displayNotation).join('–')}</span>)
+                  Correct! That was <span className="music-notation"><Notation text={displayNotation(targetChordLabel)} /></span> (<span className="music-notation">{targetNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}<Notation text={displayNotation(n)} /></span>)}</span>)
                 </div>
               )}
               {result === 'revealed' && (
@@ -431,7 +432,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Answer: <span className="music-notation">{displayNotation(targetChordLabel)}</span> (<span className="music-notation">{targetNoteNames?.map(displayNotation).join('–')}</span>)
+                  Answer: <span className="music-notation"><Notation text={displayNotation(targetChordLabel)} /></span> (<span className="music-notation">{targetNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}<Notation text={displayNotation(n)} /></span>)}</span>)
                 </div>
               )}
               {result === 'wrong' && (

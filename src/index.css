@@ -83,5 +83,9 @@ body {
 .music-notation {
   font-family: 'Noto Serif', 'Times New Roman', serif;
   font-feature-settings: 'liga' 1, 'calt' 1;
-  letter-spacing: -0.08em;
+}
+/* Tune spacing around ♭ symbol independently — adjust these two values */
+.music-notation .flat-adjust {
+  margin-left: -0.15em;
+  margin-right: -0.05em;
 }

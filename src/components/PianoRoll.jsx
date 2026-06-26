@@ -7,6 +7,7 @@ import {
   pitchClassToName,
   displayNotation
 } from '../utils/musicTheory'
+import Notation from './Notation'
 
 /**
  * PianoRoll — renders a piano keyboard at the bottom of the screen.
@@ -82,7 +83,7 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
               {/* Note label on C keys */}
               {isC && (
                 <span className={`music-notation text-[10px] font-bold ${isActive ? 'text-white' : 'text-gray-500'}`}>
-                  {displayNotation(midiNoteToName(note))}
+                  <Notation text={displayNotation(midiNoteToName(note))} />
                 </span>
               )}
             </div>

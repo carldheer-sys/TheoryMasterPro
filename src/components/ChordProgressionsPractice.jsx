@@ -14,6 +14,7 @@ import {
   getKeyDisplay,
   displayNotation
 } from '../utils/musicTheory'
+import Notation from './Notation'
 import { DEFAULT_PROGRESSIONS } from '../utils/progressions'
 
 const CHORD_TYPE_OPTIONS = [
@@ -387,7 +388,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
                           : 'bg-bg-700 text-gray-300 border-2 border-transparent'
                         }`}
                     >
-                      {displayNotation(chord.roman)}
+                      <Notation text={displayNotation(chord.roman)} />
                     </div>
                   </div>
                 )
@@ -401,14 +402,14 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="music-notation">{displayNotation(currentChordLabel)}</span> (<span className="music-notation">{currentNoteNames?.map(displayNotation).join('–')}</span>)
+                  <span className="music-notation"><Notation text={displayNotation(currentChordLabel)} /></span> (<span className="music-notation">{currentNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}<Notation text={displayNotation(n)} /></span>)}</span>)
                 </div>
               ) : revealed ? (
                 <div className="text-yellow-400 text-2xl font-bold flex items-center gap-2">
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Answer: <span className="music-notation">{displayNotation(currentChordLabel)}</span> (<span className="music-notation">{currentNoteNames?.map(displayNotation).join('–')}</span>)
+                  Answer: <span className="music-notation"><Notation text={displayNotation(currentChordLabel)} /></span> (<span className="music-notation">{currentNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}<Notation text={displayNotation(n)} /></span>)}</span>)
                 </div>
               ) : (
                 <div className="text-gray-600 text-xs text-center">
