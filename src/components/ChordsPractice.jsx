@@ -406,7 +406,12 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
               {displayNotation(currentChord?.roman)}
             </div>
             {currentChord?.isBorrowed && (
-              <div className="text-blue-400 text-xl sm:text-2xl font-bold">
+              <div className={`text-xl sm:text-2xl font-bold transition-all duration-300
+                ${result === 'correct' ? 'text-green-400' : ''}
+                ${result === 'wrong' ? 'text-keyred' : ''}
+                ${result === 'revealed' ? 'text-yellow-400' : ''}
+                ${result === null ? 'text-blue-400' : ''}
+              `}>
                 ({MODE_LABELS[currentChord.sourceMode]})
               </div>
             )}
