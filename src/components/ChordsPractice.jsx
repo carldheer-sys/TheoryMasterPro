@@ -8,6 +8,7 @@ import {
   getDiatonicTriads,
   getDiatonicSevenths,
   pickRandomChord,
+  pickInterchangeChord,
   tonicToPC,
   getChordPitchClasses,
   getChordLabel,
@@ -24,8 +25,16 @@ const CHORD_TYPE_OPTIONS = [
 ]
 
 const CHROMATICISM_OPTIONS = [
-  { value: 'diatonic', label: 'Diatonic' }
+  { value: 'diatonic', label: 'Diatonic' },
+  { value: 'modal-interchange', label: 'Modal Interchange' }
 ]
+
+const INTERCHANGE_MODE_OPTIONS = [
+  { value: 'major', label: 'Major' },
+  { value: 'minor', label: 'Minor' }
+]
+
+const MODE_LABELS = { major: 'Major', minor: 'Minor' }
 
 /**
  * ChordsPractice — practice identifying diatonic chords by ear.
@@ -41,6 +50,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   // Settings
   const [selectedChordTypes, setSelectedChordTypes] = useState(['triads'])
   const [chromaticism, setChromaticism] = useState('diatonic')
+  const [borrowedModes, setBorrowedModes] = useState([])
+  const [interchangeProbability, setInterchangeProbability] = useState(0.7)
 
   // Practice state
   const [hasStarted, setHasStarted] = useState(false)
@@ -75,16 +86,30 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   }, [tonicPC, currentChord, effectiveTonic, tonality])
 
   // Generate a new chord
+  const pickNextChord = useCallback((lastChordArg) => {
+    if (chromaticism === 'modal-interchange') {
+      return pickInterchangeChord({
+        tonicPC,
+        tonality,
+        selectedChordTypes,
+        borrowedModes,
+        probability: interchangeProbability,
+        lastChord: lastChordArg,
+      })
+    }
+    return pickRandomChord(chords, lastChordArg)
+  }, [chromaticism, tonicPC, tonality, selectedChordTypes, borrowedModes, interchangeProbability, chords])
+
   const handleGenerate = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
-    const pick = pickRandomChord(chords, lastChord)
+    const pick = pickNextChord(lastChord)
     setCurrentChord(pick)
     setLastChord(pick)
     setResult(null)
     setHasStarted(true)
     lastCheckedKeyRef.current = ''
     if (onClearAllNotes) onClearAllNotes()
-  }, [chords, lastChord, ensureAudioContext, onClearAllNotes])
+  }, [pickNextChord, lastChord, ensureAudioContext, onClearAllNotes])
 
   // Watch active notes and check against target chord
   useEffect(() => {
@@ -117,7 +142,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       setScore(s => ({ correct: s.correct + 1, answered: s.answered + 1 }))
       if (!holdOnCorrect) {
         setTimeout(() => {
-          const nextPick = pickRandomChord(chords, currentChord)
+          const nextPick = pickNextChord(currentChord)
           setCurrentChord(nextPick)
           setLastChord(nextPick)
           setResult(null)
@@ -139,14 +164,14 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       }, 600)
     }
     // If subset (all notes are chord tones but not all present) → waiting, do nothing
-  }, [activeNotes, currentChord, targetPCs, result, chords, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, mentalPractice])
+  }, [activeNotes, currentChord, targetPCs, result, pickNextChord, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, mentalPractice])
 
   // Hold-on-correct: when result is 'correct' and all notes released, advance after delay
   useEffect(() => {
     if (!holdOnCorrect || result !== 'correct') return
     if (activeNotes.size > 0) return
     const timer = setTimeout(() => {
-      const nextPick = pickRandomChord(chords, currentChord)
+      const nextPick = pickNextChord(currentChord)
       setCurrentChord(nextPick)
       setLastChord(nextPick)
       setResult(null)
@@ -154,7 +179,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       if (onClearAllNotes) onClearAllNotes()
     }, autoAdvanceDelay)
     return () => clearTimeout(timer)
-  }, [holdOnCorrect, result, activeNotes, currentChord, chords, autoAdvanceDelay, onClearAllNotes])
+  }, [holdOnCorrect, result, activeNotes, currentChord, pickNextChord, autoAdvanceDelay, onClearAllNotes])
 
   // Press-and-hold NEXT: press reveals answer, release advances after delay
   const advanceTimerRef = useRef(null)
@@ -232,9 +257,17 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     onTonicChange(v)
     handleSettingChange()
   }
-  const handleTonalityChange = (v) => { onTonalityChange(v); handleSettingChange() }
+  const handleTonalityChange = (v) => {
+    onTonalityChange(v)
+    setBorrowedModes(prev => prev.filter(m => m !== v))
+    handleSettingChange()
+  }
   const handleChordTypesChange = (v) => { setSelectedChordTypes(v); handleSettingChange() }
   const handleChromaticismChange = (v) => { setChromaticism(v); handleSettingChange() }
+  const handleBorrowedModesChange = (v) => {
+    setBorrowedModes(v.filter(m => m !== tonality))
+    handleSettingChange()
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -275,6 +308,39 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
           onChange={handleChromaticismChange}
           options={CHROMATICISM_OPTIONS}
         />
+
+        {chromaticism === 'modal-interchange' && (
+          <>
+            <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
+
+            {/* Borrowed Modes */}
+            <MultiSelect
+              label="Borrowed Modes"
+              values={[tonality, ...borrowedModes]}
+              onChange={handleBorrowedModesChange}
+              options={INTERCHANGE_MODE_OPTIONS.map(opt => ({
+                ...opt,
+                disabled: opt.value === tonality,
+              }))}
+            />
+
+            {/* Probability slider */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Main: {Math.round(interchangeProbability * 100)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={interchangeProbability}
+                onChange={(e) => setInterchangeProbability(parseFloat(e.target.value))}
+                className="w-32 sm:w-40 h-[44px] cursor-pointer accent-accent"
+              />
+            </div>
+          </>
+        )}
 
         <div className="flex-1" />
 
@@ -334,11 +400,16 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === 'correct' ? 'text-green-400 correct-pulse' : ''}
                 ${result === 'wrong' ? 'text-keyred shake' : ''}
                 ${result === 'revealed' ? 'text-yellow-400 correct-pulse' : ''}
-                ${result === null ? 'text-white' : ''}
+                ${result === null ? (currentChord?.isBorrowed ? 'text-blue-400' : 'text-white') : ''}
               `}
             >
               {displayNotation(currentChord?.roman)}
             </div>
+            {currentChord?.isBorrowed && (
+              <div className="text-blue-400 text-xl sm:text-2xl font-bold">
+                ({MODE_LABELS[currentChord.sourceMode]})
+              </div>
+            )}
 
             {/* Feedback */}
             <div className="h-12 flex flex-col items-center gap-1">

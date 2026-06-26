@@ -37,11 +37,17 @@ export default function MultiSelect({ values = [], onChange, options = [], label
     .filter(o => values.includes(o.value))
     .map(o => o.label)
 
+  const nonDisabledOptions = options.filter(o => !o.disabled)
+  const allNonDisabledSelected = nonDisabledOptions.length > 0 && nonDisabledOptions.every(o => values.includes(o.value))
+  const noNonDisabledSelected = nonDisabledOptions.length > 0 && !nonDisabledOptions.some(o => values.includes(o.value))
+
   const displayText = selectedLabels.length === 0
     ? placeholder
-    : selectedLabels.length === options.filter(o => !o.disabled).length
+    : allNonDisabledSelected
       ? 'All'
-      : selectedLabels.join(', ')
+      : noNonDisabledSelected
+        ? `${selectedLabels.join(', ')} Only`
+        : selectedLabels.join(', ')
 
   return (
     <div className="flex flex-col gap-1.5" ref={ref}>
@@ -83,7 +89,9 @@ export default function MultiSelect({ values = [], onChange, options = [], label
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-left
                     transition-colors
                     ${opt.disabled
-                      ? 'text-gray-600 cursor-not-allowed opacity-50'
+                      ? isSelected
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-gray-600 cursor-not-allowed opacity-50'
                       : 'text-white hover:bg-bg-600 cursor-pointer'
                     }`}
                 >

@@ -588,6 +588,65 @@ export function pickRandomChord(chords, lastChord = null) {
   return candidates[secureRandomInt(candidates.length)]
 }
 
+// Check if a chord's pitch classes match any chord in the main mode's chord list
+export function isChordDiatonic(tonicPC, chord, mainChords) {
+  const chordPCs = getChordPitchClasses(tonicPC, chord)
+  const chordPCSet = new Set(chordPCs)
+  return mainChords.some(mainChord => {
+    const mainPCs = getChordPitchClasses(tonicPC, mainChord)
+    if (mainPCs.length !== chordPCs.length) return false
+    return mainPCs.every(pc => chordPCSet.has(pc))
+  })
+}
+
+// Pick a chord for modal interchange mode.
+// options: { tonicPC, tonality, selectedChordTypes, borrowedModes, probability, lastChord }
+// probability: 0 = only borrowed, 1 = only main (diatonic)
+// Returns a chord object with extra fields: sourceMode, isBorrowed
+export function pickInterchangeChord({ tonicPC, tonality, selectedChordTypes, borrowedModes, probability, lastChord = null }) {
+  // Build main chord list
+  const mainChords = selectedChordTypes.flatMap(type =>
+    type === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality)
+  )
+
+  // Build borrowed chord lists (excluding main mode)
+  const borrowedLists = borrowedModes
+    .filter(mode => mode !== tonality)
+    .map(mode => ({
+      mode,
+      chords: selectedChordTypes.flatMap(type =>
+        type === 'sevenths' ? getDiatonicSevenths(mode) : getDiatonicTriads(mode)
+      ),
+    }))
+    .filter(entry => entry.chords.length > 0)
+
+  // If no borrowed modes available or probability >= 1, pick from main only
+  if (borrowedLists.length === 0 || probability >= 1) {
+    const pick = pickRandomChord(mainChords, lastChord)
+    return { ...pick, sourceMode: tonality, isBorrowed: false }
+  }
+
+  // If probability <= 0, pick from borrowed only
+  if (probability <= 0) {
+    const modeEntry = borrowedLists[secureRandomInt(borrowedLists.length)]
+    const pick = pickRandomChord(modeEntry.chords, lastChord)
+    const diatonic = isChordDiatonic(tonicPC, pick, mainChords)
+    return { ...pick, sourceMode: modeEntry.mode, isBorrowed: !diatonic }
+  }
+
+  // Use probability to choose main vs borrowed
+  const roll = Math.random()
+  if (roll < probability) {
+    const pick = pickRandomChord(mainChords, lastChord)
+    return { ...pick, sourceMode: tonality, isBorrowed: false }
+  } else {
+    const modeEntry = borrowedLists[secureRandomInt(borrowedLists.length)]
+    const pick = pickRandomChord(modeEntry.chords, lastChord)
+    const diatonic = isChordDiatonic(tonicPC, pick, mainChords)
+    return { ...pick, sourceMode: modeEntry.mode, isBorrowed: !diatonic }
+  }
+}
+
 // ─── Piano keyboard helpers ──────────────────────────────────────────────
 
 // Black key positions within an octave (relative to C)
