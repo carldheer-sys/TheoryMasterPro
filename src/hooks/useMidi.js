@@ -175,6 +175,17 @@ export function useMidi({ pianoVolume = 0 } = {}) {
     }
   }, [])
 
+  // Play a note (audio only, no visual on keyboard) — used for answer reveal
+  const playNote = useCallback(async (note) => {
+    if (Tone.getContext().state !== 'running') {
+      await Tone.start().catch(() => {})
+    }
+    if (samplerRef.current && Tone.getContext().state === 'running') {
+      const freq = Tone.Frequency(note, 'midi').toFrequency()
+      samplerRef.current.triggerAttackRelease(freq, 1.5, undefined, 0.8)
+    }
+  }, [])
+
   // Simulate a note-on from a click/touch (for on-screen keyboard)
   const simulateNoteOn = useCallback(async (note) => {
     if (Tone.getContext().state !== 'running') {
@@ -204,5 +215,5 @@ export function useMidi({ pianoVolume = 0 } = {}) {
     })
   }, [])
 
-  return { supported, devices, activeNotes, connectionStatus, clearAllNotes, ensureAudioContext, simulateNoteOn, simulateNoteOff }
+  return { supported, devices, activeNotes, connectionStatus, clearAllNotes, ensureAudioContext, simulateNoteOn, simulateNoteOff, playNote }
 }

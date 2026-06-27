@@ -30,7 +30,7 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, simulateNoteOn }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote }) {
   // Settings
   const [degreeMode, setDegreeMode] = useState('diatonic')
 
@@ -121,8 +121,6 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
   // Press-and-hold NEXT: press reveals answer, release advances after delay
   const advanceTimerRef = useRef(null)
-  const resultRef = useRef(result)
-  useEffect(() => { resultRef.current = result }, [result])
 
   const handlePress = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
@@ -130,28 +128,28 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
     }
-    if (hasStarted && currentDegree && resultRef.current === null) {
+    if (hasStarted && currentDegree && result === null) {
       setResult('revealed')
-      // Play the target note so it's heard and visualized on the keyboard
+      // Play the target note (audio only, no visual on keyboard)
       const noteToPlay = targetPC + 60
-      if (simulateNoteOn) simulateNoteOn(noteToPlay)
+      if (playNote) playNote(noteToPlay)
       setScore(s => ({ ...s, answered: s.answered + 1 }))
-    } else if (hasStarted && resultRef.current === 'revealed') {
+    } else if (hasStarted && result === 'revealed') {
       // Already revealed — press again advances immediately
       handleGenerate()
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentDegree, ensureAudioContext, targetPC, simulateNoteOn])
+  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, targetPC, playNote])
 
   const handleRelease = useCallback(() => {
-    if (hasStarted && resultRef.current === 'revealed') {
+    if (hasStarted && result === 'revealed') {
       advanceTimerRef.current = setTimeout(() => {
         advanceTimerRef.current = null
         handleGenerate()
       }, autoAdvanceDelay)
     }
-  }, [handleGenerate, hasStarted, autoAdvanceDelay])
+  }, [handleGenerate, hasStarted, result, autoAdvanceDelay])
 
   // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {

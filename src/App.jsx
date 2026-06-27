@@ -58,7 +58,7 @@ export default function App() {
   const [progressions, setProgressions] = useState(() => cloneProgressions(DEFAULT_PROGRESSIONS))
 
   // MIDI
-  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, clearAllNotes, setPianoVolume: setMidiPianoVolume } = useMidi({ pianoVolume })
+  const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, playNote, clearAllNotes, setPianoVolume: setMidiPianoVolume } = useMidi({ pianoVolume })
 
   const handleModeChange = useCallback((mode) => {
     setTrainingMode(mode)
@@ -110,7 +110,7 @@ export default function App() {
             tonality={tonality}
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
-            simulateNoteOn={simulateNoteOn}
+            playNote={playNote}
           />
         )}
         {trainingMode === 'chords' && (
@@ -127,7 +127,7 @@ export default function App() {
             tonality={tonality}
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
-            simulateNoteOn={simulateNoteOn}
+            playNote={playNote}
           />
         )}
         {trainingMode === 'chord-progressions' && (
