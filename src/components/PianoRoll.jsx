@@ -19,8 +19,9 @@ import Notation from './Notation'
  *   - range: { start, end } MIDI note numbers
  *   - activeNotes: Set<number> of currently pressed MIDI notes
  *   - targetPCs: array of pitch classes to highlight as target (optional, green outline)
+ *   - revealedNotes: Set<number> of MIDI notes to highlight as revealed answer (yellow)
  */
-export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn, onNoteOff, onClearAll, chordMode = false }) {
+export default function PianoRoll({ range, activeNotes, targetPCs = [], revealedNotes, onNoteOn, onNoteOff, onClearAll, chordMode = false }) {
   const notes = useMemo(() => generateMidiRange(range.start, range.end), [range.start, range.end])
 
   const whiteKeys = useMemo(() => notes.filter(n => !isBlackKey(midiNoteToPC(n))), [notes])
@@ -41,6 +42,7 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
   }, [blackKeys, whiteKeys, whiteKeyWidth, blackKeyWidth])
 
   const targetSet = useMemo(() => new Set(targetPCs), [targetPCs])
+  const revealedSet = useMemo(() => revealedNotes || new Set(), [revealedNotes])
 
   return (
     <div className="relative w-full h-full bg-bg-900 px-2 pb-2 pt-1 select-none">
@@ -50,6 +52,7 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
           const pc = midiNoteToPC(note)
           const isActive = activeNotes.has(note)
           const isTarget = targetSet.has(pc)
+          const isRevealed = revealedSet.has(note)
           const isC = pc === 0
           return (
             <div
@@ -74,15 +77,17 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
                 transition-colors duration-75 cursor-pointer touch-none
                 ${isActive
                   ? 'bg-keyred'
-                  : 'bg-keywhite hover:bg-gray-200'
+                  : isRevealed
+                    ? 'bg-yellow-400'
+                    : 'bg-keywhite hover:bg-gray-200'
                 }
-                ${isTarget && !isActive ? 'ring-2 ring-green-400 ring-inset' : ''}
+                ${isTarget && !isActive && !isRevealed ? 'ring-2 ring-green-400 ring-inset' : ''}
               `}
               style={{ minWidth: 0 }}
             >
               {/* Note label on C keys */}
               {isC && (
-                <span className={`music-notation text-[10px] font-bold ${isActive ? 'text-white' : 'text-gray-500'}`}>
+                <span className={`music-notation text-[10px] font-bold ${isActive || isRevealed ? 'text-white' : 'text-gray-500'}`}>
                   <Notation text={displayNotation(midiNoteToName(note))} />
                 </span>
               )}
@@ -97,6 +102,7 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
           const pc = midiNoteToPC(note)
           const isActive = activeNotes.has(note)
           const isTarget = targetSet.has(pc)
+          const isRevealed = revealedSet.has(note)
           return (
             <div
               key={note}
@@ -119,9 +125,11 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
               className={`absolute rounded-b-md transition-colors duration-75 cursor-pointer touch-none
                 ${isActive
                   ? 'bg-keyred'
-                  : 'bg-keyblack hover:bg-gray-800'
+                  : isRevealed
+                    ? 'bg-yellow-400'
+                    : 'bg-keyblack hover:bg-gray-800'
                 }
-                ${isTarget && !isActive ? 'ring-2 ring-green-400 ring-inset' : ''}
+                ${isTarget && !isActive && !isRevealed ? 'ring-2 ring-green-400 ring-inset' : ''}
               `}
               style={{
                 left: `${leftPct}%`,
@@ -129,7 +137,9 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], onNoteOn
                 height: '100%',
                 boxShadow: isActive
                   ? '0 0 12px rgba(255,59,59,0.5)'
-                  : '0 2px 4px rgba(0,0,0,0.5)'
+                  : isRevealed
+                    ? '0 0 12px rgba(250,204,21,0.5)'
+                    : '0 2px 4px rgba(0,0,0,0.5)'
               }}
             />
           )

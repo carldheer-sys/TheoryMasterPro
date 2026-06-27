@@ -47,7 +47,7 @@ const MODE_LABELS = { major: 'Major', minor: 'Minor' }
  *   4. App checks: all chord pitch classes present, no extra pitch classes
  *   5. Correct → auto-advance after delay
  */
-export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote }) {
+export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote, setRevealedNotes }) {
   // Settings
   const [selectedChordTypes, setSelectedChordTypes] = useState(['triads'])
   const [chromaticism, setChromaticism] = useState('diatonic')
@@ -110,7 +110,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     setHasStarted(true)
     lastCheckedKeyRef.current = ''
     if (onClearAllNotes) onClearAllNotes()
-  }, [pickNextChord, lastChord, ensureAudioContext, onClearAllNotes])
+    if (setRevealedNotes) setRevealedNotes(new Set())
+  }, [pickNextChord, lastChord, ensureAudioContext, onClearAllNotes, setRevealedNotes])
 
   // Watch active notes and check against target chord
   useEffect(() => {
@@ -193,11 +194,15 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     }
     if (hasStarted && currentChord && result === null) {
       setResult('revealed')
-      // Play all chord notes (audio only, no visual on keyboard)
+      // Play all chord notes (audio only) and visualize on keyboard
       const pcs = getChordPitchClasses(tonicPC, currentChord)
+      const notesToReveal = new Set()
       pcs.forEach(pc => {
-        if (playNote) playNote(pc + 60)
+        const midiNote = pc + 60
+        if (playNote) playNote(midiNote)
+        notesToReveal.add(midiNote)
       })
+      if (setRevealedNotes) setRevealedNotes(notesToReveal)
       setScore(s => ({ ...s, answered: s.answered + 1 }))
     } else if (hasStarted && result === 'revealed') {
       // Already revealed — press again advances immediately
@@ -205,7 +210,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext, tonicPC, playNote])
+  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext, tonicPC, playNote, setRevealedNotes])
 
   const handleRelease = useCallback(() => {
     if (hasStarted && result === 'revealed') {

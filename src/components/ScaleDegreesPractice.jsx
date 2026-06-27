@@ -30,7 +30,7 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote, setRevealedNotes }) {
   // Settings
   const [degreeMode, setDegreeMode] = useState('diatonic')
 
@@ -61,7 +61,8 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
     setHasStarted(true)
     checkedNotesRef.current = new Set()
     if (onClearAllNotes) onClearAllNotes()
-  }, [degrees, lastDegree, ensureAudioContext, onClearAllNotes])
+    if (setRevealedNotes) setRevealedNotes(new Set())
+  }, [degrees, lastDegree, ensureAudioContext, onClearAllNotes, setRevealedNotes])
 
   // Watch active notes and check against target
   useEffect(() => {
@@ -130,9 +131,10 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
     }
     if (hasStarted && currentDegree && result === null) {
       setResult('revealed')
-      // Play the target note (audio only, no visual on keyboard)
+      // Play the target note (audio only) and visualize on keyboard
       const noteToPlay = targetPC + 60
       if (playNote) playNote(noteToPlay)
+      if (setRevealedNotes) setRevealedNotes(new Set([noteToPlay]))
       setScore(s => ({ ...s, answered: s.answered + 1 }))
     } else if (hasStarted && result === 'revealed') {
       // Already revealed — press again advances immediately
@@ -140,7 +142,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, targetPC, playNote])
+  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, targetPC, playNote, setRevealedNotes])
 
   const handleRelease = useCallback(() => {
     if (hasStarted && result === 'revealed') {

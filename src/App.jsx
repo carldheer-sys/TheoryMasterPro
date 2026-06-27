@@ -50,6 +50,9 @@ export default function App() {
   // Hold-on-correct: wait for all notes to be released before advancing
   const [holdOnCorrect, setHoldOnCorrect] = useState(true)
 
+  // Revealed notes (for keyboard visualization when answer is shown)
+  const [revealedNotes, setRevealedNotes] = useState(new Set())
+
   // Volumes (dB)
   const [pianoVolume, setPianoVolume] = useState(0)
   const [droneVolume, setDroneVolume] = useState(0)
@@ -111,6 +114,7 @@ export default function App() {
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
             playNote={playNote}
+            setRevealedNotes={setRevealedNotes}
           />
         )}
         {trainingMode === 'chords' && (
@@ -128,6 +132,7 @@ export default function App() {
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
             playNote={playNote}
+            setRevealedNotes={setRevealedNotes}
           />
         )}
         {trainingMode === 'chord-progressions' && (
@@ -173,7 +178,7 @@ export default function App() {
       {/* Piano roll at bottom (hidden in theory-overview and progressions-catalog) */}
       {trainingMode !== 'theory-overview' && trainingMode !== 'progressions-catalog' && (
         <div className="h-[180px] sm:h-[200px] flex-shrink-0 bg-bg-900 border-t border-bg-700">
-          <PianoRoll range={range} activeNotes={activeNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords' || trainingMode === 'chord-progressions'} />
+          <PianoRoll range={range} activeNotes={activeNotes} revealedNotes={revealedNotes} onNoteOn={simulateNoteOn} onNoteOff={simulateNoteOff} onClearAll={clearAllNotes} chordMode={trainingMode === 'chords' || trainingMode === 'chord-progressions'} />
         </div>
       )}
 
