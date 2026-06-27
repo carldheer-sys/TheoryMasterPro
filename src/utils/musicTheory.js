@@ -670,22 +670,8 @@ export const DEFAULT_RANGE = { start: 48, end: 84 }
 
 // ─── Key center display ──────────────────────────────────────────────────
 
-// Convert ASCII accidentals to Unicode music symbols for display
-// 'b' → '♭' (U+266D), '#' → '♯' (U+266F)
-export function displayNotation(str) {
-  if (!str) return str
-  return str
-    .replace(/(?<=[A-G])b/g, '♭')      // Flat after note letter: Db, Eb, Bb
-    .replace(/(?<=[A-G])#/g, '♯')      // Sharp after note letter: C#, F#
-    .replace(/b(?=\d)/g, '♭')          // Flat before digit: b2, b3, b7
-    .replace(/#(?=\d)/g, '♯')          // Sharp before digit: #4
-    .replace(/b(?=[IVXivx])/g, '♭')    // Flat before Roman numeral: bIII, bvii
-    .replace(/#(?=[IVXivx])/g, '♯')    // Sharp before Roman numeral: #ivo
-    .replace(/(?<=7)b/g, '♭')          // Flat after 7 in chord suffix: m7b5
-}
-
 export function getKeyDisplay(tonic, tonality) {
-  return `${displayNotation(tonic)} ${tonality}`
+  return `${tonic} ${tonality}`
 }
 
 // ─── Tonic-based keyboard range ──────────────────────────────────────────

@@ -4,10 +4,8 @@ import {
   isBlackKey,
   midiNoteToPC,
   midiNoteToName,
-  pitchClassToName,
-  displayNotation
+  pitchClassToName
 } from '../utils/musicTheory'
-import Notation from './Notation'
 
 /**
  * PianoRoll — renders a piano keyboard at the bottom of the screen.
@@ -88,7 +86,7 @@ export default function PianoRoll({ range, activeNotes, targetPCs = [], revealed
               {/* Note label on C keys */}
               {isC && (
                 <span className={`music-notation text-[10px] font-bold ${isActive || isRevealed ? 'text-white' : 'text-gray-500'}`}>
-                  <Notation text={displayNotation(midiNoteToName(note))} />
+                  {midiNoteToName(note)}
                 </span>
               )}
             </div>

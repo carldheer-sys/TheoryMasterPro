@@ -10,10 +10,8 @@ import {
   degreeToPitchClass,
   spellNoteName,
   midiNoteToPC,
-  getKeyDisplay,
-  displayNotation
+  getKeyDisplay
 } from '../utils/musicTheory'
-import Notation from './Notation'
 
 const DEGREE_MODES = [
   { value: 'diatonic', label: 'Diatonic' },
@@ -209,7 +207,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
             label="Tonic"
             value={tonic}
             onChange={handleTonicChange}
-            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${displayNotation(effectiveTonic)}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: displayNotation(t) }))]}
+            options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
           />
           <Select
             label="Tonality"
@@ -277,7 +275,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
                 ${result === null ? 'text-white' : ''}
               `}
             >
-              <Notation text={displayNotation(currentDegree?.degree)} />
+              {currentDegree?.degree}
             </div>
 
             {/* Feedback */}
@@ -287,7 +285,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  Correct! That was <span className="music-notation"><Notation text={displayNotation(targetNoteName)} /></span>
+                  Correct! That was <span className="music-notation">{targetNoteName}</span>
                 </div>
               )}
               {result === 'revealed' && (
@@ -295,7 +293,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Answer: <span className="music-notation"><Notation text={displayNotation(targetNoteName)} /></span>
+                  Answer: <span className="music-notation">{targetNoteName}</span>
                 </div>
               )}
               {result === 'wrong' && attemptedNote !== null && (

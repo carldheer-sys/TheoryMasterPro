@@ -15,10 +15,8 @@ import {
   spellNoteName,
   midiNoteToPC,
   generateMidiRange,
-  isBlackKey,
-  displayNotation
+  isBlackKey
 } from '../utils/musicTheory'
-import Notation from './Notation'
 
 const DEGREE_NAMES = {
   '1': 'Tonic', '2': 'Supertonic', 'b3': 'Mediant', '3': 'Mediant',
@@ -175,7 +173,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
           label="Tonic"
           value={tonic}
           onChange={handleTonicChange}
-          options={TONICS.map(t => ({ value: t, label: displayNotation(t) }))}
+          options={TONICS.map(t => ({ value: t, label: t }))}
         />
 
         <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
@@ -301,7 +299,7 @@ function DegreesTable({ degreeData, isRowSelected, onSelectRow }) {
             </th>
             {Array.from({ length: degreeCount }, (_, i) => (
               <th key={i} className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 border-b border-bg-600">
-                {degreeData[0].notes[i] && <Notation text={displayNotation(degreeData[0].notes[i].degree)} />}
+                {degreeData[0].notes[i] && degreeData[0].notes[i].degree}
               </th>
             ))}
           </tr>
@@ -328,8 +326,8 @@ function DegreesTable({ degreeData, isRowSelected, onSelectRow }) {
                     ${isRowSelected(tonality) ? 'text-white' : 'text-gray-300'}
                   `}
                 >
-                  <div className="music-notation font-bold text-sm text-white"><Notation text={displayNotation(note.degree)} /></div>
-                  <div className="music-notation text-xs text-gray-400 mt-0.5"><Notation text={displayNotation(note.name)} /></div>
+                  <div className="music-notation font-bold text-sm text-white">{note.degree}</div>
+                  <div className="music-notation text-xs text-gray-400 mt-0.5">{note.name}</div>
                 </td>
               ))}
             </tr>
@@ -376,9 +374,9 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
                   `}
                 >
                   <div className={`music-notation font-bold text-sm text-white`}>
-                    <Notation text={displayNotation(cell.roman)} />
+                    {cell.roman}
                   </div>
-                  <div className="music-notation text-xs text-gray-400 mt-0.5"><Notation text={displayNotation(cell.label)} /></div>
+                  <div className="music-notation text-xs text-gray-400 mt-0.5">{cell.label}</div>
                 </td>
               ))}
             </tr>

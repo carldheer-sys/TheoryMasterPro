@@ -7,10 +7,8 @@ import {
 } from '../utils/progressions'
 import {
   getDiatonicTriads,
-  getDiatonicSevenths,
-  displayNotation,
+  getDiatonicSevenths
 } from '../utils/musicTheory'
-import Notation from './Notation'
 
 // Tab labels for each section
 const TAB_LABELS = {
@@ -152,7 +150,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     : getDiatonicTriads(activeSection.tonality)
   const chordOptions = [
     { value: '', label: '— select —' },
-    ...chords.map(c => ({ value: c.roman, label: displayNotation(c.roman) })),
+    ...chords.map(c => ({ value: c.roman, label: c.roman })),
   ]
 
   return (
@@ -258,7 +256,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                 {/* Progression label */}
                 <span className="text-sm font-semibold text-gray-200 flex-1">
                   {prog.romans.filter(r => r).length > 0
-                    ? <span className="music-notation"><Notation text={displayNotation(prog.label)} /></span>
+                    ? <span className="music-notation">{prog.label}</span>
                     : <span className="text-gray-600 italic">Empty progression</span>
                   }
                 </span>
@@ -316,7 +314,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                       </>
                     ) : (
                       <span className="music-notation px-3 py-2 rounded-lg bg-bg-700 text-white text-xs font-semibold min-w-[80px] text-center">
-                        {roman ? <Notation text={displayNotation(roman)} /> : '—'}
+                        {roman ? roman : '—'}
                       </span>
                     )}
                   </div>
