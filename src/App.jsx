@@ -150,6 +150,8 @@ export default function App() {
             tonality={tonality}
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
+            playNote={playNote}
+            setRevealedNotes={setRevealedNotes}
           />
         )}
         {trainingMode === 'progressions-catalog' && (

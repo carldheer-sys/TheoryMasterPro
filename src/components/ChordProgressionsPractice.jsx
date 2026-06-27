@@ -51,7 +51,7 @@ function generateRandomProgression(chords, count) {
   return result
 }
 
-export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, progressions = DEFAULT_PROGRESSIONS, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange }) {
+export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, progressions = DEFAULT_PROGRESSIONS, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote, setRevealedNotes }) {
   // Settings
   const [chordType, setChordType] = useState('triads')
   const [chromaticism, setChromaticism] = useState('diatonic')
@@ -120,7 +120,8 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     setHasStarted(true)
     lastCheckedKeyRef.current = ''
     if (onClearAllNotes) onClearAllNotes()
-  }, [ensureAudioContext, progressionKey, randomCount, diatonicChords, availableProgressions, onClearAllNotes])
+    if (setRevealedNotes) setRevealedNotes(new Set())
+  }, [ensureAudioContext, progressionKey, randomCount, diatonicChords, availableProgressions, onClearAllNotes, setRevealedNotes])
 
   // Watch active notes and check against current chord
   useEffect(() => {
@@ -153,6 +154,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
           setCurrentIdx(idx => (idx + 1) % progression.length)
           setRevealed(false)
           lastCheckedKeyRef.current = ''
+          if (setRevealedNotes) setRevealedNotes(new Set())
         }, autoAdvanceDelay)
       }
       // If holdOnCorrect, the release-watcher effect will handle advancing
@@ -169,9 +171,10 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
       setRevealed(false)
       lastCheckedKeyRef.current = ''
       if (onClearAllNotes) onClearAllNotes()
+      if (setRevealedNotes) setRevealedNotes(new Set())
     }, autoAdvanceDelay)
     return () => clearTimeout(timer)
-  }, [holdOnCorrect, flashGreen, activeNotes, progression.length, autoAdvanceDelay, onClearAllNotes])
+  }, [holdOnCorrect, flashGreen, activeNotes, progression.length, autoAdvanceDelay, onClearAllNotes, setRevealedNotes])
 
   // Press-and-hold NEXT: press reveals answer, release advances after delay
   const advanceTimerRef = useRef(null)
@@ -184,10 +187,20 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     }
     if (hasStarted && !flashGreen && !revealed) {
       setRevealed(true)
+      // Play all chord notes (audio only) and visualize on keyboard
+      if (currentChord && targetPCs) {
+        const notesToReveal = new Set()
+        targetPCs.forEach(pc => {
+          const midiNote = pc + 60
+          if (playNote) playNote(midiNote)
+          notesToReveal.add(midiNote)
+        })
+        if (setRevealedNotes) setRevealedNotes(notesToReveal)
+      }
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, flashGreen, revealed, ensureAudioContext])
+  }, [handleGenerate, hasStarted, flashGreen, revealed, ensureAudioContext, currentChord, targetPCs, playNote, setRevealedNotes])
 
   const handleRelease = useCallback(() => {
     if (hasStarted && (revealed || flashGreen)) {
@@ -198,9 +211,10 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
         setCurrentIdx(idx => (idx + 1) % progression.length)
         lastCheckedKeyRef.current = ''
         if (onClearAllNotes) onClearAllNotes()
+        if (setRevealedNotes) setRevealedNotes(new Set())
       }, autoAdvanceDelay)
     }
-  }, [hasStarted, revealed, flashGreen, progression.length, autoAdvanceDelay, onClearAllNotes])
+  }, [hasStarted, revealed, flashGreen, progression.length, autoAdvanceDelay, onClearAllNotes, setRevealedNotes])
 
   // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
