@@ -49,6 +49,7 @@ import {
   getChordRootName,
   getChordLabel,
   pickRandomChord,
+  pickInterchangeChord,
   getTonicBasedRange
 } from './musicTheory.js'
 
@@ -2073,8 +2074,112 @@ test('140. Tonic-based range: all 12 tonics produce valid 3-octave ranges', () =
   })
 })
 
-// ── Summary ──────────────────────────────────────────────────────────────
+// ── 141. Borrowed chord enharmonic spelling (modal interchange) ─────────
 
+test('141. Borrowed chord from C minor in C major uses flat spelling', () => {
+  // C major is the main key, chord borrowed from C minor
+  // C minor triad: C-Eb-G (not C-D#-G)
+  // C minor's relative major is Eb → flat key → use flats
+  const tonicPC = tonicToPC('C')
+
+  // Get C minor triad chords
+  const minorChords = getDiatonicTriads('minor')
+  const cMinorChord = minorChords.find(c => c.roman === 'i')
+  assert(cMinorChord, 'Should find i chord in minor')
+
+  const pcs = getChordPitchClasses(tonicPC, cMinorChord)
+  const noteNames = pcs.map(pc => spellNoteName(pc, 'C', 'minor'))
+  assert(noteNames.includes('C'), `C minor triad should include C, got ${noteNames}`)
+  assert(noteNames.includes('Eb'), `C minor triad should include Eb (not D#), got ${noteNames}`)
+  assert(noteNames.includes('G'), `C minor triad should include G, got ${noteNames}`)
+  assert(!noteNames.includes('D#'), `C minor triad should NOT include D#, got ${noteNames}`)
+})
+
+test('141b. Borrowed chord from C minor in C major — chord label uses flat spelling', () => {
+  const tonicPC = tonicToPC('C')
+  const minorChords = getDiatonicTriads('minor')
+  const cMinorChord = minorChords.find(c => c.roman === 'i')
+
+  // Spell using sourceMode (minor) — should be "Cm" with Eb in notes
+  const label = getChordLabel(tonicPC, cMinorChord, 'C', 'minor')
+  assertEqual(label, 'Cm', 'C minor triad label should be "Cm"')
+
+  // The root is C (natural, no conversion needed)
+  // But the third should be spelled Eb when using minor mode
+  const pcs = getChordPitchClasses(tonicPC, cMinorChord)
+  const thirdPC = pcs.find(pc => pc === 3) // Eb/D# pitch class
+  assertEqual(spellNoteName(thirdPC, 'C', 'minor'), 'Eb', 'Third of C minor should be Eb')
+  assertEqual(spellNoteName(thirdPC, 'C', 'major'), 'D#', 'Third in C major context should be D# (sharp key default)')
+})
+
+test('141c. Borrowed chord from E minor in E major uses sharp spelling', () => {
+  // E major is a sharp key, E minor's relative major is G (also sharp)
+  // E minor triad: E-G-B (G is natural, no conversion needed)
+  const tonicPC = tonicToPC('E')
+  const minorChords = getDiatonicTriads('minor')
+  const eMinorChord = minorChords.find(c => c.roman === 'i')
+
+  const pcs = getChordPitchClasses(tonicPC, eMinorChord)
+  const noteNames = pcs.map(pc => spellNoteName(pc, 'E', 'minor'))
+  assert(noteNames.includes('E'), `E minor triad should include E, got ${noteNames}`)
+  assert(noteNames.includes('G'), `E minor triad should include G, got ${noteNames}`)
+  assert(noteNames.includes('B'), `E minor triad should include B, got ${noteNames}`)
+})
+
+test('141d. Borrowed chord from F minor in F major uses flat spelling', () => {
+  // F major is a flat key (1 flat: Bb)
+  // F minor's relative major is Ab (flat key)
+  // F minor triad: F-Ab-C
+  const tonicPC = tonicToPC('F')
+  const minorChords = getDiatonicTriads('minor')
+  const fMinorChord = minorChords.find(c => c.roman === 'i')
+
+  const pcs = getChordPitchClasses(tonicPC, fMinorChord)
+  const noteNames = pcs.map(pc => spellNoteName(pc, 'F', 'minor'))
+  assert(noteNames.includes('F'), `F minor triad should include F, got ${noteNames}`)
+  assert(noteNames.includes('Ab'), `F minor triad should include Ab (not G#), got ${noteNames}`)
+  assert(noteNames.includes('C'), `F minor triad should include C, got ${noteNames}`)
+  assert(!noteNames.includes('G#'), `F minor triad should NOT include G#, got ${noteNames}`)
+})
+
+test('141e. pickInterchangeChord returns sourceMode for borrowed chords', () => {
+  const tonicPC = tonicToPC('C')
+  // Force borrowed only (probability = 0)
+  const chord = pickInterchangeChord({
+    tonicPC,
+    tonality: 'major',
+    selectedChordTypes: ['triads'],
+    borrowedModes: ['minor'],
+    probability: 0,
+  })
+  assert(chord.sourceMode === 'minor', `Borrowed chord should have sourceMode='minor', got ${chord.sourceMode}`)
+  assert(chord.isBorrowed !== undefined, 'Borrowed chord should have isBorrowed field')
+})
+
+test('141f. All flat-key minor tonics spell b3 as flat when borrowed', () => {
+  // For each flat minor key, the b3 should be spelled with a flat
+  const flatMinorKeys = ['D', 'G', 'C', 'F', 'Bb', 'Eb', 'Ab']
+  for (const tonic of flatMinorKeys) {
+    const tonicPC = tonicToPC(tonic)
+    const b3PC = (tonicPC + 3) % 12
+    const spelled = spellNoteName(b3PC, tonic, 'minor')
+    assert(!spelled.includes('#'), `${tonic} minor: b3 should not use sharps, got ${spelled}`)
+  }
+})
+
+test('141g. All sharp-key minor tonics spell b3 correctly when borrowed', () => {
+  // For each sharp minor key, the b3 should be spelled with a sharp or natural
+  const sharpMinorKeys = ['A', 'E', 'B', 'F#', 'C#']
+  for (const tonic of sharpMinorKeys) {
+    const tonicPC = tonicToPC(tonic)
+    const b3PC = (tonicPC + 3) % 12
+    const spelled = spellNoteName(b3PC, tonic, 'minor')
+    // Sharp keys should not use flats
+    assert(!spelled.includes('b') || spelled === tonic + 'b', `${tonic} minor: b3 should not use flats in sharp key, got ${spelled}`)
+  }
+})
+
+// ── Summary ──────────────────────────────────────────────────────────────
 console.log('\n═══════════════════════════════════════════════════════════')
 console.log(`  Results: ${passed} passed, ${failed} failed`)
 if (failures.length > 0) {

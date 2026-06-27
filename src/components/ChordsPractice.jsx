@@ -78,12 +78,14 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   }, [tonicPC, currentChord])
   const targetChordLabel = useMemo(() => {
     if (!currentChord) return null
-    return getChordLabel(tonicPC, currentChord, effectiveTonic, tonality)
+    const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
+    return getChordLabel(tonicPC, currentChord, effectiveTonic, spellMode)
   }, [tonicPC, currentChord, effectiveTonic, tonality])
   const targetNoteNames = useMemo(() => {
     if (!currentChord) return null
+    const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
     const pcs = getChordPitchClasses(tonicPC, currentChord)
-    return pcs.map(pc => spellNoteName(pc, effectiveTonic, tonality))
+    return pcs.map(pc => spellNoteName(pc, effectiveTonic, spellMode))
   }, [tonicPC, currentChord, effectiveTonic, tonality])
 
   // Generate a new chord
