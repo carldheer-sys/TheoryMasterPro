@@ -45,13 +45,10 @@ export default function App() {
   const [range, setRange] = useState(DEFAULT_RANGE)
 
   // Auto-advance delay (ms)
-  const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(600)
+  const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(300)
 
   // Hold-on-correct: wait for all notes to be released before advancing
   const [holdOnCorrect, setHoldOnCorrect] = useState(true)
-
-  // Mental practice mode (toggled within Scale Degrees and Chords)
-  const [mentalPractice, setMentalPractice] = useState(false)
 
   // Volumes (dB)
   const [pianoVolume, setPianoVolume] = useState(0)
@@ -113,8 +110,6 @@ export default function App() {
             tonality={tonality}
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
-            mentalPractice={mentalPractice}
-            onMentalPracticeChange={setMentalPractice}
             simulateNoteOn={simulateNoteOn}
           />
         )}
@@ -132,8 +127,6 @@ export default function App() {
             tonality={tonality}
             onTonicChange={handleTonicChange}
             onTonalityChange={handleTonalityChange}
-            mentalPractice={mentalPractice}
-            onMentalPracticeChange={setMentalPractice}
             simulateNoteOn={simulateNoteOn}
           />
         )}
@@ -196,7 +189,7 @@ export default function App() {
       )}
 
       {activeModal === 'auto-advance-delay' && (
-        <Modal title="Auto-Advance Delay" onClose={() => setActiveModal(null)}>
+        <Modal title="Pace" onClose={() => setActiveModal(null)}>
           <AutoAdvanceDelayModal
             delay={autoAdvanceDelay}
             onDelayChange={setAutoAdvanceDelay}

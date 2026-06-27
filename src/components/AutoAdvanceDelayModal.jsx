@@ -1,8 +1,9 @@
 import Select from './Select'
 
 const DELAY_PRESETS = [
+  { value: 0, label: '0s (Instant)' },
   { value: 300, label: '0.3s (Fast)' },
-  { value: 600, label: '0.6s (Default)' },
+  { value: 600, label: '0.6s' },
   { value: 1000, label: '1.0s' },
   { value: 1200, label: '1.2s' },
   { value: 2000, label: '2.0s' },
@@ -16,7 +17,7 @@ export default function AutoAdvanceDelayModal({ delay, onDelayChange, holdOnCorr
   return (
     <div className="space-y-5">
       <p className="text-gray-400 text-sm">
-        Choose how long the correct answer is displayed before automatically advancing to the next scale degree.
+        Choose how long the correct answer is displayed before automatically advancing to the next question.
       </p>
 
       <Select

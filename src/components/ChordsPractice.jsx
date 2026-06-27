@@ -47,7 +47,7 @@ const MODE_LABELS = { major: 'Major', minor: 'Minor' }
  *   4. App checks: all chord pitch classes present, no extra pitch classes
  *   5. Correct → auto-advance after delay
  */
-export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, mentalPractice = false, onMentalPracticeChange, simulateNoteOn }) {
+export default function ChordsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, simulateNoteOn }) {
   // Settings
   const [selectedChordTypes, setSelectedChordTypes] = useState(['triads'])
   const [chromaticism, setChromaticism] = useState('diatonic')
@@ -114,7 +114,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
   // Watch active notes and check against target chord
   useEffect(() => {
-    if (!currentChord || !targetPCs || result === 'correct' || result === 'revealed' || mentalPractice) return
+    if (!currentChord || !targetPCs || result === 'correct' || result === 'revealed') return
 
     // Extract unique pitch classes from active notes
     const activePCs = new Set()
@@ -165,7 +165,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       }, 600)
     }
     // If subset (all notes are chord tones but not all present) → waiting, do nothing
-  }, [activeNotes, currentChord, targetPCs, result, pickNextChord, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, mentalPractice])
+  }, [activeNotes, currentChord, targetPCs, result, pickNextChord, autoAdvanceDelay, holdOnCorrect, onClearAllNotes])
 
   // Hold-on-correct: when result is 'correct' and all notes released, advance after delay
   useEffect(() => {
@@ -193,32 +193,25 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     }
     if (hasStarted && currentChord && result === null) {
       setResult('revealed')
-      if (mentalPractice) {
-        // Play all chord notes
-        const pcs = getChordPitchClasses(tonicPC, currentChord)
-        pcs.forEach(pc => {
-          if (simulateNoteOn) simulateNoteOn(pc + 60)
-        })
-      } else {
-        setScore(s => ({ ...s, answered: s.answered + 1 }))
-      }
+      // Play all chord notes so they're heard and visualized on the keyboard
+      const pcs = getChordPitchClasses(tonicPC, currentChord)
+      pcs.forEach(pc => {
+        if (simulateNoteOn) simulateNoteOn(pc + 60)
+      })
+      setScore(s => ({ ...s, answered: s.answered + 1 }))
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext, mentalPractice, tonicPC, simulateNoteOn])
+  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext, tonicPC, simulateNoteOn])
 
   const handleRelease = useCallback(() => {
     if (hasStarted && result === 'revealed') {
-      if (mentalPractice) {
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
         handleGenerate()
-      } else {
-        advanceTimerRef.current = setTimeout(() => {
-          advanceTimerRef.current = null
-          handleGenerate()
-        }, autoAdvanceDelay)
-      }
+      }, autoAdvanceDelay)
     }
-  }, [handleGenerate, hasStarted, result, autoAdvanceDelay, mentalPractice])
+  }, [handleGenerate, hasStarted, result, autoAdvanceDelay])
 
   // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
@@ -348,21 +341,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         {/* Drone toggle */}
         <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
 
-        {/* Mental Practice toggle */}
-        <button
-          onClick={() => onMentalPracticeChange(!mentalPractice)}
-          className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors min-h-[40px] sm:min-h-[44px] whitespace-nowrap
-            ${mentalPractice
-              ? 'bg-accent text-white'
-              : 'bg-bg-700 text-gray-300 hover:bg-bg-600 hover:text-white'
-            }`}
-        >
-          <span className="hidden sm:inline">Mental Practice</span>
-          <span className="sm:hidden">Mental</span>
-        </button>
-
-        {/* Score display (hidden in mental practice mode) */}
-        {hasStarted && !mentalPractice && (
+        {/* Score display */}
+        {hasStarted && (
           <div className="flex items-center gap-4 pb-2.5">
             <div className="text-sm text-gray-400">
               Score: <span className="text-white font-bold">{score.correct}</span>
@@ -445,15 +425,15 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
               )}
               {result === null && hasStarted && (
                 <div className="text-gray-600 text-xs text-center">
-                  {mentalPractice ? 'Press and hold NEXT to hear the chord' : 'Play all chord notes simultaneously on your MIDI keyboard or hold Cmd/Ctrl while clicking keys'}
+                  Play all chord notes simultaneously on your MIDI keyboard or hold Cmd/Ctrl while clicking keys
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* MIDI status warning for unsupported devices (hidden in mental practice) */}
-        {!midiSupported && !mentalPractice && (
+        {/* MIDI status warning for unsupported devices */}
+        {!midiSupported && (
           <div className="text-yellow-500/60 text-xs text-center max-w-md">
             MIDI input not available on this device. Hold Cmd/Ctrl and tap the on-screen keys to practice chords.
           </div>

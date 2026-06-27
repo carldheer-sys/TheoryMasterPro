@@ -10,7 +10,7 @@ const PRACTICE_MODES = [
 
 const SETTINGS_ITEMS = [
   { label: 'Keyboard Range', value: 'keyboard-range', locked: false },
-  { label: 'Auto-Advance Delay', value: 'auto-advance-delay', locked: false },
+  { label: 'Pace', value: 'auto-advance-delay', locked: false },
   { label: 'Volume', value: 'volume', locked: false },
 ]
 

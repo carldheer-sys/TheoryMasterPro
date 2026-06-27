@@ -30,7 +30,7 @@ const DEGREE_MODES = [
  *   4. App checks pitch class match → shows correct/wrong feedback
  *   5. Click NEXT → new random degree
  */
-export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 1200, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, mentalPractice = false, onMentalPracticeChange, simulateNoteOn }) {
+export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 300, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, simulateNoteOn }) {
   // Settings
   const [degreeMode, setDegreeMode] = useState('diatonic')
 
@@ -65,7 +65,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
   // Watch active notes and check against target
   useEffect(() => {
-    if (!currentDegree || result === 'correct' || mentalPractice) return
+    if (!currentDegree || result === 'correct') return
 
     // Check each active note
     for (const note of activeNotes) {
@@ -100,7 +100,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         }, 300)
       }
     }
-  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, mentalPractice])
+  }, [activeNotes, currentDegree, targetPC, result, degrees, autoAdvanceDelay, holdOnCorrect, onClearAllNotes])
 
   // Hold-on-correct: when result is 'correct' and all notes released, advance after delay
   useEffect(() => {
@@ -130,31 +130,23 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
     }
     if (hasStarted && currentDegree && result === null) {
       setResult('revealed')
-      if (mentalPractice) {
-        // Play the target note
-        const noteToPlay = targetPC + 60
-        if (simulateNoteOn) simulateNoteOn(noteToPlay)
-      } else {
-        setScore(s => ({ ...s, answered: s.answered + 1 }))
-      }
+      // Play the target note so it's heard and visualized on the keyboard
+      const noteToPlay = targetPC + 60
+      if (simulateNoteOn) simulateNoteOn(noteToPlay)
+      setScore(s => ({ ...s, answered: s.answered + 1 }))
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, mentalPractice, targetPC, simulateNoteOn])
+  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, targetPC, simulateNoteOn])
 
   const handleRelease = useCallback(() => {
     if (hasStarted && result === 'revealed') {
-      if (mentalPractice) {
-        // In mental practice, advance immediately on release
+      advanceTimerRef.current = setTimeout(() => {
+        advanceTimerRef.current = null
         handleGenerate()
-      } else {
-        advanceTimerRef.current = setTimeout(() => {
-          advanceTimerRef.current = null
-          handleGenerate()
-        }, autoAdvanceDelay)
-      }
+      }, autoAdvanceDelay)
     }
-  }, [handleGenerate, hasStarted, result, autoAdvanceDelay, mentalPractice])
+  }, [handleGenerate, hasStarted, result, autoAdvanceDelay])
 
   // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
@@ -237,21 +229,8 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
         {/* Drone toggle */}
         <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
 
-        {/* Mental Practice toggle */}
-        <button
-          onClick={() => onMentalPracticeChange(!mentalPractice)}
-          className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors min-h-[40px] sm:min-h-[44px] whitespace-nowrap
-            ${mentalPractice
-              ? 'bg-accent text-white'
-              : 'bg-bg-700 text-gray-300 hover:bg-bg-600 hover:text-white'
-            }`}
-        >
-          <span className="hidden sm:inline">Mental Practice</span>
-          <span className="sm:hidden">Mental</span>
-        </button>
-
-        {/* Score display (hidden in mental practice mode) */}
-        {hasStarted && !mentalPractice && (
+        {/* Score display */}
+        {hasStarted && (
           <div className="flex items-center gap-4 pb-2.5">
             <div className="text-sm text-gray-400">
               Score: <span className="text-white font-bold">{score.correct}</span>
@@ -324,15 +303,15 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
               )}
               {result === null && hasStarted && (
                 <div className="text-gray-600 text-xs">
-                  {mentalPractice ? 'Press and hold NEXT to hear the answer' : 'Play the note on your MIDI keyboard or tap a key'}
+                  Play the note on your MIDI keyboard or tap a key
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* MIDI status warning for unsupported devices (hidden in mental practice) */}
-        {!midiSupported && !mentalPractice && (
+        {/* MIDI status warning for unsupported devices */}
+        {!midiSupported && (
           <div className="text-yellow-500/60 text-xs text-center max-w-md">
             MIDI input not available on this device. Tap the on-screen keys to practice.
           </div>
