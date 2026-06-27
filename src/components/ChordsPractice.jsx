@@ -184,6 +184,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
   // Press-and-hold NEXT: press reveals answer, release advances after delay
   const advanceTimerRef = useRef(null)
+  const resultRef = useRef(result)
+  useEffect(() => { resultRef.current = result }, [result])
 
   const handlePress = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
@@ -191,7 +193,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
     }
-    if (hasStarted && currentChord && result === null) {
+    if (hasStarted && currentChord && resultRef.current === null) {
       setResult('revealed')
       // Play all chord notes so they're heard and visualized on the keyboard
       const pcs = getChordPitchClasses(tonicPC, currentChord)
@@ -199,19 +201,22 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         if (simulateNoteOn) simulateNoteOn(pc + 60)
       })
       setScore(s => ({ ...s, answered: s.answered + 1 }))
+    } else if (hasStarted && resultRef.current === 'revealed') {
+      // Already revealed — press again advances immediately
+      handleGenerate()
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentChord, result, ensureAudioContext, tonicPC, simulateNoteOn])
+  }, [handleGenerate, hasStarted, currentChord, ensureAudioContext, tonicPC, simulateNoteOn])
 
   const handleRelease = useCallback(() => {
-    if (hasStarted && result === 'revealed') {
+    if (hasStarted && resultRef.current === 'revealed') {
       advanceTimerRef.current = setTimeout(() => {
         advanceTimerRef.current = null
         handleGenerate()
       }, autoAdvanceDelay)
     }
-  }, [handleGenerate, hasStarted, result, autoAdvanceDelay])
+  }, [handleGenerate, hasStarted, autoAdvanceDelay])
 
   // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {

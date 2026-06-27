@@ -121,6 +121,8 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
   // Press-and-hold NEXT: press reveals answer, release advances after delay
   const advanceTimerRef = useRef(null)
+  const resultRef = useRef(result)
+  useEffect(() => { resultRef.current = result }, [result])
 
   const handlePress = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
@@ -128,25 +130,28 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
     }
-    if (hasStarted && currentDegree && result === null) {
+    if (hasStarted && currentDegree && resultRef.current === null) {
       setResult('revealed')
       // Play the target note so it's heard and visualized on the keyboard
       const noteToPlay = targetPC + 60
       if (simulateNoteOn) simulateNoteOn(noteToPlay)
       setScore(s => ({ ...s, answered: s.answered + 1 }))
+    } else if (hasStarted && resultRef.current === 'revealed') {
+      // Already revealed — press again advances immediately
+      handleGenerate()
     } else if (!hasStarted) {
       handleGenerate()
     }
-  }, [handleGenerate, hasStarted, currentDegree, result, ensureAudioContext, targetPC, simulateNoteOn])
+  }, [handleGenerate, hasStarted, currentDegree, ensureAudioContext, targetPC, simulateNoteOn])
 
   const handleRelease = useCallback(() => {
-    if (hasStarted && result === 'revealed') {
+    if (hasStarted && resultRef.current === 'revealed') {
       advanceTimerRef.current = setTimeout(() => {
         advanceTimerRef.current = null
         handleGenerate()
       }, autoAdvanceDelay)
     }
-  }, [handleGenerate, hasStarted, result, autoAdvanceDelay])
+  }, [handleGenerate, hasStarted, autoAdvanceDelay])
 
   // Spacebar behavior: press-and-hold same as NEXT button
   useEffect(() => {
