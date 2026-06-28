@@ -647,6 +647,108 @@ export function pickInterchangeChord({ tonicPC, tonality, selectedChordTypes, bo
   }
 }
 
+// ─── Secondary chords (secondary dominants & secondary leading-tone chords) ──
+
+// Each secondary chord has:
+//   id, label, type ('dominant' | 'leading-tone'),
+//   targetRoman, targetSemitones (semitones of the target chord root from tonic),
+//   semitones (semitones of the secondary chord root from tonic),
+//   intervals, quality,
+//   equivalentRoman (the alternative spelling based on an equivalent root),
+//   applicableTonality ('major' | 'minor')
+//
+// Secondary dominants V7/X: root = (target + 7) % 12, intervals = [0,4,7,10], quality = dominant7
+// Secondary leading-tone chords viio7/X: root = (target - 1 + 12) % 12, intervals = [0,3,6,9], quality = diminished7
+//
+// Equivalent spelling rules (see MUSIC_THEORY_NAMING_CONVENTIONS.md §9):
+//   - For secondary dominants, the equivalent root is on a diatonic degree (perfect 5th above a diatonic degree is also diatonic).
+//     The equivalent uses uppercase Roman + '7' (dominant 7th quality).
+//   - For secondary leading-tone chords, the equivalent root is 1 semitone below the target.
+//     If the root is on a chromatic degree, prefer # of the nearest lower diatonic degree (not b of the upper).
+//     The equivalent uses lowercase Roman + 'o7' (diminished 7th quality).
+//   - In minor, if the root is 1 semitone above b3, the equivalent uses natural III (removing the flat).
+
+export const SECONDARY_CHORDS = [
+  // ── Major Key — Secondary Dominants ──
+  { id: 'V7/V',    label: 'V7/V',    type: 'dominant',      targetRoman: 'V',  targetSemitones: 7,  semitones: 2,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'II7',   applicableTonality: 'major' },
+  { id: 'V7/ii',   label: 'V7/ii',   type: 'dominant',      targetRoman: 'ii', targetSemitones: 2,  semitones: 9,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'VI7',   applicableTonality: 'major' },
+  { id: 'V7/iii',  label: 'V7/iii',  type: 'dominant',      targetRoman: 'iii',targetSemitones: 4,  semitones: 11, intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'VII7',  applicableTonality: 'major' },
+  { id: 'V7/vi',   label: 'V7/vi',   type: 'dominant',      targetRoman: 'vi', targetSemitones: 9,  semitones: 4,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'III7',  applicableTonality: 'major' },
+  { id: 'V7/IV',   label: 'V7/IV',   type: 'dominant',      targetRoman: 'IV', targetSemitones: 5,  semitones: 0,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'I7',    applicableTonality: 'major' },
+  // ── Major Key — Secondary Leading-Tone Chords ──
+  { id: 'viio7/V',  label: 'viio7/V',  type: 'leading-tone', targetRoman: 'V',  targetSemitones: 7,  semitones: 6, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: '#ivo7', applicableTonality: 'major' },
+  { id: 'viio7/ii',  label: 'viio7/ii',  type: 'leading-tone', targetRoman: 'ii', targetSemitones: 2,  semitones: 1, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: '#io7',  applicableTonality: 'major' },
+  { id: 'viio7/iii', label: 'viio7/iii', type: 'leading-tone', targetRoman: 'iii',targetSemitones: 4,  semitones: 3, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: '#iio7', applicableTonality: 'major' },
+  { id: 'viio7/vi',  label: 'viio7/vi',  type: 'leading-tone', targetRoman: 'vi', targetSemitones: 9,  semitones: 8, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: '#vo7',  applicableTonality: 'major' },
+  // ── Minor Key — Secondary Dominants ──
+  { id: 'V7/bIII', label: 'V7/bIII', type: 'dominant',      targetRoman: 'bIII', targetSemitones: 3,  semitones: 10, intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'bVII7', applicableTonality: 'minor' },
+  { id: 'V7/bVI',  label: 'V7/bVI',  type: 'dominant',      targetRoman: 'bVI',  targetSemitones: 8,  semitones: 3,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'bIII7', applicableTonality: 'minor' },
+  { id: 'V7/iv',   label: 'V7/iv',   type: 'dominant',      targetRoman: 'iv',   targetSemitones: 5,  semitones: 0,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'I7',    applicableTonality: 'minor' },
+  // ── Minor Key — Secondary Leading-Tone Chords ──
+  { id: 'viio7/bIII', label: 'viio7/bIII', type: 'leading-tone', targetRoman: 'bIII', targetSemitones: 3, semitones: 2, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: 'iio7',  applicableTonality: 'minor' },
+  { id: 'viio7/bVI',  label: 'viio7/bVI',  type: 'leading-tone', targetRoman: 'bVI',  targetSemitones: 8, semitones: 7, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: 'vo7',   applicableTonality: 'minor' },
+  { id: 'viio7/iv',   label: 'viio7/iv',   type: 'leading-tone', targetRoman: 'iv',   targetSemitones: 5, semitones: 4, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: 'iiio7', applicableTonality: 'minor' },
+]
+
+// Check if a secondary chord's target is diatonic to the given tonality
+export function isSecondaryChordAvailable(chord, tonality) {
+  if (chord.applicableTonality !== tonality) return false
+  const diatonicSet = tonality === 'minor' ? DIATONIC_MINOR : DIATONIC_MAJOR
+  return diatonicSet.has(chord.targetSemitones)
+}
+
+// Get the available secondary chords for a given tonality
+export function getAvailableSecondaryChords(tonality) {
+  return SECONDARY_CHORDS.filter(sc => isSecondaryChordAvailable(sc, tonality))
+}
+
+// Find the diatonic target chord for a secondary chord
+export function getSecondaryChordTarget(chord, tonality, selectedChordTypes) {
+  const chords = selectedChordTypes.flatMap(type =>
+    type === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality)
+  )
+  const matches = chords.filter(c => c.semitones === chord.targetSemitones)
+  if (matches.length === 0) return null
+  if (matches.length === 1) return matches[0]
+  return matches[secureRandomInt(matches.length)]
+}
+
+// Pick a chord for secondary chords mode.
+// options: { tonicPC, tonality, selectedChordTypes, selectedSecondaryChords, probability, lastChord }
+// probability: 0 = only secondary, 1 = only diatonic
+// Returns a chord object with extra fields: isSecondary, sourceMode, equivalentRoman (if secondary)
+export function pickSecondaryChord({ tonicPC, tonality, selectedChordTypes, selectedSecondaryChords, probability, lastChord = null }) {
+  // Build main chord list
+  const mainChords = selectedChordTypes.flatMap(type =>
+    type === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality)
+  )
+
+  // Filter available secondary chords (target must be diatonic)
+  const availableSecondary = selectedSecondaryChords.filter(sc => isSecondaryChordAvailable(sc, tonality))
+
+  // If no secondary chords available or probability >= 1, pick from main only
+  if (availableSecondary.length === 0 || probability >= 1) {
+    const pick = pickRandomChord(mainChords, lastChord)
+    return { ...pick, sourceMode: tonality, isSecondary: false }
+  }
+
+  // If probability <= 0, pick from secondary only
+  if (probability <= 0) {
+    const sc = availableSecondary[secureRandomInt(availableSecondary.length)]
+    return { ...sc, roman: sc.label, sourceMode: tonality, isSecondary: true }
+  }
+
+  // Use probability to choose main vs secondary
+  const roll = Math.random()
+  if (roll < probability) {
+    const pick = pickRandomChord(mainChords, lastChord)
+    return { ...pick, sourceMode: tonality, isSecondary: false }
+  } else {
+    const sc = availableSecondary[secureRandomInt(availableSecondary.length)]
+    return { ...sc, roman: sc.label, sourceMode: tonality, isSecondary: true }
+  }
+}
+
 // ─── Piano keyboard helpers ──────────────────────────────────────────────
 
 // Black key positions within an octave (relative to C)

@@ -440,3 +440,73 @@ Raw MIDI notes
 6. **Chord diatonic**: All chord tones must be in the key's pitch-class set.
 7. **Root finding**: Score by interval match to known chord templates. Prefer triadic roots, then perfect-fifth-containing candidates.
 8. **Same chord in different keys**: Different Roman numeral and potentially different diatonic status.
+
+---
+
+## 9. Secondary Chords — Equivalent Spelling
+
+Secondary chords (secondary dominants and secondary leading-tone chords) are chromatic chords that resolve to a diatonic target chord. Each can be named in two ways:
+
+1. **Functional notation**: `V7/X` or `viio7/X`, where X is the target chord's Roman numeral.
+2. **Equivalent root notation**: The chord is re-named based on its actual root's scale degree, using the chord's own quality.
+
+### 9.1 Secondary Dominants (V7/X)
+
+A secondary dominant is a dominant 7th chord (intervals `[0, 4, 7, 10]`) whose root is a perfect 5th above the target chord's root: `root = (target + 7) mod 12`.
+
+**Equivalent spelling rules:**
+- The root of a secondary dominant is always a diatonic scale degree (a perfect 5th above a diatonic note is also diatonic in major/minor keys).
+- Use **uppercase** Roman numeral (major triad quality) + `7` (dominant 7th suffix).
+- Apply the degree's accidental prefix (e.g., `bVII`, `bIII`).
+
+**Examples (C major):**
+| Functional | Root semitone | Degree | Equivalent |
+|---|---|---|---|
+| V7/V | 2 | 2 | II7 |
+| V7/ii | 9 | 6 | VI7 |
+| V7/iii | 11 | 7 | VII7 |
+| V7/vi | 4 | 3 | III7 |
+| V7/IV | 0 | 1 | I7 |
+
+**Examples (C minor):**
+| Functional | Root semitone | Degree | Equivalent |
+|---|---|---|---|
+| V7/bIII | 10 | b7 | bVII7 |
+| V7/bVI | 3 | b3 | bIII7 |
+| V7/iv | 0 | 1 | I7 |
+
+### 9.2 Secondary Leading-Tone Chords (viio7/X)
+
+A secondary leading-tone chord is a fully diminished 7th chord (intervals `[0, 3, 6, 9]`) whose root is one semitone below the target chord's root: `root = (target - 1 + 12) mod 12`.
+
+**Equivalent spelling rules:**
+- Use **lowercase** Roman numeral (diminished quality) + `o7` (diminished 7th suffix).
+- If the root falls on a **diatonic degree**, use that degree's standard label (including flats in minor, e.g., `iio7`, `vo7`).
+- If the root falls on a **chromatic degree** (one semitone above a diatonic degree), use **sharp of the nearest lower diatonic degree** — never flat of the upper degree.
+  - Example: In C major, `viio7/ii` has root at semitone 1. This is `#1` (sharp of degree 1), **not** `b2` (flat of degree 2). Equivalent: `#io7`.
+  - In C major, `viio7/iii` has root at semitone 3. This is `#2` (sharp of degree 2), **not** `b3`. Equivalent: `#iio7`.
+- **Special case in minor**: If the root is one semitone above `b3` (semitone 4), the equivalent uses **natural III** (removing the flat), since `#b3 = 3` (natural). Example: In C minor, `viio7/iv` has root at semitone 4 → equivalent `iiio7`.
+
+**Examples (C major):**
+| Functional | Root semitone | Degree | Equivalent |
+|---|---|---|---|
+| viio7/V | 6 | #4 | #ivo7 |
+| viio7/ii | 1 | #1 | #io7 |
+| viio7/iii | 3 | #2 | #iio7 |
+| viio7/vi | 8 | #5 | #vo7 |
+
+**Examples (C minor):**
+| Functional | Root semitone | Degree | Equivalent |
+|---|---|---|---|
+| viio7/bIII | 2 | 2 (diatonic) | iio7 |
+| viio7/bVI | 7 | 5 (diatonic) | vo7 |
+| viio7/iv | 4 | 3 (natural III) | iiio7 |
+
+### 9.3 Availability Filtering
+
+A secondary chord is only shown as an option if its **target chord is diatonic** to the chosen key. Each secondary chord is pre-assigned an `applicableTonality` (`'major'` or `'minor'`) based on the key in which its target chord is diatonic with the expected quality:
+
+- **Major-key chords** (e.g., `V7/ii`, `viio7/iii`): only shown in major keys, where the target chords have their standard major-key qualities (ii = minor, iii = minor, etc.).
+- **Minor-key chords** (e.g., `V7/bIII`, `viio7/iv`): only shown in minor keys, where the target chords have their standard minor-key qualities (bIII = major, iv = minor, etc.).
+
+This prevents, for example, `V7/ii` from appearing in a minor key (where the supertonic is `iio`, a diminished chord — a different harmonic function than the minor `ii` in major keys).

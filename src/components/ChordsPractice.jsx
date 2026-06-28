@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Select from './Select'
 import MultiSelect from './MultiSelect'
+import GroupedMultiSelect from './GroupedMultiSelect'
 import DroneToggle from './DroneToggle'
 import {
   TONICS,
@@ -9,6 +10,10 @@ import {
   getDiatonicSevenths,
   pickRandomChord,
   pickInterchangeChord,
+  pickSecondaryChord,
+  getSecondaryChordTarget,
+  getAvailableSecondaryChords,
+  SECONDARY_CHORDS,
   tonicToPC,
   getChordPitchClasses,
   getChordLabel,
@@ -25,7 +30,8 @@ const CHORD_TYPE_OPTIONS = [
 
 const CHROMATICISM_OPTIONS = [
   { value: 'diatonic', label: 'Diatonic' },
-  { value: 'modal-interchange', label: 'Modal Interchange' }
+  { value: 'modal-interchange', label: 'Modal Interchange' },
+  { value: 'secondary-chords', label: 'Secondary Chords' }
 ]
 
 const INTERCHANGE_MODE_OPTIONS = [
@@ -51,6 +57,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   const [chromaticism, setChromaticism] = useState('diatonic')
   const [borrowedModes, setBorrowedModes] = useState([])
   const [interchangeProbability, setInterchangeProbability] = useState(0.7)
+  const [selectedSecondaryChords, setSelectedSecondaryChords] = useState([])
+  const [secondaryProbability, setSecondaryProbability] = useState(0.7)
 
   // Practice state
   const [hasStarted, setHasStarted] = useState(false)
@@ -61,6 +69,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
   // Track the last checked configuration to avoid duplicate checks
   const lastCheckedKeyRef = useRef('')
+  // Track pending target chord after a secondary chord (must follow with its diatonic target)
+  const pendingTargetRef = useRef(null)
 
   // Build combined chord list from all selected chord types
   const chords = useMemo(() => {
@@ -86,8 +96,42 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     return pcs.map(pc => spellNoteName(pc, effectiveTonic, spellMode))
   }, [tonicPC, currentChord, effectiveTonic, tonality])
 
+  // Build grouped options for secondary chords dropdown (filtered by tonality)
+  const secondaryChordGroups = useMemo(() => {
+    const available = getAvailableSecondaryChords(tonality)
+    const dominants = available.filter(sc => sc.type === 'dominant')
+    const leadingTones = available.filter(sc => sc.type === 'leading-tone')
+    const groups = []
+    if (dominants.length > 0) {
+      groups.push({
+        label: 'Secondary Dominants',
+        options: dominants.map(sc => ({
+          value: sc.id,
+          label: `${sc.label} (${sc.equivalentRoman})`,
+        })),
+      })
+    }
+    if (leadingTones.length > 0) {
+      groups.push({
+        label: 'Secondary Leading-Tone Chords',
+        options: leadingTones.map(sc => ({
+          value: sc.id,
+          label: `${sc.label} (${sc.equivalentRoman})`,
+        })),
+      })
+    }
+    return groups
+  }, [tonality])
+
   // Generate a new chord
   const pickNextChord = useCallback((lastChordArg) => {
+    // If there's a pending target from a secondary chord, return it
+    if (pendingTargetRef.current) {
+      const target = pendingTargetRef.current
+      pendingTargetRef.current = null
+      return target
+    }
+
     if (chromaticism === 'modal-interchange') {
       return pickInterchangeChord({
         tonicPC,
@@ -98,8 +142,27 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         lastChord: lastChordArg,
       })
     }
+    if (chromaticism === 'secondary-chords') {
+      const pick = pickSecondaryChord({
+        tonicPC,
+        tonality,
+        selectedChordTypes,
+        selectedSecondaryChords: selectedSecondaryChords
+          .map(id => SECONDARY_CHORDS.find(sc => sc.id === id))
+          .filter(Boolean),
+        probability: secondaryProbability,
+        lastChord: lastChordArg,
+      })
+      if (pick.isSecondary) {
+        const targetChord = getSecondaryChordTarget(pick, tonality, selectedChordTypes)
+        if (targetChord) {
+          pendingTargetRef.current = { ...targetChord, sourceMode: tonality, isSecondary: false }
+        }
+      }
+      return pick
+    }
     return pickRandomChord(chords, lastChordArg)
-  }, [chromaticism, tonicPC, tonality, selectedChordTypes, borrowedModes, interchangeProbability, chords])
+  }, [chromaticism, tonicPC, tonality, selectedChordTypes, borrowedModes, interchangeProbability, selectedSecondaryChords, secondaryProbability, chords])
 
   const handleGenerate = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
@@ -245,6 +308,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
   // Reset practice when key settings change
   const handleSettingChange = () => {
+    pendingTargetRef.current = null
     if (hasStarted) {
       setHasStarted(false)
       setCurrentChord(null)
@@ -261,11 +325,38 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   }
   const handleTonalityChange = (v) => {
     onTonalityChange(v)
-    setBorrowedModes(prev => prev.filter(m => m !== v))
+    setBorrowedModes(prev => {
+      const filtered = prev.filter(m => m !== v)
+      if (chromaticism === 'modal-interchange' && filtered.length === 0) {
+        const oppositeMode = v === 'major' ? 'minor' : 'major'
+        return [oppositeMode]
+      }
+      return filtered
+    })
+    setSelectedSecondaryChords(prev => {
+      const available = getAvailableSecondaryChords(v)
+      const availableIds = new Set(available.map(sc => sc.id))
+      const filtered = prev.filter(id => availableIds.has(id))
+      if (chromaticism === 'secondary-chords' && filtered.length === 0) {
+        return available.map(sc => sc.id)
+      }
+      return filtered
+    })
     handleSettingChange()
   }
   const handleChordTypesChange = (v) => { setSelectedChordTypes(v); handleSettingChange() }
-  const handleChromaticismChange = (v) => { setChromaticism(v); handleSettingChange() }
+  const handleChromaticismChange = (v) => {
+    setChromaticism(v)
+    if (v === 'modal-interchange' && borrowedModes.length === 0) {
+      const oppositeMode = tonality === 'major' ? 'minor' : 'major'
+      setBorrowedModes([oppositeMode])
+    }
+    if (v === 'secondary-chords' && selectedSecondaryChords.length === 0) {
+      const available = getAvailableSecondaryChords(tonality)
+      setSelectedSecondaryChords(available.map(sc => sc.id))
+    }
+    handleSettingChange()
+  }
   const handleBorrowedModesChange = (v) => {
     setBorrowedModes(v.filter(m => m !== tonality))
     handleSettingChange()
@@ -344,6 +435,37 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
           </>
         )}
 
+        {chromaticism === 'secondary-chords' && (
+          <>
+            <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
+
+            {/* Secondary Chords */}
+            <GroupedMultiSelect
+              label="Secondary Chords"
+              values={selectedSecondaryChords}
+              onChange={(v) => { setSelectedSecondaryChords(v); handleSettingChange() }}
+              groups={secondaryChordGroups}
+              placeholder="Select chords…"
+            />
+
+            {/* Probability slider */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Main: {Math.round(secondaryProbability * 100)}%
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={secondaryProbability}
+                onChange={(e) => { setSecondaryProbability(parseFloat(e.target.value)); handleSettingChange() }}
+                className="w-32 sm:w-40 h-[44px] cursor-pointer accent-accent"
+              />
+            </div>
+          </>
+        )}
+
         <div className="flex-1" />
 
         {/* Drone toggle */}
@@ -389,11 +511,21 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === 'correct' ? 'text-green-400 correct-pulse' : ''}
                 ${result === 'wrong' ? 'text-keyred shake' : ''}
                 ${result === 'revealed' ? 'text-yellow-400 correct-pulse' : ''}
-                ${result === null ? (currentChord?.isBorrowed ? 'text-blue-400' : 'text-white') : ''}
+                ${result === null ? (currentChord?.isBorrowed ? 'text-blue-400' : currentChord?.isSecondary ? 'text-keyred' : 'text-white') : ''}
               `}
             >
               {currentChord?.roman}
             </div>
+            {currentChord?.isSecondary && (
+              <div className={`text-xl sm:text-2xl font-bold transition-all duration-300
+                ${result === 'correct' ? 'text-green-400' : ''}
+                ${result === 'wrong' ? 'text-keyred' : ''}
+                ${result === 'revealed' ? 'text-yellow-400' : ''}
+                ${result === null ? 'text-keyred' : ''}
+              `}>
+                ({currentChord.equivalentRoman})
+              </div>
+            )}
             {currentChord?.isBorrowed && (
               <div className={`text-xl sm:text-2xl font-bold transition-all duration-300
                 ${result === 'correct' ? 'text-green-400' : ''}

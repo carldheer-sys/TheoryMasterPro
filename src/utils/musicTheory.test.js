@@ -50,6 +50,11 @@ import {
   getChordLabel,
   pickRandomChord,
   pickInterchangeChord,
+  SECONDARY_CHORDS,
+  isSecondaryChordAvailable,
+  getAvailableSecondaryChords,
+  getSecondaryChordTarget,
+  pickSecondaryChord,
   getTonicBasedRange
 } from './musicTheory.js'
 
@@ -2176,6 +2181,167 @@ test('141g. All sharp-key minor tonics spell b3 correctly when borrowed', () => 
     const spelled = spellNoteName(b3PC, tonic, 'minor')
     // Sharp keys should not use flats
     assert(!spelled.includes('b') || spelled === tonic + 'b', `${tonic} minor: b3 should not use flats in sharp key, got ${spelled}`)
+  }
+})
+
+// ── Secondary Chords Tests ───────────────────────────────────────────────
+
+test('142. SECONDARY_CHORDS has correct equivalent spellings for major key dominants', () => {
+  const majorDominants = SECONDARY_CHORDS.filter(sc => sc.applicableTonality === 'major' && sc.type === 'dominant')
+  const expected = {
+    'V7/V':   'II7',
+    'V7/ii':  'VI7',
+    'V7/iii': 'VII7',
+    'V7/vi':  'III7',
+    'V7/IV':  'I7',
+  }
+  for (const sc of majorDominants) {
+    assert(sc.equivalentRoman === expected[sc.id],
+      `${sc.id}: expected equivalent ${expected[sc.id]}, got ${sc.equivalentRoman}`)
+  }
+})
+
+test('143. SECONDARY_CHORDS has correct equivalent spellings for minor key dominants', () => {
+  const minorDominants = SECONDARY_CHORDS.filter(sc => sc.applicableTonality === 'minor' && sc.type === 'dominant')
+  const expected = {
+    'V7/bIII': 'bVII7',
+    'V7/bVI':  'bIII7',
+    'V7/iv':   'I7',
+  }
+  for (const sc of minorDominants) {
+    assert(sc.equivalentRoman === expected[sc.id],
+      `${sc.id}: expected equivalent ${expected[sc.id]}, got ${sc.equivalentRoman}`)
+  }
+})
+
+test('144. SECONDARY_CHORDS has correct equivalent spellings for major key leading-tone chords', () => {
+  const majorLT = SECONDARY_CHORDS.filter(sc => sc.applicableTonality === 'major' && sc.type === 'leading-tone')
+  const expected = {
+    'viio7/V':   '#ivo7',
+    'viio7/ii':  '#io7',
+    'viio7/iii': '#iio7',
+    'viio7/vi':  '#vo7',
+  }
+  for (const sc of majorLT) {
+    assert(sc.equivalentRoman === expected[sc.id],
+      `${sc.id}: expected equivalent ${expected[sc.id]}, got ${sc.equivalentRoman}`)
+  }
+})
+
+test('145. SECONDARY_CHORDS has correct equivalent spellings for minor key leading-tone chords', () => {
+  const minorLT = SECONDARY_CHORDS.filter(sc => sc.applicableTonality === 'minor' && sc.type === 'leading-tone')
+  const expected = {
+    'viio7/bIII': 'iio7',
+    'viio7/bVI':  'vo7',
+    'viio7/iv':   'iiio7',
+  }
+  for (const sc of minorLT) {
+    assert(sc.equivalentRoman === expected[sc.id],
+      `${sc.id}: expected equivalent ${expected[sc.id]}, got ${sc.equivalentRoman}`)
+  }
+})
+
+test('146. Secondary dominant root is a perfect 5th above target', () => {
+  const dominants = SECONDARY_CHORDS.filter(sc => sc.type === 'dominant')
+  for (const sc of dominants) {
+    const expectedRoot = (sc.targetSemitones + 7) % 12
+    assert(sc.semitones === expectedRoot,
+      `${sc.id}: root should be ${expectedRoot}, got ${sc.semitones}`)
+  }
+})
+
+test('147. Secondary leading-tone root is 1 semitone below target', () => {
+  const leadingTones = SECONDARY_CHORDS.filter(sc => sc.type === 'leading-tone')
+  for (const sc of leadingTones) {
+    const expectedRoot = (sc.targetSemitones - 1 + 12) % 12
+    assert(sc.semitones === expectedRoot,
+      `${sc.id}: root should be ${expectedRoot}, got ${sc.semitones}`)
+  }
+})
+
+test('148. isSecondaryChordAvailable filters by tonality', () => {
+  const v7_ii = SECONDARY_CHORDS.find(sc => sc.id === 'V7/ii')
+  assert(isSecondaryChordAvailable(v7_ii, 'major'), 'V7/ii should be available in major')
+  assert(!isSecondaryChordAvailable(v7_ii, 'minor'), 'V7/ii should NOT be available in minor')
+
+  const v7_bIII = SECONDARY_CHORDS.find(sc => sc.id === 'V7/bIII')
+  assert(!isSecondaryChordAvailable(v7_bIII, 'major'), 'V7/bIII should NOT be available in major')
+  assert(isSecondaryChordAvailable(v7_bIII, 'minor'), 'V7/bIII should be available in minor')
+})
+
+test('149. getAvailableSecondaryChords returns correct chords for major', () => {
+  const available = getAvailableSecondaryChords('major')
+  const ids = available.map(sc => sc.id)
+  // All major-key chords should be present
+  assert(ids.includes('V7/V'), 'V7/V should be available in major')
+  assert(ids.includes('V7/ii'), 'V7/ii should be available in major')
+  assert(ids.includes('viio7/V'), 'viio7/V should be available in major')
+  // No minor-key chords
+  assert(!ids.includes('V7/bIII'), 'V7/bIII should NOT be available in major')
+  assert(!ids.includes('viio7/bIII'), 'viio7/bIII should NOT be available in major')
+})
+
+test('150. getAvailableSecondaryChords returns correct chords for minor', () => {
+  const available = getAvailableSecondaryChords('minor')
+  const ids = available.map(sc => sc.id)
+  // All minor-key chords should be present
+  assert(ids.includes('V7/bIII'), 'V7/bIII should be available in minor')
+  assert(ids.includes('V7/bVI'), 'V7/bVI should be available in minor')
+  assert(ids.includes('viio7/iv'), 'viio7/iv should be available in minor')
+  // No major-key chords
+  assert(!ids.includes('V7/V'), 'V7/V should NOT be available in minor')
+  assert(!ids.includes('viio7/ii'), 'viio7/ii should NOT be available in minor')
+})
+
+test('151. getSecondaryChordTarget returns correct diatonic chord', () => {
+  const v7_ii = SECONDARY_CHORDS.find(sc => sc.id === 'V7/ii')
+  const target = getSecondaryChordTarget(v7_ii, 'major', ['triads'])
+  assert(target !== null, 'V7/ii target should not be null')
+  assert(target.semitones === 2, 'V7/ii target should be at semitone 2')
+  assert(target.roman === 'ii', 'V7/ii target should be ii')
+})
+
+test('152. pickSecondaryChord returns secondary chord with isSecondary flag', () => {
+  const v7_ii = SECONDARY_CHORDS.find(sc => sc.id === 'V7/ii')
+  const pick = pickSecondaryChord({
+    tonicPC: 0, tonality: 'major', selectedChordTypes: ['triads'],
+    selectedSecondaryChords: [v7_ii], probability: 0, lastChord: null,
+  })
+  assert(pick.isSecondary === true, 'Should return secondary chord at probability 0')
+  assert(pick.roman === 'V7/ii', 'Roman should be V7/ii')
+  assert(pick.equivalentRoman === 'VI7', 'Equivalent should be VI7')
+})
+
+test('153. pickSecondaryChord returns diatonic chord at probability 1', () => {
+  const v7_ii = SECONDARY_CHORDS.find(sc => sc.id === 'V7/ii')
+  const pick = pickSecondaryChord({
+    tonicPC: 0, tonality: 'major', selectedChordTypes: ['triads'],
+    selectedSecondaryChords: [v7_ii], probability: 1, lastChord: null,
+  })
+  assert(pick.isSecondary === false, 'Should return diatonic chord at probability 1')
+})
+
+test('154. pickSecondaryChord returns diatonic when no secondary chords available', () => {
+  const pick = pickSecondaryChord({
+    tonicPC: 0, tonality: 'major', selectedChordTypes: ['triads'],
+    selectedSecondaryChords: [], probability: 0, lastChord: null,
+  })
+  assert(pick.isSecondary === false, 'Should return diatonic when no secondary chords selected')
+})
+
+test('155. Secondary dominant intervals are [0,4,7,10]', () => {
+  const dominants = SECONDARY_CHORDS.filter(sc => sc.type === 'dominant')
+  for (const sc of dominants) {
+    assert(sc.intervals.length === 4 && sc.intervals[0] === 0 && sc.intervals[1] === 4 && sc.intervals[2] === 7 && sc.intervals[3] === 10,
+      `${sc.id}: intervals should be [0,4,7,10]`)
+  }
+})
+
+test('156. Secondary leading-tone intervals are [0,3,6,9]', () => {
+  const leadingTones = SECONDARY_CHORDS.filter(sc => sc.type === 'leading-tone')
+  for (const sc of leadingTones) {
+    assert(sc.intervals.length === 4 && sc.intervals[0] === 0 && sc.intervals[1] === 3 && sc.intervals[2] === 6 && sc.intervals[3] === 9,
+      `${sc.id}: intervals should be [0,3,6,9]`)
   }
 })
 
