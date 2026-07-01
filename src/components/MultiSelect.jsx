@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect } from 'react'
+import useDropdownPosition from '../hooks/useDropdownPosition'
 
 /**
  * MultiSelect — a styled dropdown with checkboxes for multiple selection.
@@ -10,18 +11,18 @@ import { useState, useRef, useEffect } from 'react'
  *   - placeholder: text when nothing is selected
  */
 export default function MultiSelect({ values = [], onChange, options = [], label, placeholder = 'Select…' }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const { open, setOpen, toggle, panelStyle, triggerRef } = useDropdownPosition()
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (triggerRef.current && !triggerRef.current.contains(e.target) &&
+          !e.target.closest('[data-dropdown-panel]')) {
         setOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [setOpen])
 
   const toggleValue = (val) => {
     if (values.includes(val)) {
@@ -50,7 +51,7 @@ export default function MultiSelect({ values = [], onChange, options = [], label
         : selectedLabels.join(', ')
 
   return (
-    <div className="flex flex-col gap-1.5" ref={ref}>
+    <div className="flex flex-col gap-1.5">
       {label && (
         <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           {label}
@@ -58,8 +59,9 @@ export default function MultiSelect({ values = [], onChange, options = [], label
       )}
       <div className="relative">
         <button
+          ref={triggerRef}
           type="button"
-          onClick={() => setOpen(o => !o)}
+          onClick={toggle}
           className="appearance-none w-full bg-bg-700 text-white text-sm font-semibold
             px-4 py-3 pr-10 rounded-xl border border-bg-500
             hover:border-accent/50 focus:border-accent focus:outline-none
@@ -76,8 +78,11 @@ export default function MultiSelect({ values = [], onChange, options = [], label
           </svg>
         </button>
         {open && (
-          <div className="absolute top-full left-0 mt-1 w-full bg-bg-700 border border-bg-500
-            rounded-xl shadow-xl z-50 overflow-hidden min-w-[140px]">
+          <div
+            data-dropdown-panel
+            style={panelStyle}
+            className="bg-bg-700 border border-bg-500 rounded-xl shadow-xl overflow-hidden"
+          >
             {options.map(opt => {
               const isSelected = values.includes(opt.value)
               return (

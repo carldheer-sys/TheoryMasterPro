@@ -510,3 +510,88 @@ A secondary chord is only shown as an option if its **target chord is diatonic**
 - **Minor-key chords** (e.g., `V7/bIII`, `viio7/iv`): only shown in minor keys, where the target chords have their standard minor-key qualities (bIII = major, iv = minor, etc.).
 
 This prevents, for example, `V7/ii` from appearing in a minor key (where the supertonic is `iio`, a diminished chord — a different harmonic function than the minor `ii` in major keys).
+
+---
+
+## 10. Natural Minor vs. Harmonic Minor
+
+The app distinguishes between two minor scales:
+
+### 10.1 Natural Minor (Aeolian)
+
+The natural minor scale uses the same notes as its relative major. This is the default minor scale for all practice modes.
+
+- **Scale degrees**: `1, 2, b3, 4, 5, b6, b7` (semitones: `0, 2, 3, 5, 7, 8, 10`)
+- **Diatonic pitch-class set**: `{0, 2, 3, 5, 7, 8, 10}`
+- **Key signature**: Same as relative major (e.g., A minor = C major → no sharps/flats)
+
+**Diatonic triads (natural minor):**
+| Degree | Roman | Quality | Intervals |
+|---|---|---|---|
+| 1 | `i` | minor | `[0, 3, 7]` |
+| 2 | `iio` | diminished | `[0, 3, 6]` |
+| b3 | `bIII` | major | `[0, 4, 7]` |
+| 4 | `iv` | minor | `[0, 3, 7]` |
+| 5 | `v` | minor | `[0, 3, 7]` |
+| b6 | `bVI` | major | `[0, 4, 7]` |
+| b7 | `bVII` | major | `[0, 4, 7]` |
+
+**Diatonic sevenths (natural minor):**
+| Degree | Roman | Quality | Intervals |
+|---|---|---|---|
+| 1 | `im7` | minor7 | `[0, 3, 7, 10]` |
+| 2 | `iim7b5` | half-diminished | `[0, 3, 6, 10]` |
+| b3 | `bIIImaj7` | major7 | `[0, 4, 7, 11]` |
+| 4 | `ivm7` | minor7 | `[0, 3, 7, 10]` |
+| 5 | `vm7` | minor7 | `[0, 3, 7, 10]` |
+| b6 | `bVImaj7` | major7 | `[0, 4, 7, 11]` |
+| b7 | `bVII7` | dominant7 | `[0, 4, 7, 10]` |
+
+### 10.2 Harmonic Minor
+
+The harmonic minor scale raises the 7th degree by one semitone, creating a leading tone. This produces the major V chord and the diminished viio chord.
+
+- **Scale degrees**: `1, 2, b3, 4, 5, b6, 7` (semitones: `0, 2, 3, 5, 7, 8, 11`)
+- **Diatonic pitch-class set**: `{0, 2, 3, 5, 7, 8, 11}`
+- **Key signature**: Same as natural minor (the raised 7th is an accidental, not part of the key signature)
+
+**Diatonic triads (harmonic minor):**
+| Degree | Roman | Quality | Intervals |
+|---|---|---|---|
+| 1 | `i` | minor | `[0, 3, 7]` |
+| 2 | `iio` | diminished | `[0, 3, 6]` |
+| b3 | `bIII+` | augmented | `[0, 4, 8]` |
+| 4 | `iv` | minor | `[0, 3, 7]` |
+| 5 | `V` | major | `[0, 4, 7]` |
+| b6 | `bVI` | major | `[0, 4, 7]` |
+| 7 | `viio` | diminished | `[0, 3, 6]` |
+
+**Diatonic sevenths (harmonic minor):**
+| Degree | Roman | Quality | Intervals |
+|---|---|---|---|
+| 1 | `i(M7)` | minor-major7 | `[0, 3, 7, 11]` |
+| 2 | `iim7b5` | half-diminished | `[0, 3, 6, 10]` |
+| b3 | `bIII+maj7` | augmented-major7 | `[0, 4, 8, 11]` |
+| 4 | `ivm7` | minor7 | `[0, 3, 7, 10]` |
+| 5 | `V7` | dominant7 | `[0, 4, 7, 10]` |
+| b6 | `bVImaj7` | major7 | `[0, 4, 7, 11]` |
+| 7 | `viio7` | diminished7 | `[0, 3, 6, 9]` |
+
+### 10.3 Integration in Practice Modes
+
+In chord practice and chord progressions modes, the **V (triad) and V7 (seventh)** from the harmonic minor scale can be optionally included in the minor key's chord collection. This is controlled by a toggle button labeled "incl. V(7) from harm. minor" that appears under the tonality dropdown when minor is selected. It is enabled by default.
+
+When enabled:
+- The major V triad is added to the natural minor's diatonic triads (alongside the minor `v`).
+- The dominant V7 seventh chord is added to the natural minor's diatonic sevenths (alongside the minor `vm7`).
+- Both chords are marked with `isHarmonicMinor: true` so they can be colored blue in the UI (same as borrowed chords from modal interchange).
+
+### 10.4 Theory Overview Display
+
+In the Theory Overview page's "Major/Minor" view mode:
+- The former "Minor" row is renamed to **"Natural Minor"**.
+- A new **"Harmonic Minor"** row is added below it, showing the full harmonic minor scale degrees and diatonic chords (triads and sevenths).
+
+### 10.5 Progressions Catalog
+
+In the Progressions Catalog, minor key sections include V/V7 from the harmonic minor scale as selectable chord options. A note "includes V/V7 of harmonic minor scale" is displayed near the minor progression tabs. Chords identified as V or V7 in minor progressions are colored blue in the catalog display.

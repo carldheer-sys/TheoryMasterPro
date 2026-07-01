@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Select from './Select'
+import TonalitySelect from './TonalitySelect'
 import DroneToggle from './DroneToggle'
 import {
   TONICS,
   TONALITIES,
-  getDiatonicTriads,
-  getDiatonicSevenths,
+  getDiatonicTriadsWithHarmMinor,
+  getDiatonicSeventhsWithHarmMinor,
   tonicToPC,
   getChordPitchClasses,
   getChordLabel,
@@ -55,6 +56,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   const [chromaticism, setChromaticism] = useState('diatonic')
   const [progressionKey, setProgressionKey] = useState('vi – IV – I – V')
   const [randomCount, setRandomCount] = useState(4)
+  const [includeHarmMinor, setIncludeHarmMinor] = useState(true)
 
   // Practice state
   const [hasStarted, setHasStarted] = useState(false)
@@ -67,8 +69,8 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
 
   const tonicPC = tonicToPC(effectiveTonic)
   const diatonicChords = useMemo(() =>
-    chordType === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality),
-  [chordType, tonality])
+    chordType === 'sevenths' ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor),
+  [chordType, tonality, includeHarmMinor])
 
   // Available progressions for current settings
   const availableProgressions = useMemo(() => {
@@ -288,11 +290,12 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
             onChange={handleTonicChange}
             options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
           />
-          <Select
+          <TonalitySelect
             label="Tonality"
             value={tonality}
             onChange={handleTonalityChange}
-            options={TONALITIES}
+            includeHarmMinor={includeHarmMinor}
+            onHarmMinorChange={(v) => { setIncludeHarmMinor(v); handleSettingChange() }}
           />
         </div>
 
@@ -389,6 +392,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
                 const isCurrent = idx === currentIdx
                 const isPast = idx < currentIdx
                 const label = getChordLabel(tonicPC, chord, effectiveTonic, tonality)
+                const isHarmMinor = chord.isHarmonicMinor === true
                 return (
                   <div key={idx} className="flex items-center gap-3 sm:gap-4">
                     {idx > 0 && <span className="text-gray-600 text-2xl">→</span>}
@@ -397,6 +401,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
                         ${isCurrent && flashGreen ? 'bg-green-500/20 text-green-400 border-2 border-green-400 scale-110'
                           : isCurrent ? 'bg-accent/20 text-accent-light border-2 border-accent scale-110'
                           : isPast ? 'bg-bg-700/50 text-gray-600 border-2 border-transparent'
+                          : isHarmMinor ? 'bg-bg-700 text-blue-400 border-2 border-transparent'
                           : 'bg-bg-700 text-gray-300 border-2 border-transparent'
                         }`}
                     >

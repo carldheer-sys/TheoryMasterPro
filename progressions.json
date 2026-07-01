@@ -1,18 +1,42 @@
 {
   "major:triads": [
     { "label": "vi – IV – I – V", "romans": ["vi", "IV", "I", "V"] },
-    { "label": "vi – ii – V – I", "romans": ["vi", "ii", "V", "I"] }
+    { "label": "vi – ii – V – I", "romans": ["vi", "ii", "V", "I"] },
+    { "label": "I – V – vi – iii – IV – I – IV – V", "romans": ["I", "V", "vi", "iii", "IV", "I", "IV", "V"], "favorite": true },
+    { "label": "vi – iii – IV – I – ii – vi – IV – V", "romans": ["vi", "iii", "IV", "I", "ii", "vi", "IV", "V"] },
+    { "label": "vi – iii – IV – I – V", "romans": ["vi", "iii", "IV", "I", "V"] },
+    { "label": "IV – V – iii – vi", "romans": ["IV", "V", "iii", "vi"] },
+    { "label": "II – V – vi – IV", "romans": ["II", "V", "vi", "IV"] },
+    { "label": "Vi – ii – V – I", "romans": ["Vi", "ii", "V", "I"] },
+    { "label": "ii – V – iii – vi", "romans": ["ii", "V", "iii", "vi"] },
+    { "label": "ii – vi – IV – V", "romans": ["ii", "vi", "IV", "V"] },
+    { "label": "IV – I – iii – vi", "romans": ["IV", "I", "iii", "vi"] },
+    { "label": "I – V – iii – ii", "romans": ["I", "V", "iii", "ii"] },
+    { "label": "iii – IV – vi – V", "romans": ["iii", "IV", "vi", "V"] }
   ],
   "minor:triads": [
     { "label": "bVI – iv – i – v", "romans": ["bVI", "iv", "i", "v"] },
-    { "label": "bVI – bIII – bVII – bIII", "romans": ["bVI", "bIII", "bVII", "bIII"] }
+    { "label": "bVI – bIII – bVII – bIII", "romans": ["bVI", "bIII", "bVII", "bIII"] },
+    { "label": "i – v – bVI – bIII – iv – i – iv – V", "romans": ["i", "v", "bVI", "bIII", "iv", "i", "iv", "V"], "favorite": true },
+    { "label": "bVI – bIII – v – i", "romans": ["bVI", "bIII", "v", "i"] },
+    { "label": "i – bVI – bIII – bVII", "romans": ["i", "bVI", "bIII", "bVII"] },
+    { "label": "bVI – iio – v – i", "romans": ["bVI", "iio", "v", "i"] },
+    { "label": "bIII – i – bVI – bVII", "romans": ["bIII", "i", "bVI", "bVII"] },
+    { "label": "i – iio – v – i", "romans": ["i", "iio", "v", "i"] },
+    { "label": "i – bIII – v – i", "romans": ["i", "bIII", "v", "i"] },
+    { "label": "i – v – bVI – bIII", "romans": ["i", "v", "bVI", "bIII"] }
   ],
   "major:sevenths": [
     { "label": "vim7 – IVmaj7 – Imaj7 – V7", "romans": ["vim7", "IVmaj7", "Imaj7", "V7"] },
-    { "label": "vim7 – iim7 – V7 – Imaj7", "romans": ["vim7", "iim7", "V7", "Imaj7"] }
+    { "label": "vim7 – iim7 – V7 – Imaj7", "romans": ["vim7", "iim7", "V7", "Imaj7"] },
+    { "label": "iiim7 – vim7 – iim7 – V7 – Imaj7", "romans": ["iiim7", "vim7", "iim7", "V7", "Imaj7"] },
+    { "label": "Imaj7 – IVmaj7 – iim7 – V7 – Imaj7", "romans": ["Imaj7", "IVmaj7", "iim7", "V7", "Imaj7"] },
+    { "label": "Imaj7 – iim7 – V7 – vim7", "romans": ["Imaj7", "iim7", "V7", "vim7"] },
+    { "label": "vim7 – IVmaj7 – iiim7 – Imaj7", "romans": ["vim7", "IVmaj7", "iiim7", "Imaj7"] }
   ],
   "minor:sevenths": [
     { "label": "bVImaj7 – ivm7 – im7 – v7", "romans": ["bVImaj7", "ivm7", "im7", "vm7"] },
-    { "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7", "romans": ["bVImaj7", "bIIImaj7", "bVII7", "bIIImaj7"] }
+    { "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7", "romans": ["bVImaj7", "bIIImaj7", "bVII7", "bIIImaj7"] },
+    { "label": "iim7b5 – V7 – im7", "romans": ["iim7b5", "V7", "im7"] }
   ]
 }

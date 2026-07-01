@@ -7,7 +7,9 @@ import {
 } from '../utils/progressions'
 import {
   getDiatonicTriads,
-  getDiatonicSevenths
+  getDiatonicSevenths,
+  HARMONIC_MINOR_V_TRIAD,
+  HARMONIC_MINOR_V7_SEVENTH
 } from '../utils/musicTheory'
 
 // Tab labels for each section
@@ -47,7 +49,11 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
   const enterEditMode = () => {
     const copy = {}
     for (const key of Object.keys(progressions)) {
-      copy[key] = progressions[key].map(p => ({ label: p.label, romans: [...p.romans] }))
+      copy[key] = progressions[key].map(p => ({
+        label: p.label,
+        romans: [...p.romans],
+        ...(p.favorite ? { favorite: true } : {}),
+      }))
     }
     setLocal(copy)
     setEditMode(true)
@@ -95,6 +101,23 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     })
   }
 
+  const toggleFavorite = (sKey, idx) => {
+    const updateList = (list) => {
+      const item = { ...list[idx] }
+      if (item.favorite) {
+        delete item.favorite
+      } else {
+        item.favorite = true
+      }
+      return [...list.slice(0, idx), item, ...list.slice(idx + 1)]
+    }
+    if (editMode) {
+      setLocal(prev => ({ ...prev, [sKey]: updateList(prev[sKey] || []) }))
+    } else {
+      onProgressionsChange({ ...progressions, [sKey]: updateList(progressions[sKey] || []) })
+    }
+  }
+
   // --- Per-chord operations ---
 
   const deleteChord = (sKey, progIdx, chordIdx) => {
@@ -126,6 +149,13 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     })
   }
 
+  // Star icon for favorite toggle
+  const StarIcon = ({ filled, className }) => (
+    <svg className={className} fill={filled ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    </svg>
+  )
+
   // --- Drag and drop ---
 
   const handleDragStart = (sKey, idx) => {
@@ -151,9 +181,13 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
   const chords = activeSection.chordType === 'sevenths'
     ? getDiatonicSevenths(activeSection.tonality)
     : getDiatonicTriads(activeSection.tonality)
+  // For minor sections, add V/V7 from harmonic minor to the chord options
+  const allChords = activeSection.tonality === 'minor'
+    ? [...chords, activeSection.chordType === 'sevenths' ? HARMONIC_MINOR_V7_SEVENTH : HARMONIC_MINOR_V_TRIAD]
+    : chords
   const chordOptions = [
     { value: '', label: '— select —' },
-    ...chords.map(c => ({ value: c.roman, label: c.roman })),
+    ...allChords.map(c => ({ value: c.roman, label: c.roman })),
   ]
 
   return (
@@ -231,6 +265,9 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
             )
           })}
         </div>
+        {activeSection.tonality === 'minor' && (
+          <p className="text-gray-500 text-xs mt-2 ml-1">includes V/V7 of harmonic minor scale</p>
+        )}
       </div>
 
       {/* Content area */}
@@ -265,13 +302,74 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                   </div>
                 )}
 
-                {/* Progression label */}
-                <span className="text-sm font-semibold text-gray-200 flex-1">
-                  {prog.romans.filter(r => r).length > 0
-                    ? <span className="music-notation">{prog.label}</span>
-                    : <span className="text-gray-600 italic">Empty progression</span>
-                  }
-                </span>
+                {/* Favorite star toggle */}
+                <button
+                  onClick={() => toggleFavorite(sKey, progIdx)}
+                  className={`flex-shrink-0 transition-colors ${prog.favorite ? 'text-yellow-400 hover:text-yellow-500' : 'text-gray-600 hover:text-gray-400'}`}
+                  title={prog.favorite ? 'Unfavorite' : 'Favorite'}
+                >
+                  <StarIcon filled={!!prog.favorite} className="w-4 h-4" />
+                </button>
+
+                {/* Progression content — single row */}
+                <div className="flex-1 flex items-center gap-1 flex-wrap">
+                  {editMode ? (
+                    <>
+                      {prog.romans.map((roman, chordIdx) => (
+                        <div key={chordIdx} className="flex items-center gap-1">
+                          <div className="relative">
+                            <select
+                              value={roman}
+                              onChange={(e) => changeChord(sKey, progIdx, chordIdx, e.target.value)}
+                              className="appearance-none bg-bg-700 text-white text-xs font-semibold
+                                px-2 py-1.5 pr-7 rounded-lg border border-bg-500
+                                hover:border-accent/50 focus:border-accent focus:outline-none
+                                transition-colors cursor-pointer min-w-[70px] music-notation"
+                            >
+                              {chordOptions.map(opt => (
+                                <option key={opt.value} value={opt.value} className="bg-bg-700 text-white">
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                            <svg
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none"
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                          <button
+                            onClick={() => deleteChord(sKey, progIdx, chordIdx)}
+                            className="text-gray-600 hover:text-keyred flex-shrink-0"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                      {/* Add chord button */}
+                      <button
+                        onClick={() => addChord(sKey, progIdx)}
+                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-dashed border-bg-500
+                          text-gray-500 hover:text-accent hover:border-accent/50 transition-colors text-xs font-semibold"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-200">
+                      {prog.romans.filter(r => r).length > 0
+                        ? <span className="music-notation">{prog.label}</span>
+                        : <span className="text-gray-600 italic">Empty progression</span>
+                      }
+                    </span>
+                  )}
+                </div>
 
                 {/* Delete progression (edit mode only) */}
                 {editMode && (
@@ -282,67 +380,6 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  </button>
-                )}
-              </div>
-
-              {/* Chord slots */}
-              <div className="flex flex-wrap items-center gap-2 pl-6">
-                {prog.romans.map((roman, chordIdx) => (
-                  <div key={chordIdx} className="flex items-center gap-1">
-                    {chordIdx > 0 && <span className="text-gray-600 text-xs">→</span>}
-                    {editMode ? (
-                      <>
-                        <div className="relative">
-                          <select
-                            value={roman}
-                            onChange={(e) => changeChord(sKey, progIdx, chordIdx, e.target.value)}
-                            className="appearance-none bg-bg-700 text-white text-xs font-semibold
-                              px-3 py-2 pr-8 rounded-lg border border-bg-500
-                              hover:border-accent/50 focus:border-accent focus:outline-none
-                              transition-colors cursor-pointer min-w-[80px]"
-                          >
-                            {chordOptions.map(opt => (
-                              <option key={opt.value} value={opt.value} className="bg-bg-700 text-white">
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                          <svg
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none"
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                        <button
-                          onClick={() => deleteChord(sKey, progIdx, chordIdx)}
-                          className="text-gray-600 hover:text-keyred"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </>
-                    ) : (
-                      <span className="music-notation px-3 py-2 rounded-lg bg-bg-700 text-white text-xs font-semibold min-w-[80px] text-center">
-                        {roman ? roman : '—'}
-                      </span>
-                    )}
-                  </div>
-                ))}
-
-                {/* Add chord button (edit mode only) */}
-                {editMode && (
-                  <button
-                    onClick={() => addChord(sKey, progIdx)}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed border-bg-500
-                      text-gray-500 hover:text-accent hover:border-accent/50 transition-colors text-xs font-semibold"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add chord
                   </button>
                 )}
               </div>

@@ -34,6 +34,7 @@ export function cloneProgressions(progs) {
     result[key] = progs[key].map(p => ({
       label: p.label,
       romans: [...p.romans],
+      ...(p.favorite ? { favorite: true } : {}),
     }))
   }
   return result

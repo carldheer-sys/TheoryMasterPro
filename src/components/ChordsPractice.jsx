@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Select from './Select'
+import TonalitySelect from './TonalitySelect'
 import MultiSelect from './MultiSelect'
 import GroupedMultiSelect from './GroupedMultiSelect'
 import DroneToggle from './DroneToggle'
 import {
   TONICS,
   TONALITIES,
-  getDiatonicTriads,
-  getDiatonicSevenths,
+  getDiatonicTriadsWithHarmMinor,
+  getDiatonicSeventhsWithHarmMinor,
   pickRandomChord,
   pickInterchangeChord,
   pickSecondaryChord,
@@ -59,6 +60,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   const [interchangeProbability, setInterchangeProbability] = useState(0.7)
   const [selectedSecondaryChords, setSelectedSecondaryChords] = useState([])
   const [secondaryProbability, setSecondaryProbability] = useState(0.7)
+  const [includeHarmMinor, setIncludeHarmMinor] = useState(true)
 
   // Practice state
   const [hasStarted, setHasStarted] = useState(false)
@@ -71,14 +73,16 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   const lastCheckedKeyRef = useRef('')
   // Track pending target chord after a secondary chord (must follow with its diatonic target)
   const pendingTargetRef = useRef(null)
+  // Track the last secondary chord ID used (to prevent same secondary chord twice in a row)
+  const lastSecondaryIdRef = useRef(null)
 
   // Build combined chord list from all selected chord types
   const chords = useMemo(() => {
     const lists = selectedChordTypes.map(type =>
-      type === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality)
+      type === 'sevenths' ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor)
     )
     return lists.flat()
-  }, [selectedChordTypes, tonality])
+  }, [selectedChordTypes, tonality, includeHarmMinor])
   const tonicPC = tonicToPC(effectiveTonic)
   const targetPCs = useMemo(() => {
     if (!currentChord) return null
@@ -89,6 +93,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
     return getChordLabel(tonicPC, currentChord, effectiveTonic, spellMode)
   }, [tonicPC, currentChord, effectiveTonic, tonality])
+  const isHarmonicMinorChord = currentChord?.isHarmonicMinor === true
   const targetNoteNames = useMemo(() => {
     if (!currentChord) return null
     const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
@@ -140,6 +145,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         borrowedModes,
         probability: interchangeProbability,
         lastChord: lastChordArg,
+        includeHarmMinor,
       })
     }
     if (chromaticism === 'secondary-chords') {
@@ -152,17 +158,22 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
           .filter(Boolean),
         probability: secondaryProbability,
         lastChord: lastChordArg,
+        lastSecondaryId: lastSecondaryIdRef.current,
+        includeHarmMinor,
       })
       if (pick.isSecondary) {
+        lastSecondaryIdRef.current = pick.id
         const targetChord = getSecondaryChordTarget(pick, tonality, selectedChordTypes)
         if (targetChord) {
           pendingTargetRef.current = { ...targetChord, sourceMode: tonality, isSecondary: false }
         }
+      } else {
+        lastSecondaryIdRef.current = null
       }
       return pick
     }
     return pickRandomChord(chords, lastChordArg)
-  }, [chromaticism, tonicPC, tonality, selectedChordTypes, borrowedModes, interchangeProbability, selectedSecondaryChords, secondaryProbability, chords])
+  }, [chromaticism, tonicPC, tonality, selectedChordTypes, borrowedModes, interchangeProbability, selectedSecondaryChords, secondaryProbability, chords, includeHarmMinor])
 
   const handleGenerate = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
@@ -309,6 +320,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   // Reset practice when key settings change
   const handleSettingChange = () => {
     pendingTargetRef.current = null
+    lastSecondaryIdRef.current = null
     if (hasStarted) {
       setHasStarted(false)
       setCurrentChord(null)
@@ -374,11 +386,12 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
             onChange={handleTonicChange}
             options={[{ value: 'random', label: tonic === 'random' ? `Random → ${effectiveTonic}` : 'Random' }, ...TONICS.map(t => ({ value: t, label: t }))]}
           />
-          <Select
+          <TonalitySelect
             label="Tonality"
             value={tonality}
             onChange={handleTonalityChange}
-            options={TONALITIES}
+            includeHarmMinor={includeHarmMinor}
+            onHarmMinorChange={(v) => { setIncludeHarmMinor(v); handleSettingChange() }}
           />
         </div>
 
@@ -511,7 +524,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === 'correct' ? 'text-green-400 correct-pulse' : ''}
                 ${result === 'wrong' ? 'text-keyred shake' : ''}
                 ${result === 'revealed' ? 'text-yellow-400 correct-pulse' : ''}
-                ${result === null ? (currentChord?.isBorrowed ? 'text-blue-400' : currentChord?.isSecondary ? 'text-keyred' : 'text-white') : ''}
+                ${result === null ? (currentChord?.isBorrowed || isHarmonicMinorChord ? 'text-blue-400' : currentChord?.isSecondary ? 'text-keyred' : 'text-white') : ''}
               `}
             >
               {currentChord?.roman}
@@ -534,6 +547,16 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === null ? 'text-blue-400' : ''}
               `}>
                 ({MODE_LABELS[currentChord.sourceMode]})
+              </div>
+            )}
+            {isHarmonicMinorChord && (
+              <div className={`text-xl sm:text-2xl font-bold transition-all duration-300
+                ${result === 'correct' ? 'text-green-400' : ''}
+                ${result === 'wrong' ? 'text-keyred' : ''}
+                ${result === 'revealed' ? 'text-yellow-400' : ''}
+                ${result === null ? 'text-blue-400' : ''}
+              `}>
+                (harm. minor)
               </div>
             )}
 

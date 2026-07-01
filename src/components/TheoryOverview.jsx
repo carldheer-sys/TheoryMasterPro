@@ -3,7 +3,6 @@ import Select from './Select'
 import DroneToggle from './DroneToggle'
 import {
   TONICS,
-  TONALITIES,
   MODES,
   DIATONIC_DEGREES,
   getDiatonicTriads,
@@ -39,6 +38,13 @@ const VIEW_MODES = [
   { value: 'all-modes', label: 'All Modes' }
 ]
 
+// Rows for major-minor view: Major, Natural Minor, Harmonic Minor
+const THEORY_TONALITIES = [
+  { value: 'major', label: 'Major' },
+  { value: 'minor', label: 'Natural Minor' },
+  { value: 'harmonic-minor', label: 'Harmonic Minor' },
+]
+
 export default function TheoryOverview({ range, activeNotes, ensureAudioContext, droneVolume = 0, tonic, onTonicChange }) {
   const [tab, setTab] = useState('degrees')
   const [chordVariant, setChordVariant] = useState('triads')
@@ -51,7 +57,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
   const tonicRange = useMemo(() => ({ start: 57, end: 84 }), [])
 
   // Rows to display based on view mode
-  const rows = viewMode === 'all-modes' ? MODES : TONALITIES
+  const rows = viewMode === 'all-modes' ? MODES : THEORY_TONALITIES
 
   // Compute highlight MIDI notes (one per pitch class, closest to center of tonic range)
   const highlightNotes = useMemo(() => {

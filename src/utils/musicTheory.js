@@ -100,6 +100,7 @@ export const DIATONIC_PCS = {
   // Backward compatibility
   major: new Set([0, 2, 4, 5, 7, 9, 11]),
   minor: new Set([0, 2, 3, 5, 7, 8, 10]),
+  'harmonic-minor': new Set([0, 2, 3, 5, 7, 8, 11]),
 }
 
 // Diatonic scale degrees for major and minor
@@ -184,6 +185,15 @@ export const DIATONIC_DEGREES = {
     { degree: 'b5', semitones: 6 },
     { degree: 'b6', semitones: 8 },
     { degree: 'b7', semitones: 10 }
+  ],
+  'harmonic-minor': [
+    { degree: '1', semitones: 0 },
+    { degree: '2', semitones: 2 },
+    { degree: 'b3', semitones: 3 },
+    { degree: '4', semitones: 5 },
+    { degree: '5', semitones: 7 },
+    { degree: 'b6', semitones: 8 },
+    { degree: '7', semitones: 11 }
   ]
 }
 
@@ -289,7 +299,7 @@ export function degreeToPitchClass(tonicPC, semitones) {
 // Compute the parent major tonic name for a given tonic + mode
 function getParentMajorTonic(tonic, mode) {
   if (mode === 'major' || mode === 'ionian') return tonic
-  if (mode === 'minor' || mode === 'aeolian') return MINOR_TO_RELATIVE_MAJOR[tonic] || 'C'
+  if (mode === 'minor' || mode === 'aeolian' || mode === 'harmonic-minor') return MINOR_TO_RELATIVE_MAJOR[tonic] || 'C'
   const offset = MODE_PARENT_MAJOR_OFFSET[mode]
   if (offset == null) return tonic
   const tonicPC = tonicToPC(tonic)
@@ -449,6 +459,15 @@ export const DIATONIC_TRIADS = {
     { roman: 'bVI',  semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
     { roman: 'bvii', semitones: 10, quality: 'minor',      intervals: [0, 3, 7] },
   ],
+  'harmonic-minor': [
+    { roman: 'i',      semitones: 0,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'iio',    semitones: 2,  quality: 'diminished', intervals: [0, 3, 6] },
+    { roman: 'bIII+',  semitones: 3,  quality: 'augmented',  intervals: [0, 4, 8] },
+    { roman: 'iv',     semitones: 5,  quality: 'minor',      intervals: [0, 3, 7] },
+    { roman: 'V',      semitones: 7,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'bVI',    semitones: 8,  quality: 'major',      intervals: [0, 4, 7] },
+    { roman: 'viio',   semitones: 11, quality: 'diminished', intervals: [0, 3, 6] },
+  ],
 }
 
 // Diatonic seventh chords for major and minor keys (from naming conventions §5.5)
@@ -534,6 +553,15 @@ export const DIATONIC_SEVENTHS = {
     { roman: 'bVI7',    semitones: 8,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
     { roman: 'bviim7',   semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
   ],
+  'harmonic-minor': [
+    { roman: 'i(M7)',       semitones: 0,  quality: 'minor-major7',     intervals: [0, 3, 7, 11] },
+    { roman: 'iim7b5',      semitones: 2,  quality: 'half-diminished',  intervals: [0, 3, 6, 10] },
+    { roman: 'bIII+maj7',  semitones: 3,  quality: 'augmented-major7', intervals: [0, 4, 8, 11] },
+    { roman: 'ivm7',        semitones: 5,  quality: 'minor7',           intervals: [0, 3, 7, 10] },
+    { roman: 'V7',          semitones: 7,  quality: 'dominant7',        intervals: [0, 4, 7, 10] },
+    { roman: 'bVImaj7',    semitones: 8,  quality: 'major7',           intervals: [0, 4, 7, 11] },
+    { roman: 'viio7',       semitones: 11, quality: 'diminished7',      intervals: [0, 3, 6, 9] },
+  ],
 }
 
 // Chord label suffixes by quality (jazz/pop notation from §4.1)
@@ -547,6 +575,8 @@ const CHORD_LABEL_SUFFIXES = {
   minor7: 'm7',
   'half-diminished': 'm7b5',
   diminished7: 'o7',
+  'minor-major7': 'm(maj7)',
+  'augmented-major7': 'aug(maj7)',
 }
 
 // Get diatonic triads for a tonality or mode
@@ -557,6 +587,34 @@ export function getDiatonicTriads(tonality) {
 // Get diatonic sevenths for a tonality or mode
 export function getDiatonicSevenths(tonality) {
   return DIATONIC_SEVENTHS[tonality] || DIATONIC_SEVENTHS[TONALITY_TO_MODE[tonality]] || DIATONIC_SEVENTHS.ionian
+}
+
+// Harmonic minor V triad (for inclusion in minor key chord practice)
+export const HARMONIC_MINOR_V_TRIAD = {
+  roman: 'V', semitones: 7, quality: 'major', intervals: [0, 4, 7], isHarmonicMinor: true,
+}
+
+// Harmonic minor V7 seventh chord (for inclusion in minor key chord practice)
+export const HARMONIC_MINOR_V7_SEVENTH = {
+  roman: 'V7', semitones: 7, quality: 'dominant7', intervals: [0, 4, 7, 10], isHarmonicMinor: true,
+}
+
+// Get diatonic triads, optionally including the V from harmonic minor for minor keys
+export function getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor) {
+  const base = getDiatonicTriads(tonality)
+  if (tonality === 'minor' && includeHarmMinor) {
+    return [...base, HARMONIC_MINOR_V_TRIAD]
+  }
+  return base
+}
+
+// Get diatonic sevenths, optionally including the V7 from harmonic minor for minor keys
+export function getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) {
+  const base = getDiatonicSevenths(tonality)
+  if (tonality === 'minor' && includeHarmMinor) {
+    return [...base, HARMONIC_MINOR_V7_SEVENTH]
+  }
+  return base
 }
 
 // Get the pitch classes for a chord given the tonic pitch class
@@ -603,10 +661,10 @@ export function isChordDiatonic(tonicPC, chord, mainChords) {
 // options: { tonicPC, tonality, selectedChordTypes, borrowedModes, probability, lastChord }
 // probability: 0 = only borrowed, 1 = only main (diatonic)
 // Returns a chord object with extra fields: sourceMode, isBorrowed
-export function pickInterchangeChord({ tonicPC, tonality, selectedChordTypes, borrowedModes, probability, lastChord = null }) {
+export function pickInterchangeChord({ tonicPC, tonality, selectedChordTypes, borrowedModes, probability, lastChord = null, includeHarmMinor = false }) {
   // Build main chord list
   const mainChords = selectedChordTypes.flatMap(type =>
-    type === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality)
+    type === 'sevenths' ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor)
   )
 
   // Build borrowed chord lists (excluding main mode)
@@ -717,14 +775,28 @@ export function getSecondaryChordTarget(chord, tonality, selectedChordTypes) {
 // options: { tonicPC, tonality, selectedChordTypes, selectedSecondaryChords, probability, lastChord }
 // probability: 0 = only secondary, 1 = only diatonic
 // Returns a chord object with extra fields: isSecondary, sourceMode, equivalentRoman (if secondary)
-export function pickSecondaryChord({ tonicPC, tonality, selectedChordTypes, selectedSecondaryChords, probability, lastChord = null }) {
+export function pickSecondaryChord({ tonicPC, tonality, selectedChordTypes, selectedSecondaryChords, probability, lastChord = null, lastSecondaryId = null, includeHarmMinor = false }) {
   // Build main chord list
   const mainChords = selectedChordTypes.flatMap(type =>
-    type === 'sevenths' ? getDiatonicSevenths(tonality) : getDiatonicTriads(tonality)
+    type === 'sevenths' ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor)
   )
 
   // Filter available secondary chords (target must be diatonic)
-  const availableSecondary = selectedSecondaryChords.filter(sc => isSecondaryChordAvailable(sc, tonality))
+  let availableSecondary = selectedSecondaryChords.filter(sc => isSecondaryChordAvailable(sc, tonality))
+
+  // Don't pick the same secondary chord as the last one used (the target in between doesn't count)
+  if (lastSecondaryId) {
+    availableSecondary = availableSecondary.filter(sc => sc.id !== lastSecondaryId)
+  }
+
+  // Don't pick a secondary chord whose target is the same as the last chord
+  // (prevents e.g. V7/ii ii viio7/ii ii — target repeating after a different secondary)
+  if (lastChord) {
+    availableSecondary = availableSecondary.filter(sc => {
+      const target = getSecondaryChordTarget(sc, tonality, selectedChordTypes)
+      return !target || target.roman !== lastChord.roman
+    })
+  }
 
   // If no secondary chords available or probability >= 1, pick from main only
   if (availableSecondary.length === 0 || probability >= 1) {
