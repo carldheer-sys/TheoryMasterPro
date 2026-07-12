@@ -4,6 +4,8 @@ import TonalitySelect from './TonalitySelect'
 import MultiSelect from './MultiSelect'
 import GroupedMultiSelect from './GroupedMultiSelect'
 import DroneToggle from './DroneToggle'
+import RomanNumeral from './RomanNumeral'
+import ChordLabel from './ChordLabel'
 import {
   TONICS,
   TONALITIES,
@@ -21,7 +23,11 @@ import {
   getChordRootName,
   spellNoteName,
   midiNoteToPC,
-  getKeyDisplay
+  getKeyDisplay,
+  assignInversion,
+  getBassPC,
+  getBassScaleDegree,
+  getFiguredBass
 } from '../utils/musicTheory'
 
 const CHORD_TYPE_OPTIONS = [
@@ -61,6 +67,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   const [selectedSecondaryChords, setSelectedSecondaryChords] = useState([])
   const [secondaryProbability, setSecondaryProbability] = useState(0.7)
   const [includeHarmMinor, setIncludeHarmMinor] = useState(true)
+  const [includeInversions, setIncludeInversions] = useState(false)
+  const [inversionNotation, setInversionNotation] = useState('slash') // 'slash' | 'figured-bass'
 
   // Practice state
   const [hasStarted, setHasStarted] = useState(false)
@@ -100,6 +108,25 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     const pcs = getChordPitchClasses(tonicPC, currentChord)
     return pcs.map(pc => spellNoteName(pc, effectiveTonic, spellMode))
   }, [tonicPC, currentChord, effectiveTonic, tonality])
+
+  // Inversion display: figured bass or slash notation
+  const displayFiguredBass = useMemo(() => {
+    if (!currentChord || !includeInversions || currentChord.inversion == null) return null
+    return getFiguredBass(currentChord, currentChord.inversion)
+  }, [currentChord, includeInversions])
+
+  const displayBassDegree = useMemo(() => {
+    if (!currentChord || !includeInversions || currentChord.inversion == null || currentChord.inversion === 0) return null
+    return getBassScaleDegree(tonicPC, currentChord, currentChord.inversion)
+  }, [tonicPC, currentChord, includeInversions])
+
+  // Bass note pitch class for inversion checking.
+  // When inversions are enabled, we ALWAYS check the bass note — even for root position
+  // (inversion=0), the lowest note must be the root.
+  const targetBassPC = useMemo(() => {
+    if (!currentChord || !includeInversions || currentChord.inversion == null) return null
+    return getBassPC(tonicPC, currentChord, currentChord.inversion)
+  }, [tonicPC, currentChord, includeInversions])
 
   // Build grouped options for secondary chords dropdown (filtered by tonality)
   const secondaryChordGroups = useMemo(() => {
@@ -178,6 +205,12 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   const handleGenerate = useCallback(() => {
     if (ensureAudioContext) ensureAudioContext()
     const pick = pickNextChord(lastChord)
+    // Assign a random inversion if inversions are enabled
+    if (includeInversions) {
+      pick.inversion = assignInversion(pick)
+    } else {
+      pick.inversion = 0
+    }
     setCurrentChord(pick)
     setLastChord(pick)
     setResult(null)
@@ -185,7 +218,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     lastCheckedKeyRef.current = ''
     if (onClearAllNotes) onClearAllNotes()
     if (setRevealedNotes) setRevealedNotes(new Set())
-  }, [pickNextChord, lastChord, ensureAudioContext, onClearAllNotes, setRevealedNotes])
+  }, [pickNextChord, lastChord, ensureAudioContext, onClearAllNotes, setRevealedNotes, includeInversions])
 
   // Watch active notes and check against target chord
   useEffect(() => {
@@ -203,6 +236,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     }
 
     // Create a key for this configuration to avoid re-checking
+    // Include bass note info so different bass notes trigger re-check
     const configKey = Array.from(activePCs).sort((a, b) => a - b).join(',')
     if (configKey === lastCheckedKeyRef.current) return
     lastCheckedKeyRef.current = configKey
@@ -212,13 +246,27 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     // Check if all chord tones are present
     const allPresent = Array.from(targetPCs).every(pc => activePCs.has(pc))
 
-    if (allPresent && !hasExtra) {
-      // Correct! All chord tones present, no extras
+    // If inversions are enabled and chord has a non-zero inversion,
+    // the lowest played note must match the target bass pitch class
+    let bassCorrect = true
+    if (targetBassPC != null && activeNotes.size > 0) {
+      const lowestNote = Math.min(...activeNotes)
+      const lowestPC = midiNoteToPC(lowestNote)
+      bassCorrect = lowestPC === targetBassPC
+    }
+
+    if (allPresent && !hasExtra && bassCorrect) {
+      // Correct! All chord tones present, no extras, correct bass
       setResult('correct')
       setScore(s => ({ correct: s.correct + 1, answered: s.answered + 1 }))
       if (!holdOnCorrect) {
         setTimeout(() => {
           const nextPick = pickNextChord(currentChord)
+          if (includeInversions) {
+            nextPick.inversion = assignInversion(nextPick)
+          } else {
+            nextPick.inversion = 0
+          }
           setCurrentChord(nextPick)
           setLastChord(nextPick)
           setResult(null)
@@ -227,8 +275,8 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
         }, autoAdvanceDelay)
       }
       // If holdOnCorrect, the release-watcher effect will handle advancing
-    } else if (hasExtra) {
-      // Wrong: there are notes not in the chord
+    } else if (hasExtra || (allPresent && !bassCorrect)) {
+      // Wrong: there are notes not in the chord, or bass note is incorrect
       setResult('wrong')
       setScore(s => ({ ...s, answered: s.answered + 1 }))
       // Clear notes immediately so the effect doesn't re-trigger
@@ -240,7 +288,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       }, 600)
     }
     // If subset (all notes are chord tones but not all present) → waiting, do nothing
-  }, [activeNotes, currentChord, targetPCs, result, pickNextChord, autoAdvanceDelay, holdOnCorrect, onClearAllNotes])
+  }, [activeNotes, currentChord, targetPCs, targetBassPC, result, pickNextChord, autoAdvanceDelay, holdOnCorrect, onClearAllNotes, includeInversions])
 
   // Hold-on-correct: when result is 'correct' and all notes released, advance after delay
   useEffect(() => {
@@ -248,6 +296,11 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
     if (activeNotes.size > 0) return
     const timer = setTimeout(() => {
       const nextPick = pickNextChord(currentChord)
+      if (includeInversions) {
+        nextPick.inversion = assignInversion(nextPick)
+      } else {
+        nextPick.inversion = 0
+      }
       setCurrentChord(nextPick)
       setLastChord(nextPick)
       setResult(null)
@@ -255,7 +308,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       if (onClearAllNotes) onClearAllNotes()
     }, autoAdvanceDelay)
     return () => clearTimeout(timer)
-  }, [holdOnCorrect, result, activeNotes, currentChord, pickNextChord, autoAdvanceDelay, onClearAllNotes])
+  }, [holdOnCorrect, result, activeNotes, currentChord, pickNextChord, autoAdvanceDelay, onClearAllNotes, includeInversions])
 
   // Press-and-hold NEXT: press reveals answer, release advances after delay
   const advanceTimerRef = useRef(null)
@@ -481,19 +534,45 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
 
         <div className="flex-1" />
 
+        {/* Score display — always visible so right-side buttons don't shift */}
+        <div className="flex items-center gap-4 pb-2.5 min-w-[120px]">
+          <div className="text-sm text-gray-400">
+            Score: <span className="text-white font-bold">{score.correct}</span>
+            <span className="text-gray-600"> / </span>
+            <span className="text-white font-bold">{score.answered}</span>
+          </div>
+        </div>
+
+        {/* Include inversions toggle + format selector */}
+        <div className="relative flex flex-col">
+          <button
+            onClick={() => { setIncludeInversions(v => !v); handleSettingChange() }}
+            className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors min-h-[40px] sm:min-h-[44px]
+              flex items-center gap-1.5
+              ${includeInversions
+                ? 'bg-accent text-white'
+                : 'bg-bg-700 text-gray-400 hover:bg-bg-600 hover:text-white'
+              }`}
+          >
+            Inversions
+          </button>
+          {includeInversions && (
+            <div className="absolute top-full left-0 pt-1.5 flex flex-col gap-0.5 z-10">
+              <label className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-gray-500 pl-1">Format</label>
+              <select
+                value={inversionNotation}
+                onChange={(e) => setInversionNotation(e.target.value)}
+                className="px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium bg-bg-700 text-gray-400 border border-bg-600 cursor-pointer hover:text-white transition-colors"
+              >
+                <option value="slash">Slash Notation</option>
+                <option value="figured-bass">Figured Bass</option>
+              </select>
+            </div>
+          )}
+        </div>
+
         {/* Drone toggle */}
         <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
-
-        {/* Score display */}
-        {hasStarted && (
-          <div className="flex items-center gap-4 pb-2.5">
-            <div className="text-sm text-gray-400">
-              Score: <span className="text-white font-bold">{score.correct}</span>
-              <span className="text-gray-600"> / </span>
-              <span className="text-white font-bold">{score.answered}</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main display area */}
@@ -527,7 +606,11 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === null ? (currentChord?.isBorrowed || isHarmonicMinorChord ? 'text-blue-400' : currentChord?.isSecondary ? 'text-keyred' : 'text-white') : ''}
               `}
             >
-              {currentChord?.roman}
+              <RomanNumeral
+                roman={currentChord?.roman}
+                figuredBass={inversionNotation === 'figured-bass' ? displayFiguredBass : null}
+                bassDegree={inversionNotation === 'slash' ? displayBassDegree : null}
+              />
             </div>
             {currentChord?.isSecondary && (
               <div className={`text-xl sm:text-2xl font-bold transition-all duration-300
@@ -536,7 +619,11 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                 ${result === 'revealed' ? 'text-yellow-400' : ''}
                 ${result === null ? 'text-keyred' : ''}
               `}>
-                ({currentChord.equivalentRoman})
+                (<RomanNumeral
+                  roman={currentChord.equivalentRoman}
+                  figuredBass={inversionNotation === 'figured-bass' ? displayFiguredBass : null}
+                  bassDegree={inversionNotation === 'slash' ? displayBassDegree : null}
+                />)
               </div>
             )}
             {currentChord?.isBorrowed && (
@@ -567,7 +654,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
-                  Correct! That was <span className="music-notation">{targetChordLabel}</span> (<span className="music-notation whitespace-nowrap">{targetNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}{n}</span>)}</span>)
+                  Correct! That was <span className="music-notation"><ChordLabel label={targetChordLabel} /></span> (<span className="music-notation whitespace-nowrap">{targetNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}{n}</span>)}</span>)
                 </div>
               )}
               {result === 'revealed' && (
@@ -575,7 +662,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
                   <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Answer: <span className="music-notation">{targetChordLabel}</span> (<span className="music-notation whitespace-nowrap">{targetNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}{n}</span>)}</span>)
+                  Answer: <span className="music-notation"><ChordLabel label={targetChordLabel} /></span> (<span className="music-notation whitespace-nowrap">{targetNoteNames?.map((n, i) => <span key={i}>{i > 0 && '–'}{n}</span>)}</span>)
                 </div>
               )}
               {result === 'wrong' && (

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import Select from './Select'
 import DroneToggle from './DroneToggle'
+import RomanNumeral from './RomanNumeral'
+import ChordLabel from './ChordLabel'
 import {
   TONICS,
   MODES,
@@ -380,9 +382,9 @@ function ChordsTable({ chordData, isCellSelected, onSelectCell }) {
                   `}
                 >
                   <div className={`music-notation font-bold text-sm text-white`}>
-                    {cell.roman}
+                    <RomanNumeral roman={cell.roman} />
                   </div>
-                  <div className="music-notation text-xs text-gray-400 mt-0.5">{cell.label}</div>
+                  <div className="music-notation text-xs text-gray-400 mt-0.5"><ChordLabel label={cell.label} /></div>
                 </td>
               ))}
             </tr>

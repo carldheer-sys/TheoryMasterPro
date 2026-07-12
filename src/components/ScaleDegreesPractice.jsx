@@ -229,19 +229,17 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
 
         <div className="flex-1" />
 
+        {/* Score display — always visible so right-side buttons don't shift */}
+        <div className="flex items-center gap-4 pb-2.5 min-w-[120px]">
+          <div className="text-sm text-gray-400">
+            Score: <span className="text-white font-bold">{score.correct}</span>
+            <span className="text-gray-600"> / </span>
+            <span className="text-white font-bold">{score.answered}</span>
+          </div>
+        </div>
+
         {/* Drone toggle */}
         <DroneToggle tonic={effectiveTonic} ensureAudioContext={ensureAudioContext} droneVolume={droneVolume} />
-
-        {/* Score display */}
-        {hasStarted && (
-          <div className="flex items-center gap-4 pb-2.5">
-            <div className="text-sm text-gray-400">
-              Score: <span className="text-white font-bold">{score.correct}</span>
-              <span className="text-gray-600"> / </span>
-              <span className="text-white font-bold">{score.answered}</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main display area */}

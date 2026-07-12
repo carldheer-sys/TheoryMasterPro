@@ -474,90 +474,90 @@ export const DIATONIC_TRIADS = {
 export const DIATONIC_SEVENTHS = {
   major: [
     { roman: 'Imaj7',  semitones: 0,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'iim7',    semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'iiim7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'ii7',    semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iii7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'IVmaj7', semitones: 5,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'V7',     semitones: 7,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'vim7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vi7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'viim7b5',  semitones: 11, quality: 'half-diminished', intervals: [0, 3, 6, 10] },
   ],
   minor: [
-    { roman: 'im7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'iim7b5',     semitones: 2,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'bIIImaj7', semitones: 3,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'ivm7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'vm7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iv7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'bVII7',    semitones: 10, quality: 'dominant7',       intervals: [0, 4, 7, 10] },
   ],
   ionian: [
     { roman: 'Imaj7',  semitones: 0,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'iim7',    semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'iiim7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'ii7',    semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iii7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'IVmaj7', semitones: 5,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'V7',     semitones: 7,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'vim7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vi7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'viim7b5',  semitones: 11, quality: 'half-diminished', intervals: [0, 3, 6, 10] },
   ],
   dorian: [
-    { roman: 'im7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'iim7',      semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'ii7',      semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'bIIImaj7', semitones: 3,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'IV7',      semitones: 5,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'vm7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'vim7b5',     semitones: 9,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'bVIImaj7', semitones: 10, quality: 'major7',          intervals: [0, 4, 7, 11] },
   ],
   phrygian: [
-    { roman: 'im7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'bIImaj7',  semitones: 1,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'bIII7',    semitones: 3,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'ivm7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iv7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'vm7b5',      semitones: 7,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'bviim7',    semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bvii7',    semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
   ],
   lydian: [
     { roman: 'Imaj7',  semitones: 0,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'II7',    semitones: 2,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'iiim7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iii7',   semitones: 4,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: '#ivm7b5',  semitones: 6,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'Vmaj7',  semitones: 7,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'vim7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'viim7',   semitones: 11, quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vi7',    semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vii7',   semitones: 11, quality: 'minor7',          intervals: [0, 3, 7, 10] },
   ],
   mixolydian: [
     { roman: 'I7',       semitones: 0,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'iim7',      semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'ii7',      semitones: 2,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'iiim7b5',    semitones: 4,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'IVmaj7',   semitones: 5,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'vm7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'vim7',      semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'vi7',      semitones: 9,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'bVIImaj7', semitones: 10, quality: 'major7',          intervals: [0, 4, 7, 11] },
   ],
   aeolian: [
-    { roman: 'im7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'i7',       semitones: 0,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'iim7b5',     semitones: 2,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'bIIImaj7', semitones: 3,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'ivm7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'vm7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iv7',      semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'v7',       semitones: 7,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'bVImaj7',  semitones: 8,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'bVII7',    semitones: 10, quality: 'dominant7',       intervals: [0, 4, 7, 10] },
   ],
   locrian: [
     { roman: 'im7b5',     semitones: 0,  quality: 'half-diminished', intervals: [0, 3, 6, 10] },
     { roman: 'bIImaj7', semitones: 1,  quality: 'major7',          intervals: [0, 4, 7, 11] },
-    { roman: 'biiim7',   semitones: 3,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
-    { roman: 'ivm7',     semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'biii7',   semitones: 3,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'iv7',     semitones: 5,  quality: 'minor7',          intervals: [0, 3, 7, 10] },
     { roman: 'bVmaj7',  semitones: 6,  quality: 'major7',          intervals: [0, 4, 7, 11] },
     { roman: 'bVI7',    semitones: 8,  quality: 'dominant7',       intervals: [0, 4, 7, 10] },
-    { roman: 'bviim7',   semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
+    { roman: 'bvii7',   semitones: 10, quality: 'minor7',          intervals: [0, 3, 7, 10] },
   ],
   'harmonic-minor': [
-    { roman: 'i(M7)',       semitones: 0,  quality: 'minor-major7',     intervals: [0, 3, 7, 11] },
+    { roman: 'imaj7',       semitones: 0,  quality: 'minor-major7',     intervals: [0, 3, 7, 11] },
     { roman: 'iim7b5',      semitones: 2,  quality: 'half-diminished',  intervals: [0, 3, 6, 10] },
     { roman: 'bIII+maj7',  semitones: 3,  quality: 'augmented-major7', intervals: [0, 4, 8, 11] },
-    { roman: 'ivm7',        semitones: 5,  quality: 'minor7',           intervals: [0, 3, 7, 10] },
+    { roman: 'iv7',        semitones: 5,  quality: 'minor7',           intervals: [0, 3, 7, 10] },
     { roman: 'V7',          semitones: 7,  quality: 'dominant7',        intervals: [0, 4, 7, 10] },
     { roman: 'bVImaj7',    semitones: 8,  quality: 'major7',           intervals: [0, 4, 7, 11] },
     { roman: 'viio7',       semitones: 11, quality: 'diminished7',      intervals: [0, 3, 6, 9] },
@@ -568,15 +568,15 @@ export const DIATONIC_SEVENTHS = {
 const CHORD_LABEL_SUFFIXES = {
   major: '',
   minor: 'm',
-  diminished: 'dim',
-  augmented: 'aug',
+  diminished: 'o',
+  augmented: '+',
   major7: 'maj7',
   dominant7: '7',
   minor7: 'm7',
   'half-diminished': 'm7b5',
   diminished7: 'o7',
   'minor-major7': 'm(maj7)',
-  'augmented-major7': 'aug(maj7)',
+  'augmented-major7': '+maj7',
 }
 
 // Get diatonic triads for a tonality or mode
@@ -623,13 +623,72 @@ export function getChordPitchClasses(tonicPC, chord) {
   return chord.intervals.map(iv => (rootPC + iv) % 12)
 }
 
+// ─── Inversion support (from naming conventions §6) ──────────────────────
+
+// Assign a random inversion to a chord (0 = root position, 1 = 1st inversion, etc.)
+// Returns an inversion number from 0 to intervals.length - 1
+export function assignInversion(chord) {
+  const numPositions = chord.intervals.length
+  return secureRandomInt(numPositions)
+}
+
+// Get the bass note pitch class for a chord in a given inversion
+export function getBassPC(tonicPC, chord, inversion) {
+  const rootPC = (tonicPC + chord.semitones) % 12
+  return (rootPC + chord.intervals[inversion]) % 12
+}
+
+// Get the scale degree label for the bass note (relative to home key)
+export function getBassScaleDegree(tonicPC, chord, inversion) {
+  const bassPC = getBassPC(tonicPC, chord, inversion)
+  const chromaticDistance = (bassPC - tonicPC + 12) % 12
+  return DEGREE_MAP[chromaticDistance]
+}
+
+// Parse a roman numeral string into { base, superscript } for CSS superscript rendering.
+// The superscript is the chord-quality extension that follows the roman numeral letters.
+// Examples: 'Imaj7' → { base: 'I', superscript: 'maj7' }
+//           'viim7b5' → { base: 'vii', superscript: 'm7b5' }
+//           'V7/ii' → { base: 'V', superscript: '7', secondary: '/ii' }
+//           'viio7/V' → { base: 'vii', superscript: 'o7', secondary: '/V' }
+//           'i' → { base: 'i', superscript: '' }
+//           'bIII+' → { base: 'bIII', superscript: '+' }
+export function getRomanParts(roman) {
+  if (!roman) return { base: '', superscript: '', secondary: '' }
+  // Split off secondary chord target (everything after first '/')
+  const slashIdx = roman.indexOf('/')
+  const main = slashIdx >= 0 ? roman.slice(0, slashIdx) : roman
+  const secondary = slashIdx >= 0 ? roman.slice(slashIdx) : ''
+  // The base is the roman numeral letters: optional b/# prefix + roman numerals (i, ii, iii, iv, v, vi, vii, I..VII)
+  // The superscript is whatever follows after the roman numeral letters
+  const match = main.match(/^([b#]*[IViv]+)(.*)$/)
+  if (!match) return { base: main, superscript: '', secondary }
+  return { base: match[1], superscript: match[2], secondary }
+}
+
+// Figured bass symbols for chord inversions
+// Triads: root = '' (no figure), 1st = '6', 2nd = '6/4'
+// Sevenths: root = '7', 1st = '6/5', 2nd = '4/3', 3rd = '4/2'
+const FIGURED_BASS_TRIAD = ['', '6', '6/4']
+const FIGURED_BASS_SEVENTH = ['7', '6/5', '4/3', '4/2']
+
+// Get the figured bass symbol for a chord in a given inversion
+export function getFiguredBass(chord, inversion) {
+  if (inversion == null || inversion === 0) {
+    // Root position: triads have no figure, sevenths get '7'
+    return chord.intervals.length === 4 ? '7' : ''
+  }
+  const table = chord.intervals.length === 4 ? FIGURED_BASS_SEVENTH : FIGURED_BASS_TRIAD
+  return table[inversion] || ''
+}
+
 // Get the root note name for a chord (key-aware spelling)
 export function getChordRootName(tonicPC, chord, tonic, tonality) {
   const rootPC = (tonicPC + chord.semitones) % 12
   return spellNoteName(rootPC, tonic, tonality)
 }
 
-// Get the chord label (e.g. "Ab", "Cm", "Bdim", "G7", "Cmaj7", "Bm7b5") with key-aware spelling
+// Get the chord label (e.g. "Ab", "Cm", "Bo", "G7", "Cmaj7", "Bm7b5") with key-aware spelling
 export function getChordLabel(tonicPC, chord, tonic, tonality) {
   const rootName = getChordRootName(tonicPC, chord, tonic, tonality)
   const suffix = CHORD_LABEL_SUFFIXES[chord.quality] ?? ''

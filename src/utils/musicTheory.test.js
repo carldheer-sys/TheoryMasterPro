@@ -55,7 +55,12 @@ import {
   getAvailableSecondaryChords,
   getSecondaryChordTarget,
   pickSecondaryChord,
-  getTonicBasedRange
+  getTonicBasedRange,
+  assignInversion,
+  getBassPC,
+  getBassScaleDegree,
+  getRomanParts,
+  getFiguredBass
 } from './musicTheory.js'
 
 // ─── Test helpers ────────────────────────────────────────────────────────
@@ -688,10 +693,10 @@ test('28. Chord label: C major vi = "Am"', () => {
   assertEqual(getChordLabel(tonicPC, triads[5], 'C', 'major'), 'Am', 'C major vi should be labeled "Am"')
 })
 
-test('29. Chord label: C major viio = "Bdim"', () => {
+test('29. Chord label: C major viio = "Bo"', () => {
   const triads = getDiatonicTriads('major')
   const tonicPC = tonicToPC('C')
-  assertEqual(getChordLabel(tonicPC, triads[6], 'C', 'major'), 'Bdim', 'C major viio should be labeled "Bdim"')
+  assertEqual(getChordLabel(tonicPC, triads[6], 'C', 'major'), 'Bo', 'C major viio should be labeled "Bo"')
 })
 
 test('30. Chord label: C minor bVI = "Ab" (flat key spelling)', () => {
@@ -706,10 +711,10 @@ test('31. Chord label: C minor i = "Cm"', () => {
   assertEqual(getChordLabel(tonicPC, triads[0], 'C', 'minor'), 'Cm', 'C minor i should be labeled "Cm"')
 })
 
-test('32. Chord label: C minor iio = "Ddim"', () => {
+test('32. Chord label: C minor iio = "Do"', () => {
   const triads = getDiatonicTriads('minor')
   const tonicPC = tonicToPC('C')
-  assertEqual(getChordLabel(tonicPC, triads[1], 'C', 'minor'), 'Ddim', 'C minor iio should be labeled "Ddim"')
+  assertEqual(getChordLabel(tonicPC, triads[1], 'C', 'minor'), 'Do', 'C minor iio should be labeled "Do"')
 })
 
 test('33. Chord root name: Ab major bVI in C minor = "Ab"', () => {
@@ -842,7 +847,7 @@ test('43. Integration: C major full diatonic triad set matches naming convention
     { roman: 'IV',   label: 'F',    pcs: [5, 9, 0] },
     { roman: 'V',    label: 'G',    pcs: [7, 11, 2] },
     { roman: 'vi',   label: 'Am',   pcs: [9, 0, 4] },
-    { roman: 'viio', label: 'Bdim', pcs: [11, 2, 5] },
+    { roman: 'viio', label: 'Bo',   pcs: [11, 2, 5] },
   ]
   expected.forEach((exp, i) => {
     const t = triads[i]
@@ -860,7 +865,7 @@ test('44. Integration: A minor full diatonic triad set matches naming convention
   const tonicPC = tonicToPC('A')
   const expected = [
     { roman: 'i',     label: 'Am',   pcs: [9, 0, 4] },
-    { roman: 'iio',   label: 'Bdim', pcs: [11, 2, 5] },
+    { roman: 'iio',   label: 'Bo',   pcs: [11, 2, 5] },
     { roman: 'bIII',  label: 'C',    pcs: [0, 4, 7] },
     { roman: 'iv',    label: 'Dm',   pcs: [2, 5, 9] },
     { roman: 'v',     label: 'Em',   pcs: [4, 7, 11] },
@@ -950,7 +955,7 @@ test('49. Chord pitch classes: minor triad has minor third and perfect fifth', (
 test('50. Diatonic sevenths: major key has 7 chords with correct Roman numerals', () => {
   const sevenths = getDiatonicSevenths('major')
   assertEqual(sevenths.length, 7, 'Major key should have 7 diatonic sevenths')
-  const expectedRomans = ['Imaj7', 'iim7', 'iiim7', 'IVmaj7', 'V7', 'vim7', 'viim7b5']
+  const expectedRomans = ['Imaj7', 'ii7', 'iii7', 'IVmaj7', 'V7', 'vi7', 'viim7b5']
   sevenths.forEach((s, i) => {
     assertEqual(s.roman, expectedRomans[i], `Major 7th ${i}: expected ${expectedRomans[i]}, got ${s.roman}`)
   })
@@ -959,7 +964,7 @@ test('50. Diatonic sevenths: major key has 7 chords with correct Roman numerals'
 test('51. Diatonic sevenths: minor key has 7 chords with correct Roman numerals', () => {
   const sevenths = getDiatonicSevenths('minor')
   assertEqual(sevenths.length, 7, 'Minor key should have 7 diatonic sevenths')
-  const expectedRomans = ['im7', 'iim7b5', 'bIIImaj7', 'ivm7', 'vm7', 'bVImaj7', 'bVII7']
+  const expectedRomans = ['i7', 'iim7b5', 'bIIImaj7', 'iv7', 'v7', 'bVImaj7', 'bVII7']
   sevenths.forEach((s, i) => {
     assertEqual(s.roman, expectedRomans[i], `Minor 7th ${i}: expected ${expectedRomans[i]}, got ${s.roman}`)
   })
@@ -1248,11 +1253,11 @@ test('84. Integration: C major full diatonic 7th set matches naming conventions 
   const tonicPC = tonicToPC('C')
   const expected = [
     { roman: 'Imaj7',  label: 'Cmaj7',  pcs: [0, 4, 7, 11] },
-    { roman: 'iim7',    label: 'Dm7',    pcs: [2, 5, 9, 0] },
-    { roman: 'iiim7',   label: 'Em7',    pcs: [4, 7, 11, 2] },
+    { roman: 'ii7',    label: 'Dm7',    pcs: [2, 5, 9, 0] },
+    { roman: 'iii7',   label: 'Em7',    pcs: [4, 7, 11, 2] },
     { roman: 'IVmaj7', label: 'Fmaj7',  pcs: [5, 9, 0, 4] },
     { roman: 'V7',     label: 'G7',     pcs: [7, 11, 2, 5] },
-    { roman: 'vim7',    label: 'Am7',    pcs: [9, 0, 4, 7] },
+    { roman: 'vi7',    label: 'Am7',    pcs: [9, 0, 4, 7] },
     { roman: 'viim7b5',  label: 'Bm7b5',  pcs: [11, 2, 5, 9] },
   ]
   expected.forEach((exp, i) => {
@@ -1270,11 +1275,11 @@ test('85. Integration: A minor full diatonic 7th set', () => {
   const sevenths = getDiatonicSevenths('minor')
   const tonicPC = tonicToPC('A')
   const expected = [
-    { roman: 'im7',       label: 'Am7',    pcs: [9, 0, 4, 7] },
+    { roman: 'i7',       label: 'Am7',    pcs: [9, 0, 4, 7] },
     { roman: 'iim7b5',     label: 'Bm7b5',  pcs: [11, 2, 5, 9] },
     { roman: 'bIIImaj7', label: 'Cmaj7',  pcs: [0, 4, 7, 11] },
-    { roman: 'ivm7',      label: 'Dm7',    pcs: [2, 5, 9, 0] },
-    { roman: 'vm7',       label: 'Em7',    pcs: [4, 7, 11, 2] },
+    { roman: 'iv7',      label: 'Dm7',    pcs: [2, 5, 9, 0] },
+    { roman: 'v7',       label: 'Em7',    pcs: [4, 7, 11, 2] },
     { roman: 'bVImaj7',  label: 'Fmaj7',  pcs: [5, 9, 0, 4] },
     { roman: 'bVII7',    label: 'G7',     pcs: [7, 11, 2, 5] },
   ]
@@ -1841,7 +1846,7 @@ test('129. All modes: C Dorian diatonic triad set matches expected', () => {
     { roman: 'bIII', label: 'Eb',    pcs: [3, 7, 10] },
     { roman: 'IV',   label: 'F',     pcs: [5, 9, 0] },
     { roman: 'v',    label: 'Gm',    pcs: [7, 10, 2] },
-    { roman: 'vio',  label: 'Adim',  pcs: [9, 0, 3] },
+    { roman: 'vio',  label: 'Ao',    pcs: [9, 0, 3] },
     { roman: 'bVII', label: 'Bb',    pcs: [10, 2, 5] },
   ]
   expected.forEach((exp, i) => {
@@ -1863,7 +1868,7 @@ test('130. All modes: C Phrygian diatonic triad set matches expected', () => {
     { roman: 'bII',  label: 'Db',    pcs: [1, 5, 8] },
     { roman: 'bIII', label: 'Eb',    pcs: [3, 7, 10] },
     { roman: 'iv',   label: 'Fm',    pcs: [5, 8, 0] },
-    { roman: 'vo',   label: 'Gdim',  pcs: [7, 10, 1] },
+    { roman: 'vo',   label: 'Go',    pcs: [7, 10, 1] },
     { roman: 'bVI',  label: 'Ab',    pcs: [8, 0, 3] },
     { roman: 'bvii', label: 'Bbm',   pcs: [10, 1, 5] },
   ]
@@ -1885,7 +1890,7 @@ test('131. All modes: C Lydian diatonic triad set matches expected', () => {
     { roman: 'I',    label: 'C',     pcs: [0, 4, 7] },
     { roman: 'II',   label: 'D',     pcs: [2, 6, 9] },
     { roman: 'iii',  label: 'Em',    pcs: [4, 7, 11] },
-    { roman: '#ivo', label: 'F#dim', pcs: [6, 9, 0] },
+    { roman: '#ivo', label: 'F#o',   pcs: [6, 9, 0] },
     { roman: 'V',    label: 'G',     pcs: [7, 11, 2] },
     { roman: 'vi',   label: 'Am',    pcs: [9, 0, 4] },
     { roman: 'vii',  label: 'Bm',    pcs: [11, 2, 6] },
@@ -1907,7 +1912,7 @@ test('132. All modes: C Mixolydian diatonic triad set matches expected', () => {
   const expected = [
     { roman: 'I',    label: 'C',     pcs: [0, 4, 7] },
     { roman: 'ii',   label: 'Dm',    pcs: [2, 5, 9] },
-    { roman: 'iiio', label: 'Edim',  pcs: [4, 7, 10] },
+    { roman: 'iiio', label: 'Eo',    pcs: [4, 7, 10] },
     { roman: 'IV',   label: 'F',     pcs: [5, 9, 0] },
     { roman: 'v',    label: 'Gm',    pcs: [7, 10, 2] },
     { roman: 'vi',   label: 'Am',    pcs: [9, 0, 4] },
@@ -1928,7 +1933,7 @@ test('133. All modes: C Locrian diatonic triad set matches expected', () => {
   const triads = getDiatonicTriads('locrian')
   const tonicPC = tonicToPC('C')
   const expected = [
-    { roman: 'io',   label: 'Cdim',  pcs: [0, 3, 6] },
+    { roman: 'io',   label: 'Co',    pcs: [0, 3, 6] },
     { roman: 'bII',  label: 'Db',    pcs: [1, 5, 8] },
     { roman: 'biii', label: 'Ebm',   pcs: [3, 6, 10] },
     { roman: 'iv',   label: 'Fm',    pcs: [5, 8, 0] },
@@ -1951,11 +1956,11 @@ test('134. All modes: C Dorian diatonic seventh set matches expected', () => {
   const sevenths = getDiatonicSevenths('dorian')
   const tonicPC = tonicToPC('C')
   const expected = [
-    { roman: 'im7',       label: 'Cm7',    pcs: [0, 3, 7, 10] },
-    { roman: 'iim7',      label: 'Dm7',    pcs: [2, 5, 9, 0] },
+    { roman: 'i7',       label: 'Cm7',    pcs: [0, 3, 7, 10] },
+    { roman: 'ii7',      label: 'Dm7',    pcs: [2, 5, 9, 0] },
     { roman: 'bIIImaj7', label: 'Ebmaj7', pcs: [3, 7, 10, 2] },
     { roman: 'IV7',      label: 'F7',     pcs: [5, 9, 0, 3] },
-    { roman: 'vm7',       label: 'Gm7',    pcs: [7, 10, 2, 5] },
+    { roman: 'v7',       label: 'Gm7',    pcs: [7, 10, 2, 5] },
     { roman: 'vim7b5',     label: 'Am7b5',  pcs: [9, 0, 3, 7] },
     { roman: 'bVIImaj7', label: 'Bbmaj7', pcs: [10, 2, 5, 9] },
   ]
@@ -1976,11 +1981,11 @@ test('135. All modes: C Locrian diatonic seventh set matches expected', () => {
   const expected = [
     { roman: 'im7b5',     label: 'Cm7b5',  pcs: [0, 3, 6, 10] },
     { roman: 'bIImaj7', label: 'Dbmaj7', pcs: [1, 5, 8, 0] },
-    { roman: 'biiim7',   label: 'Ebm7',   pcs: [3, 6, 10, 1] },
-    { roman: 'ivm7',     label: 'Fm7',    pcs: [5, 8, 0, 3] },
+    { roman: 'biii7',   label: 'Ebm7',   pcs: [3, 6, 10, 1] },
+    { roman: 'iv7',     label: 'Fm7',    pcs: [5, 8, 0, 3] },
     { roman: 'bVmaj7',  label: 'Gbmaj7', pcs: [6, 10, 1, 5] },
     { roman: 'bVI7',    label: 'Ab7',    pcs: [8, 0, 3, 6] },
-    { roman: 'bviim7',   label: 'Bbm7',   pcs: [10, 1, 5, 8] },
+    { roman: 'bvii7',   label: 'Bbm7',   pcs: [10, 1, 5, 8] },
   ]
   expected.forEach((exp, i) => {
     const s = sevenths[i]
@@ -2342,6 +2347,521 @@ test('156. Secondary leading-tone intervals are [0,3,6,9]', () => {
   for (const sc of leadingTones) {
     assert(sc.intervals.length === 4 && sc.intervals[0] === 0 && sc.intervals[1] === 3 && sc.intervals[2] === 6 && sc.intervals[3] === 9,
       `${sc.id}: intervals should be [0,3,6,9]`)
+  }
+})
+
+// ── Inversion Tests ──────────────────────────────────────────────────────
+
+test('157. assignInversion returns 0 for triads (3 positions)', () => {
+  const triad = DIATONIC_TRIADS.major[0] // I chord, intervals [0,4,7]
+  const inv = assignInversion(triad)
+  assert(inv >= 0 && inv < 3, `Triad inversion should be 0-2, got ${inv}`)
+})
+
+test('158. assignInversion returns 0 for sevenths (4 positions)', () => {
+  const seventh = DIATONIC_SEVENTHS.major[0] // Imaj7, intervals [0,4,7,11]
+  const inv = assignInversion(seventh)
+  assert(inv >= 0 && inv < 4, `Seventh inversion should be 0-3, got ${inv}`)
+})
+
+test('159. getBassPC: root position returns root PC', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[0] // I, semitones=0, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 0)
+  assertEqual(bassPC, 0, 'Root position bass should be root PC (0)')
+})
+
+test('160. getBassPC: 1st inversion of I in C major = E (pc=4)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[0] // I, semitones=0, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 1)
+  assertEqual(bassPC, 4, '1st inversion of I should have bass E (pc=4)')
+})
+
+test('161. getBassPC: 2nd inversion of I in C major = G (pc=7)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[0] // I, semitones=0, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 2)
+  assertEqual(bassPC, 7, '2nd inversion of I should have bass G (pc=7)')
+})
+
+test('162. getBassPC: 1st inversion of V in C major = B (pc=11)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[4] // V, semitones=7, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 1)
+  // root = 0+7=7 (G), 1st inv = 7+4=11 (B)
+  assertEqual(bassPC, 11, '1st inversion of V should have bass B (pc=11)')
+})
+
+test('163. getBassPC: 2nd inversion of V in C major = D (pc=2)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[4] // V, semitones=7, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 2)
+  // root = 0+7=7 (G), 2nd inv = 7+7=14%12=2 (D)
+  assertEqual(bassPC, 2, '2nd inversion of V should have bass D (pc=2)')
+})
+
+test('164. getBassPC: 3rd inversion of V7 in C major = F (pc=5)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, semitones=7, intervals=[0,4,7,10]
+  const bassPC = getBassPC(tonicPC, chord, 3)
+  // root = 0+7=7 (G), 3rd inv = 7+10=17%12=5 (F)
+  assertEqual(bassPC, 5, '3rd inversion of V7 should have bass F (pc=5)')
+})
+
+test('165. getBassPC: 1st inversion of V7 in C major = B (pc=11)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, semitones=7, intervals=[0,4,7,10]
+  const bassPC = getBassPC(tonicPC, chord, 1)
+  // root = 0+7=7 (G), 1st inv = 7+4=11 (B)
+  assertEqual(bassPC, 11, '1st inversion of V7 should have bass B (pc=11)')
+})
+
+test('166. getBassPC: 2nd inversion of V7 in C major = D (pc=2)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, semitones=7, intervals=[0,4,7,10]
+  const bassPC = getBassPC(tonicPC, chord, 2)
+  // root = 0+7=7 (G), 2nd inv = 7+7=14%12=2 (D)
+  assertEqual(bassPC, 2, '2nd inversion of V7 should have bass D (pc=2)')
+})
+
+test('167. getBassScaleDegree: root position of I = "1"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[0] // I
+  const degree = getBassScaleDegree(tonicPC, chord, 0)
+  assertEqual(degree, '1', 'Root position of I should have bass degree "1"')
+})
+
+test('168. getBassScaleDegree: 1st inversion of I = "3"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[0] // I
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  assertEqual(degree, '3', '1st inversion of I should have bass degree "3"')
+})
+
+test('169. getBassScaleDegree: 2nd inversion of I = "5"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[0] // I
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  assertEqual(degree, '5', '2nd inversion of I should have bass degree "5"')
+})
+
+test('170. getBassScaleDegree: 1st inversion of V = "7"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[4] // V, semitones=7
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // bass = 0+7+4=11, degree 11 = '7'
+  assertEqual(degree, '7', '1st inversion of V should have bass degree "7"')
+})
+
+test('171. getBassScaleDegree: 2nd inversion of V = "2"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[4] // V, semitones=7
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // bass = 0+7+7=14%12=2, degree 2 = '2'
+  assertEqual(degree, '2', '2nd inversion of V should have bass degree "2"')
+})
+
+test('172. getBassScaleDegree: 1st inversion of V7 = "7"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[4] // V7
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // bass = 0+7+4=11, degree 11 = '7'
+  assertEqual(degree, '7', '1st inversion of V7 should have bass degree "7"')
+})
+
+test('173. getBassScaleDegree: 2nd inversion of V7 = "2"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[4] // V7
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // bass = 0+7+7=14%12=2, degree 2 = '2'
+  assertEqual(degree, '2', '2nd inversion of V7 should have bass degree "2"')
+})
+
+test('174. getBassScaleDegree: 3rd inversion of V7 = "4"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[4] // V7
+  const degree = getBassScaleDegree(tonicPC, chord, 3)
+  // bass = 0+7+10=17%12=5, degree 5 = '4'
+  assertEqual(degree, '4', '3rd inversion of V7 should have bass degree "4"')
+})
+
+test('175. getBassScaleDegree: 1st inversion of iii = "5"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[2] // iii (minor), semitones=4, intervals=[0,3,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // iii root = E (pc=4), 1st inv = 4+3=7 (G), degree 7 = '5'
+  assertEqual(degree, '5', '1st inversion of iii should have bass degree "5" (G in C)')
+})
+
+test('176. getBassScaleDegree: 2nd inversion of iii = "7"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_TRIADS.major[2] // iii (minor), semitones=4, intervals=[0,3,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // bass = 0+4+7=11, degree 11 = '7'
+  assertEqual(degree, '7', '2nd inversion of iii should have bass degree "7" (B in C)')
+})
+
+test('177. getBassScaleDegree: 1st inversion of iv in A minor = "b6"', () => {
+  const tonicPC = 9 // A minor
+  const chord = DIATONIC_TRIADS.minor[3] // iv, semitones=5, intervals=[0,3,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // root = 9+5=14%12=2 (D), 1st inv = 2+3=5 (F), degree 5 from A = (5-9+12)%12=8 = b6
+  assertEqual(degree, 'b6', '1st inversion of iv in A minor should have bass degree "b6"')
+})
+
+test('178. getBassScaleDegree: 2nd inversion of iv in A minor = "1"', () => {
+  const tonicPC = 9 // A minor
+  const chord = DIATONIC_TRIADS.minor[3] // iv, semitones=5, intervals=[0,3,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // root = 9+5=14%12=2 (D), 2nd inv = 2+7=9 (A), degree 9 from A = (9-9+12)%12=0 = '1'
+  assertEqual(degree, '1', '2nd inversion of iv in A minor should have bass degree "1"')
+})
+
+test('179. getBassScaleDegree: 1st inversion of bIII in C minor = "5"', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[2] // bIII, semitones=3, intervals=[0,4,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // root = 0+3=3 (Eb), 1st inv = 3+4=7 (G), degree 7 from C = '5'
+  assertEqual(degree, '5', '1st inversion of bIII in C minor should have bass degree "5"')
+})
+
+test('180. getBassScaleDegree: 2nd inversion of bIII in C minor = "b7"', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[2] // bIII, semitones=3, intervals=[0,4,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // root = 0+3=3 (Eb), 2nd inv = 3+7=10 (Bb), degree 10 from C = 'b7'
+  assertEqual(degree, 'b7', '2nd inversion of bIII in C minor should have bass degree "b7"')
+})
+
+test('181. getBassScaleDegree: 3rd inversion of viim7b5 in C major = "6"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[6] // viim7b5, semitones=11, intervals=[0,3,6,10]
+  const degree = getBassScaleDegree(tonicPC, chord, 3)
+  // root = 0+11=11 (B), 3rd inv = 11+10=21%12=9 (A), degree 9 from C = '6'
+  assertEqual(degree, '6', '3rd inversion of viim7b5 should have bass degree "6" (A in C)')
+})
+
+test('182. getBassScaleDegree: 1st inversion of viim7b5 in C major = "2"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[6] // viim7b5, semitones=11, intervals=[0,3,6,10]
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // root = 0+11=11 (B), 1st inv = 11+3=14%12=2 (D), degree 2 from C = '2'
+  assertEqual(degree, '2', '1st inversion of viim7b5 should have bass degree "2" (D in C)')
+})
+
+test('183. getBassScaleDegree: 2nd inversion of viim7b5 in C major = "4"', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[6] // viim7b5, semitones=11, intervals=[0,3,6,10]
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // root = 0+11=11 (B), 2nd inv = 11+6=17%12=5 (F), degree 5 from C = '4'
+  assertEqual(degree, '4', '2nd inversion of viim7b5 should have bass degree "4" (F in C)')
+})
+
+test('184. getBassPC: 1st inversion of ii7 in C major = F (pc=5)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[1] // ii7, semitones=2, intervals=[0,3,7,10]
+  const bassPC = getBassPC(tonicPC, chord, 1)
+  // root = 0+2=2 (D), 1st inv = 2+3=5 (F)
+  assertEqual(bassPC, 5, '1st inversion of ii7 should have bass F (pc=5)')
+})
+
+test('185. getBassPC: 2nd inversion of ii7 in C major = A (pc=9)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[1] // ii7, semitones=2, intervals=[0,3,7,10]
+  const bassPC = getBassPC(tonicPC, chord, 2)
+  // root = 0+2=2 (D), 2nd inv = 2+7=9 (A)
+  assertEqual(bassPC, 9, '2nd inversion of ii7 should have bass A (pc=9)')
+})
+
+test('186. getBassPC: 3rd inversion of ii7 in C major = C (pc=0)', () => {
+  const tonicPC = 0 // C major
+  const chord = DIATONIC_SEVENTHS.major[1] // ii7, semitones=2, intervals=[0,3,7,10]
+  const bassPC = getBassPC(tonicPC, chord, 3)
+  // root = 0+2=2 (D), 3rd inv = 2+10=12%12=0 (C)
+  assertEqual(bassPC, 0, '3rd inversion of ii7 should have bass C (pc=0)')
+})
+
+test('187. getBassPC: root position of bVI in C minor = Ab (pc=8)', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[5] // bVI, semitones=8, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 0)
+  assertEqual(bassPC, 8, 'Root position of bVI should have bass Ab (pc=8)')
+})
+
+test('188. getBassPC: 1st inversion of bVI in C minor = C (pc=0)', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[5] // bVI, semitones=8, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 1)
+  // root = 0+8=8 (Ab), 1st inv = 8+4=12%12=0 (C)
+  assertEqual(bassPC, 0, '1st inversion of bVI should have bass C (pc=0)')
+})
+
+test('189. getBassPC: 2nd inversion of bVI in C minor = Eb (pc=3)', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[5] // bVI, semitones=8, intervals=[0,4,7]
+  const bassPC = getBassPC(tonicPC, chord, 2)
+  // root = 0+8=8 (Ab), 2nd inv = 8+7=15%12=3 (Eb)
+  assertEqual(bassPC, 3, '2nd inversion of bVI should have bass Eb (pc=3)')
+})
+
+test('190. getBassScaleDegree: 1st inversion of bVI in C minor = "1"', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[5] // bVI
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // bass = 0, degree 0 = '1'
+  assertEqual(degree, '1', '1st inversion of bVI in C minor should have bass degree "1"')
+})
+
+test('191. getBassScaleDegree: 2nd inversion of bVI in C minor = "b3"', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[5] // bVI
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // bass = 3, degree 3 = 'b3'
+  assertEqual(degree, 'b3', '2nd inversion of bVI in C minor should have bass degree "b3"')
+})
+
+test('192. getBassScaleDegree: 1st inversion of bVII in C minor = "2"', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[6] // bVII, semitones=10, intervals=[0,4,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 1)
+  // root = 0+10=10 (Bb), 1st inv = 10+4=14%12=2 (D), degree 2 = '2'
+  assertEqual(degree, '2', '1st inversion of bVII in C minor should have bass degree "2"')
+})
+
+test('193. getBassScaleDegree: 2nd inversion of bVII in C minor = "4"', () => {
+  const tonicPC = 0 // C minor
+  const chord = DIATONIC_TRIADS.minor[6] // bVII, semitones=10, intervals=[0,4,7]
+  const degree = getBassScaleDegree(tonicPC, chord, 2)
+  // root = 0+10=10 (Bb), 2nd inv = 10+7=17%12=5 (F), degree 5 = '4'
+  assertEqual(degree, '4', '2nd inversion of bVII in C minor should have bass degree "4"')
+})
+
+test('194. getBassPC: all triad inversions in all 12 major keys', () => {
+  for (const tonic of TONICS) {
+    const tonicPC = tonicToPC(tonic)
+    const triads = getDiatonicTriads('major')
+    for (const chord of triads) {
+      for (let inv = 0; inv < 3; inv++) {
+        const rootPC = (tonicPC + chord.semitones) % 12
+        const expectedBass = (rootPC + chord.intervals[inv]) % 12
+        const bassPC = getBassPC(tonicPC, chord, inv)
+        assertEqual(bassPC, expectedBass, `${tonic} major ${chord.roman} inv ${inv}: bass PC mismatch`)
+      }
+    }
+  }
+})
+
+test('195. getBassPC: all seventh chord inversions in all 12 major keys', () => {
+  for (const tonic of TONICS) {
+    const tonicPC = tonicToPC(tonic)
+    const sevenths = getDiatonicSevenths('major')
+    for (const chord of sevenths) {
+      for (let inv = 0; inv < 4; inv++) {
+        const rootPC = (tonicPC + chord.semitones) % 12
+        const expectedBass = (rootPC + chord.intervals[inv]) % 12
+        const bassPC = getBassPC(tonicPC, chord, inv)
+        assertEqual(bassPC, expectedBass, `${tonic} major ${chord.roman} inv ${inv}: bass PC mismatch`)
+      }
+    }
+  }
+})
+
+test('196. getBassPC: all triad inversions in all 12 minor keys', () => {
+  for (const tonic of TONICS) {
+    const tonicPC = tonicToPC(tonic)
+    const triads = getDiatonicTriads('minor')
+    for (const chord of triads) {
+      for (let inv = 0; inv < 3; inv++) {
+        const rootPC = (tonicPC + chord.semitones) % 12
+        const expectedBass = (rootPC + chord.intervals[inv]) % 12
+        const bassPC = getBassPC(tonicPC, chord, inv)
+        assertEqual(bassPC, expectedBass, `${tonic} minor ${chord.roman} inv ${inv}: bass PC mismatch`)
+      }
+    }
+  }
+})
+
+test('197. getBassPC: all seventh chord inversions in all 12 minor keys', () => {
+  for (const tonic of TONICS) {
+    const tonicPC = tonicToPC(tonic)
+    const sevenths = getDiatonicSevenths('minor')
+    for (const chord of sevenths) {
+      for (let inv = 0; inv < 4; inv++) {
+        const rootPC = (tonicPC + chord.semitones) % 12
+        const expectedBass = (rootPC + chord.intervals[inv]) % 12
+        const bassPC = getBassPC(tonicPC, chord, inv)
+        assertEqual(bassPC, expectedBass, `${tonic} minor ${chord.roman} inv ${inv}: bass PC mismatch`)
+      }
+    }
+  }
+})
+
+test('198. getBassPC: secondary chord inversions', () => {
+  const tonicPC = 0 // C major
+  for (const sc of SECONDARY_CHORDS) {
+    for (let inv = 0; inv < sc.intervals.length; inv++) {
+      const rootPC = (tonicPC + sc.semitones) % 12
+      const expectedBass = (rootPC + sc.intervals[inv]) % 12
+      const bassPC = getBassPC(tonicPC, sc, inv)
+      assertEqual(bassPC, expectedBass, `${sc.id} inv ${inv}: bass PC mismatch`)
+    }
+  }
+})
+
+test('199. getBassScaleDegree: root position always returns chord root degree', () => {
+  const tonicPC = 0 // C major
+  const triads = getDiatonicTriads('major')
+  for (const chord of triads) {
+    const degree = getBassScaleDegree(tonicPC, chord, 0)
+    const expectedDegree = DEGREE_MAP[chord.semitones]
+    assertEqual(degree, expectedDegree, `Root position of ${chord.roman} should have degree ${expectedDegree}`)
+  }
+})
+
+// ── getRomanParts Tests ──────────────────────────────────────────────────
+
+test('200. getRomanParts: triad roman returns empty superscript', () => {
+  const parts = getRomanParts('I')
+  assertEqual(parts.base, 'I', 'Base should be I')
+  assertEqual(parts.superscript, '', 'Superscript should be empty')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('201. getRomanParts: seventh roman returns extension as superscript', () => {
+  const parts = getRomanParts('Imaj7')
+  assertEqual(parts.base, 'I', 'Base should be I')
+  assertEqual(parts.superscript, 'maj7', 'Superscript should be maj7')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('202. getRomanParts: minor seventh with flat5', () => {
+  const parts = getRomanParts('viim7b5')
+  assertEqual(parts.base, 'vii', 'Base should be vii')
+  assertEqual(parts.superscript, 'm7b5', 'Superscript should be m7b5')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('203. getRomanParts: dominant seventh', () => {
+  const parts = getRomanParts('V7')
+  assertEqual(parts.base, 'V', 'Base should be V')
+  assertEqual(parts.superscript, '7', 'Superscript should be 7')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('204. getRomanParts: secondary dominant with slash', () => {
+  const parts = getRomanParts('V7/ii')
+  assertEqual(parts.base, 'V', 'Base should be V')
+  assertEqual(parts.superscript, '7', 'Superscript should be 7')
+  assertEqual(parts.secondary, '/ii', 'Secondary should be /ii')
+})
+
+test('205. getRomanParts: secondary leading-tone with slash', () => {
+  const parts = getRomanParts('viio7/V')
+  assertEqual(parts.base, 'vii', 'Base should be vii')
+  assertEqual(parts.superscript, 'o7', 'Superscript should be o7')
+  assertEqual(parts.secondary, '/V', 'Secondary should be /V')
+})
+
+test('206. getRomanParts: flat-prefixed roman', () => {
+  const parts = getRomanParts('bIIImaj7')
+  assertEqual(parts.base, 'bIII', 'Base should be bIII')
+  assertEqual(parts.superscript, 'maj7', 'Superscript should be maj7')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('207. getRomanParts: sharp-prefixed roman', () => {
+  const parts = getRomanParts('#ivm7b5')
+  assertEqual(parts.base, '#iv', 'Base should be #iv')
+  assertEqual(parts.superscript, 'm7b5', 'Superscript should be m7b5')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('208. getRomanParts: augmented triad with + suffix', () => {
+  const parts = getRomanParts('bIII+')
+  assertEqual(parts.base, 'bIII', 'Base should be bIII')
+  assertEqual(parts.superscript, '+', 'Superscript should be +')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('209. getRomanParts: diminished triad with o suffix', () => {
+  const parts = getRomanParts('viio')
+  assertEqual(parts.base, 'vii', 'Base should be vii')
+  assertEqual(parts.superscript, 'o', 'Superscript should be o')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+test('210. getRomanParts: null input returns empty parts', () => {
+  const parts = getRomanParts(null)
+  assertEqual(parts.base, '', 'Base should be empty')
+  assertEqual(parts.superscript, '', 'Superscript should be empty')
+  assertEqual(parts.secondary, '', 'Secondary should be empty')
+})
+
+// ── getFiguredBass Tests ─────────────────────────────────────────────────
+
+test('211. getFiguredBass: root position triad returns empty string', () => {
+  const chord = DIATONIC_TRIADS.major[0] // I, intervals=[0,4,7]
+  assertEqual(getFiguredBass(chord, 0), '', 'Root position triad should have no figured bass')
+})
+
+test('212. getFiguredBass: 1st inversion triad returns "6"', () => {
+  const chord = DIATONIC_TRIADS.major[0] // I, intervals=[0,4,7]
+  assertEqual(getFiguredBass(chord, 1), '6', '1st inversion triad should be "6"')
+})
+
+test('213. getFiguredBass: 2nd inversion triad returns "6/4"', () => {
+  const chord = DIATONIC_TRIADS.major[0] // I, intervals=[0,4,7]
+  assertEqual(getFiguredBass(chord, 2), '6/4', '2nd inversion triad should be "6/4"')
+})
+
+test('214. getFiguredBass: root position seventh returns "7"', () => {
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, intervals=[0,4,7,10]
+  assertEqual(getFiguredBass(chord, 0), '7', 'Root position seventh should be "7"')
+})
+
+test('215. getFiguredBass: 1st inversion seventh returns "6/5"', () => {
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, intervals=[0,4,7,10]
+  assertEqual(getFiguredBass(chord, 1), '6/5', '1st inversion seventh should be "6/5"')
+})
+
+test('216. getFiguredBass: 2nd inversion seventh returns "4/3"', () => {
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, intervals=[0,4,7,10]
+  assertEqual(getFiguredBass(chord, 2), '4/3', '2nd inversion seventh should be "4/3"')
+})
+
+test('217. getFiguredBass: 3rd inversion seventh returns "4/2"', () => {
+  const chord = DIATONIC_SEVENTHS.major[4] // V7, intervals=[0,4,7,10]
+  assertEqual(getFiguredBass(chord, 3), '4/2', '3rd inversion seventh should be "4/2"')
+})
+
+test('218. getFiguredBass: null inversion returns root position figure', () => {
+  const triad = DIATONIC_TRIADS.major[0] // I, intervals=[0,4,7]
+  assertEqual(getFiguredBass(triad, null), '', 'Null inversion triad should have no figured bass')
+  const seventh = DIATONIC_SEVENTHS.major[4] // V7, intervals=[0,4,7,10]
+  assertEqual(getFiguredBass(seventh, null), '7', 'Null inversion seventh should be "7"')
+})
+
+test('219. getFiguredBass: all triad inversions across all modes', () => {
+  for (const mode of MODES) {
+    const triads = getDiatonicTriads(mode)
+    for (const chord of triads) {
+      assertEqual(getFiguredBass(chord, 0), '', `${mode} ${chord.roman} root: expected ""`)
+      assertEqual(getFiguredBass(chord, 1), '6', `${mode} ${chord.roman} 1st inv: expected "6"`)
+      assertEqual(getFiguredBass(chord, 2), '6/4', `${mode} ${chord.roman} 2nd inv: expected "6/4"`)
+    }
+  }
+})
+
+test('220. getFiguredBass: all seventh inversions across all modes', () => {
+  for (const mode of MODES) {
+    const sevenths = getDiatonicSevenths(mode)
+    for (const chord of sevenths) {
+      assertEqual(getFiguredBass(chord, 0), '7', `${mode} ${chord.roman} root: expected "7"`)
+      assertEqual(getFiguredBass(chord, 1), '6/5', `${mode} ${chord.roman} 1st inv: expected "6/5"`)
+      assertEqual(getFiguredBass(chord, 2), '4/3', `${mode} ${chord.roman} 2nd inv: expected "4/3"`)
+      assertEqual(getFiguredBass(chord, 3), '4/2', `${mode} ${chord.roman} 3rd inv: expected "4/2"`)
+    }
   }
 })
 

@@ -27,16 +27,16 @@
     { "label": "i – v – bVI – bIII", "romans": ["i", "v", "bVI", "bIII"] }
   ],
   "major:sevenths": [
-    { "label": "vim7 – IVmaj7 – Imaj7 – V7", "romans": ["vim7", "IVmaj7", "Imaj7", "V7"] },
-    { "label": "vim7 – iim7 – V7 – Imaj7", "romans": ["vim7", "iim7", "V7", "Imaj7"] },
-    { "label": "iiim7 – vim7 – iim7 – V7 – Imaj7", "romans": ["iiim7", "vim7", "iim7", "V7", "Imaj7"] },
-    { "label": "Imaj7 – IVmaj7 – iim7 – V7 – Imaj7", "romans": ["Imaj7", "IVmaj7", "iim7", "V7", "Imaj7"] },
-    { "label": "Imaj7 – iim7 – V7 – vim7", "romans": ["Imaj7", "iim7", "V7", "vim7"] },
-    { "label": "vim7 – IVmaj7 – iiim7 – Imaj7", "romans": ["vim7", "IVmaj7", "iiim7", "Imaj7"] }
+    { "label": "vi7 – IVmaj7 – Imaj7 – V7", "romans": ["vi7", "IVmaj7", "Imaj7", "V7"] },
+    { "label": "vi7 – ii7 – V7 – Imaj7", "romans": ["vi7", "ii7", "V7", "Imaj7"] },
+    { "label": "iii7 – vi7 – ii7 – V7 – Imaj7", "romans": ["iii7", "vi7", "ii7", "V7", "Imaj7"] },
+    { "label": "Imaj7 – IVmaj7 – ii7 – V7 – Imaj7", "romans": ["Imaj7", "IVmaj7", "ii7", "V7", "Imaj7"] },
+    { "label": "Imaj7 – ii7 – V7 – vi7", "romans": ["Imaj7", "ii7", "V7", "vi7"] },
+    { "label": "vi7 – IVmaj7 – iii7 – Imaj7", "romans": ["vi7", "IVmaj7", "iii7", "Imaj7"] }
   ],
   "minor:sevenths": [
-    { "label": "bVImaj7 – ivm7 – im7 – v7", "romans": ["bVImaj7", "ivm7", "im7", "vm7"] },
+    { "label": "bVImaj7 – iv7 – i7 – v7", "romans": ["bVImaj7", "iv7", "i7", "v7"] },
     { "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7", "romans": ["bVImaj7", "bIIImaj7", "bVII7", "bIIImaj7"] },
-    { "label": "iim7b5 – V7 – im7", "romans": ["iim7b5", "V7", "im7"] }
+    { "label": "iim7b5 – V7 – i7", "romans": ["iim7b5", "V7", "i7"] }
   ]
 }

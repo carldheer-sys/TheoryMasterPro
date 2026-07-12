@@ -169,8 +169,8 @@ Chord labels use **jazz/pop notation** (not classical):
 |-----------|:-------------|---------|
 | Major triad | *(none)* | `C`, `F`, `G` |
 | Minor triad | `m` | `Am`, `Dm` |
-| Diminished triad | `dim` | `Bdim` |
-| Augmented triad | `aug` | `Caug` |
+| Diminished triad | `o` | `Bo` |
+| Augmented triad | `+` | `C+` |
 | Dominant 7th | `7` | `G7`, `F7` |
 | Major 7th | `maj7` | `Cmaj7` |
 | Minor 7th | `m7` | `Am7` |
@@ -190,16 +190,51 @@ Chord labels use **jazz/pop notation** (not classical):
 | Minor 13th | `m13` | `Am13` |
 | Added 9th | `add9` | `Cadd9` |
 | Minor add 9th | `madd9` | `Amadd9` |
-| Augmented 7th | `aug7` | `Caug7` |
+| Augmented 7th | `+7` | `C+7` |
+| Augmented major 7th | `+maj7` | `C+maj7` |
 
-### 4.2 Inversions
+### 4.2 Chord Label Rendering (CSS Superscript)
+
+Chord labels are rendered in the UI using the `ChordLabel` React component, which splits the label into a **base** (inline) and a **suffix** (CSS superscript via `vertical-align: super`, `fontSize: 0.65em`).
+
+**Parsing rules:**
+1. Root = note letter (A–G) + optional accidental (`#`/`b`).
+2. Everything after the root is the suffix.
+3. If the suffix starts with `m` but **not** `maj`, the `m` is a minor indicator and stays **inline** with the root. Only the remaining suffix becomes the superscript.
+4. If the suffix starts with `maj`, the `m` is part of `maj7` and stays in the **superscript**.
+
+| Chord Label | Base (inline) | Suffix (superscript) | Explanation |
+|------------|--------------|---------------------|-------------|
+| `C` | `C` | *(none)* | Major triad |
+| `Am` | `Am` | *(none)* | Minor triad — `m` stays inline |
+| `Bo` | `B` | `o` | Diminished triad |
+| `C+` | `C` | `+` | Augmented triad |
+| `G7` | `G` | `7` | Dominant 7th |
+| `Cmaj7` | `C` | `maj7` | Major 7th — `m` is part of `maj` |
+| `Am7` | `Am` | `7` | Minor 7th — `m` stays inline |
+| `Bo7` | `B` | `o7` | Diminished 7th |
+| `Bm7b5` | `Bm` | `7b5` | Half-diminished — `m` stays inline |
+| `Am(maj7)` | `Am` | `(maj7)` | Minor-major 7th — `m` stays inline |
+| `C+maj7` | `C` | `+maj7` | Augmented major 7th |
+
+### 4.3 Inversions
 
 When the bass note (lowest sounding pitch) differs from the chord root, append `/BassNote`:
 - `G/B` = G major in first inversion (B in bass)
 - `C/G` = C major in second inversion (G in bass)
 - `Am/E` = A minor in first inversion
 
-### 4.3 Chord Normalization (Root Finding)
+**Roman numeral inversions** use slash notation with the **bass note's scale degree** (relative to the home key):
+- `I/3` = I chord in 1st inversion (3rd scale degree in bass)
+- `iii/5` = iii chord in 1st inversion (5th scale degree in bass)
+- `IV/1` = IV chord in 2nd inversion (1st scale degree in bass)
+- `V7/7` = V7 in 1st inversion (7th scale degree in bass)
+- `V7/2` = V7 in 2nd inversion (2nd scale degree in bass)
+- `V7/4` = V7 in 3rd inversion (4th scale degree in bass)
+
+Root position chords have no slash suffix. The bass scale degree is computed from the chord's interval at the inversion index, added to the chord root, then expressed as a scale degree relative to the tonic using the `DEGREE_MAP`.
+
+### 4.4 Chord Normalization (Root Finding)
 
 When multiple pitches are sounding, you must find the **root** before labeling. Algorithm:
 
@@ -217,9 +252,9 @@ When multiple pitches are sounding, you must find the **root** before labeling. 
    - Otherwise → 0
 4. Pick the highest-scoring root. On ties, prefer the lower pitch class number.
 
-### 4.4 Chord Spelling Normalization
+### 4.5 Chord Spelling Normalization
 
-Once the root is found, spell all chord tones relative to that root using proper interval names (not just nearest semitone). This ensures a C major chord is spelled C-E-G (not C-Fb-G), and a diminished chord gets proper enharmonic spelling (B-D-F, not B-Eb-F for Bdim).
+Once the root is found, spell all chord tones relative to that root using proper interval names (not just nearest semitone). This ensures a C major chord is spelled C-E-G (not C-Fb-G), and a diminished chord gets proper enharmonic spelling (B-D-F, not B-Eb-F for Bo).
 
 The mapping from semitone offset to scale degree (relative to root):
 
@@ -240,7 +275,7 @@ The mapping from semitone offset to scale degree (relative to root):
 
 For diminished chords, semitone 6 should be spelled as `b5` (degree 4 with flat), not `#4`.
 
-### 4.5 Sharp/Flat Conversion for Chord Labels
+### 4.6 Sharp/Flat Conversion for Chord Labels
 
 After identifying a chord, convert its root spelling to match the key's notation preference:
 
@@ -272,7 +307,7 @@ The Roman numeral encodes chord **quality** through case:
 |-------------|:-------------|---------|
 | Major | **UPPER** | `I`, `IV`, `V` |
 | Minor | **lower** | `ii`, `iii`, `vi` |
-| Diminished | **lower + °** | `viio`, `iio` |
+| Diminished | **lower + `o`** | `viio`, `iio` |
 | Augmented | **UPPER + +** | `I+`, `III+` |
 
 Accidentals (`b`, `#`) from the degree name are preserved as prefixes:
@@ -284,30 +319,37 @@ Accidentals (`b`, `#`) from the degree name are preserved as prefixes:
 
 ### 5.3 Extensions (7ths, 9ths, etc.)
 
-Append the extension to the Roman numeral:
+Seventh chord extensions are written **inline** after the Roman numeral letters and rendered as **CSS superscripts** in the UI (via `vertical-align: super`). Triad quality suffixes (`o`, `+`) remain inline.
 
-| Chord Label | Roman Numeral |
-|------------|---------------|
-| `C` in C Major | `I` |
-| `G7` in C Major | `V7` |
-| `Dm7` in C Major | `iim7` |
-| `Cmaj7` in C Major | `Imaj7` |
-| `Bm7b5` in C Major | `viiø7` |
-| `Bo7` in C Major | `viio7` |
-| `Am(maj7)` in C Major | `vim(maj7)` |
+| Chord Label | Roman Numeral | Explanation |
+|------------|---------------|-------------|
+| `C` in C Major | `I` | Major triad, no suffix |
+| `G7` in C Major | `V7` | Dominant 7th — `7` suffix (rendered as superscript) |
+| `Dm7` in C Major | `ii7` | Minor 7th — `7` suffix, omit `m` (lowercase Roman already shows minor) |
+| `Cmaj7` in C Major | `Imaj7` | Major 7th — `maj7` suffix |
+| `Bm7b5` in C Major | `viim7b5` | Half-diminished — `m7b5`, keep `m` for clarity |
+| `Bo7` in C Major | `viio7` | Diminished 7th — `o7` suffix |
+| `Am(maj7)` in C Major | `vimaj7` | Minor-major 7th — `maj7` (lowercase Roman shows minor) |
 
 **Rules for extension mapping**:
-- If the extension is `m7b5`, use `ø7` for half-diminished (unless the base already has `°`, then just `7`)
-- If the extension is `o7` (diminished 7th), append `7` to the `°` numeral: `viio` + `7` → `viio7`
-- `m(maj7)` → no extension shown (minor-major 7th is rare; the numeral stays as lowercase)
+- All seventh chord extensions are inline suffixes: `7`, `maj7`, `m7b5`, `o7`
+- **Dominant 7th**: `7` (e.g., `V7`, `bVII7`)
+- **Major 7th**: `maj7` (e.g., `Imaj7`, `IVmaj7`)
+- **Minor 7th**: `7` — the `m` is omitted because the lowercase Roman numeral already indicates minor quality (e.g., `ii7`, `vi7`)
+- **Half-diminished 7th**: `m7b5` — the `m` is kept because the chord is more complex and the `m7b5` label is standard in jazz notation (e.g., `viim7b5`, `iim7b5`)
+- **Diminished 7th**: `o7` (e.g., `viio7`)
+- **Minor-major 7th**: `maj7` — lowercase Roman shows minor, `maj7` shows the major 7th extension (e.g., `imaj7`)
+- **Augmented-major 7th**: `+maj7` — the `+` stays inline for the augmented triad, `maj7` for the extension (e.g., `bIII+maj7`)
+- Triad quality suffixes (`o` for diminished, `+` for augmented) stay inline: `viio`, `bIII+`
 - `sus`, `add9`, `madd9` chords → no extension appended
+- The `getRomanParts()` function parses a Roman numeral string into `{ base, superscript, secondary }` for CSS superscript rendering (e.g., `Imaj7` → base `I`, superscript `maj7`)
 
 ### 5.4 Determining Quality from Chord Label
 
 ```python
 is_minor = ('m' in label and 'maj' not in label) or 'm(maj7)' in label or 'madd9' in label
-is_dim = 'dim' in label or 'o7' in label
-is_aug = 'aug' in label
+is_dim = 'o' in label  # 'o' for diminished triad, 'o7' for diminished 7th
+is_aug = '+' in label  # '+' for augmented triad, '+maj7' for augmented major 7th
 ```
 
 Apply in order: diminished → minor → augmented → major (default).
@@ -324,7 +366,7 @@ Apply in order: diminished → minor → augmented → major (default).
 | F | F-A-C | `IV` | ✅ |
 | G | G-B-D | `V` | ✅ |
 | Am | A-C-E | `vi` | ✅ |
-| Bdim | B-D-F | `viio` | ✅ |
+| Bo | B-D-F | `viio` | ✅ |
 
 **C Major diatonic 7ths**:
 
@@ -336,14 +378,14 @@ Apply in order: diminished → minor → augmented → major (default).
 | Fmaj7 | F-A-C-E | `IVmaj7` |
 | G7 | G-B-D-F | `V7` |
 | Am7 | A-C-E-G | `vi7` |
-| Bm7b5 | B-D-F-A | `viiø7` |
+| Bm7b5 | B-D-F-A | `viim7b5` |
 
 **A Minor diatonic triads**:
 
 | Chord | Pitches | Roman Numeral | Diatonic |
 |-------|---------|:-------------|:--------|
 | Am | A-C-E | `i` | ✅ |
-| Bdim | B-D-F | `iio` | ✅ |
+| Bo | B-D-F | `iio` | ✅ |
 | C | C-E-G | `bIII` | ✅ |
 | Dm | D-F-A | `iv` | ✅ |
 | Em | E-G-B | `v` | ✅ |
@@ -435,8 +477,8 @@ Raw MIDI notes
 1. **Scale degrees**: Always relative to tonic using fixed `b2, 2, b3, 3, #4, b6, b7` notation. Octave-independent.
 2. **Diatonic**: Major scale = `{0,2,4,5,7,9,11}`, minor scale = `{0,2,3,5,7,8,10}` (intervals from tonic).
 3. **Note spelling**: Sharps in sharp keys, flats in flat keys. Use relative major's key signature for minor keys.
-4. **Chord labels**: Jazz notation (`C`, `Am`, `G7`, `Cmaj7`, `Dm7`, `Bdim`, `Bm7b5`, `Csus4`). Inversions as `/BassNote`.
-5. **Roman numerals**: Upper case = major, lower case = minor, lower+° = diminished, upper+`+` = augmented. Preserve accidentals from degree. Append extensions (`7`, `m7`, `maj7`, `ø7`, `o7`).
+4. **Chord labels**: Jazz notation (`C`, `Am`, `G7`, `Cmaj7`, `Dm7`, `Bo`, `Bm7b5`, `Csus4`). Inversions as `/BassNote`. Rendered via `ChordLabel` component with CSS superscript suffixes — minor `m` stays inline, `maj7`/`7`/`o`/`+`/`7b5` etc. as superscripts.
+5. **Roman numerals**: Upper case = major, lower case = minor, lower+`o` = diminished, upper+`+` = augmented. Preserve accidentals from degree. Seventh chord extensions are inline suffixes rendered as CSS superscripts via `RomanNumeral` component: `7` (dominant), `maj7` (major 7th), `7` (minor 7th, omit `m`), `m7b5` (half-diminished, keep `m`), `o7` (diminished 7th). Triad suffixes (`o`, `+`) stay inline. Inversions use `/ScaleDegree` slash notation (e.g., `iii/5`, `V7/2`) or figured bass notation (e.g., `6`, `6/4`, `6/5`, `4/3`, `4/2`), selectable via a Format dropdown.
 6. **Chord diatonic**: All chord tones must be in the key's pitch-class set.
 7. **Root finding**: Score by interval match to known chord templates. Prefer triadic roots, then perfect-fifth-containing candidates.
 8. **Same chord in different keys**: Different Roman numeral and potentially different diatonic status.
@@ -457,7 +499,7 @@ A secondary dominant is a dominant 7th chord (intervals `[0, 4, 7, 10]`) whose r
 **Equivalent spelling rules:**
 - The root of a secondary dominant is always a diatonic scale degree (a perfect 5th above a diatonic note is also diatonic in major/minor keys).
 - Use **uppercase** Roman numeral (major triad quality) + `7` (dominant 7th suffix).
-- Apply the degree's accidental prefix (e.g., `bVII`, `bIII`).
+- Apply the degree's accidental prefix (e.g., `bVII7`, `bIII7`).
 
 **Examples (C major):**
 | Functional | Root semitone | Degree | Equivalent |
@@ -539,11 +581,11 @@ The natural minor scale uses the same notes as its relative major. This is the d
 **Diatonic sevenths (natural minor):**
 | Degree | Roman | Quality | Intervals |
 |---|---|---|---|
-| 1 | `im7` | minor7 | `[0, 3, 7, 10]` |
+| 1 | `i7` | minor7 | `[0, 3, 7, 10]` |
 | 2 | `iim7b5` | half-diminished | `[0, 3, 6, 10]` |
 | b3 | `bIIImaj7` | major7 | `[0, 4, 7, 11]` |
-| 4 | `ivm7` | minor7 | `[0, 3, 7, 10]` |
-| 5 | `vm7` | minor7 | `[0, 3, 7, 10]` |
+| 4 | `iv7` | minor7 | `[0, 3, 7, 10]` |
+| 5 | `v7` | minor7 | `[0, 3, 7, 10]` |
 | b6 | `bVImaj7` | major7 | `[0, 4, 7, 11]` |
 | b7 | `bVII7` | dominant7 | `[0, 4, 7, 10]` |
 
@@ -569,10 +611,10 @@ The harmonic minor scale raises the 7th degree by one semitone, creating a leadi
 **Diatonic sevenths (harmonic minor):**
 | Degree | Roman | Quality | Intervals |
 |---|---|---|---|
-| 1 | `i(M7)` | minor-major7 | `[0, 3, 7, 11]` |
+| 1 | `imaj7` | minor-major7 | `[0, 3, 7, 11]` |
 | 2 | `iim7b5` | half-diminished | `[0, 3, 6, 10]` |
 | b3 | `bIII+maj7` | augmented-major7 | `[0, 4, 8, 11]` |
-| 4 | `ivm7` | minor7 | `[0, 3, 7, 10]` |
+| 4 | `iv7` | minor7 | `[0, 3, 7, 10]` |
 | 5 | `V7` | dominant7 | `[0, 4, 7, 10]` |
 | b6 | `bVImaj7` | major7 | `[0, 4, 7, 11]` |
 | 7 | `viio7` | diminished7 | `[0, 3, 6, 9]` |
@@ -583,7 +625,7 @@ In chord practice and chord progressions modes, the **V (triad) and V7 (seventh)
 
 When enabled:
 - The major V triad is added to the natural minor's diatonic triads (alongside the minor `v`).
-- The dominant V7 seventh chord is added to the natural minor's diatonic sevenths (alongside the minor `vm7`).
+- The dominant V7 seventh chord is added to the natural minor's diatonic sevenths (alongside the minor `v7`).
 - Both chords are marked with `isHarmonicMinor: true` so they can be colored blue in the UI (same as borrowed chords from modal interchange).
 
 ### 10.4 Theory Overview Display
@@ -595,3 +637,106 @@ In the Theory Overview page's "Major/Minor" view mode:
 ### 10.5 Progressions Catalog
 
 In the Progressions Catalog, minor key sections include V/V7 from the harmonic minor scale as selectable chord options. A note "includes V/V7 of harmonic minor scale" is displayed near the minor progression tabs. Chords identified as V or V7 in minor progressions are colored blue in the catalog display.
+
+---
+
+## 11. Inversions in Chord Practice
+
+### 11.1 Toggle
+
+The Chord Practice page includes an **"Inversions"** toggle button. When enabled:
+- Each generated chord is randomly assigned an inversion (0 = root position, 1 = 1st inversion, 2 = 2nd inversion, 3 = 3rd inversion for 7th chords).
+- The Roman numeral display includes slash notation with the bass note's scale degree (e.g., `iii/5`, `V7/2`) or figured bass notation (e.g., `6`, `6/4`, `6/5`, `4/3`, `4/2`).
+- The chord checking logic enforces that the **lowest played MIDI note** matches the expected bass pitch class for the assigned inversion.
+
+When disabled, all chords are in root position (inversion = 0) and no slash notation is shown.
+
+### 11.2 Inversion Assignment
+
+Inversions are assigned with **equal probability** using cryptographically secure uniform random selection:
+
+```javascript
+function assignInversion(chord) {
+  const numPositions = chord.intervals.length // 3 for triads, 4 for sevenths
+  return secureRandomInt(numPositions)        // uniform 0 to numPositions-1
+}
+```
+
+`secureRandomInt` uses rejection sampling to avoid modular bias, ensuring each inversion is equally likely.
+
+### 11.3 Bass Note Calculation
+
+The bass pitch class for a given inversion is the chord root plus the interval at the inversion index:
+
+```javascript
+function getBassPC(tonicPC, chord, inversion) {
+  const rootPC = (tonicPC + chord.semitones) % 12
+  return (rootPC + chord.intervals[inversion]) % 12
+}
+```
+
+The bass scale degree (for display) is computed from the bass pitch class relative to the tonic using `DEGREE_MAP`:
+
+```javascript
+function getBassScaleDegree(tonicPC, chord, inversion) {
+  const bassPC = getBassPC(tonicPC, chord, inversion)
+  const chromaticDistance = (bassPC - tonicPC + 12) % 12
+  return DEGREE_MAP[chromaticDistance]
+}
+```
+
+### 11.4 Display Examples
+
+| Chord | Inversion | Bass Note | Display |
+|-------|-----------|-----------|---------|
+| `I` (C-E-G) | 0 (root) | C (degree 1) | `I` |
+| `I` (C-E-G) | 1 (1st) | E (degree 3) | `I/3` |
+| `I` (C-E-G) | 2 (2nd) | G (degree 5) | `I/5` |
+| `V7` (G-B-D-F) | 0 (root) | G (degree 5) | `V7` |
+| `V7` (G-B-D-F) | 1 (1st) | B (degree 7) | `V7/7` |
+| `V7` (G-B-D-F) | 2 (2nd) | D (degree 2) | `V7/2` |
+| `V7` (G-B-D-F) | 3 (3rd) | F (degree 4) | `V7/4` |
+| `ii7` (D-F-A-C) | 1 (1st) | F (degree 4) | `ii7/4` |
+| `viim7b5` (B-D-F-A) | 2 (2nd) | F (degree 4) | `viim7b5/4` |
+
+### 11.5 Secondary Chord Inversions
+
+Secondary chords can also be inverted. The slash notation for inversions is appended after the functional notation:
+
+| Chord | Inversion | Display |
+|-------|-----------|---------|
+| `V7/vi` | 0 (root) | `V7/vi` |
+| `V7/vi` | 1 (1st) | `V7/vi/3` |
+| `viio7/V` | 2 (2nd) | `viio7/V/2` |
+
+The equivalent Roman also receives the inversion slash:
+
+| Functional Display | Equivalent Display |
+|---|---|
+| `V7/vi/3` | `III7/3` |
+| `viio7/V/2` | `#ivo7/2` |
+
+### 11.6 Figured Bass Notation
+
+As an alternative to slash notation, the Chord Practice page includes a **"Format"** dropdown (visible only when inversions are enabled, positioned below the Inversions button). It offers two options:
+- **Slash Notation** (default): Bass scale degree after a slash (e.g., `iii/5`, `V7/2`).
+- **Figured Bass**: Traditional figured bass symbols rendered as CSS superscripts.
+
+Changing the format does **not** restart the game — it only affects the display of the current chord.
+
+**Triads:**
+| Inversion | Figured Bass | Example (I in C major) |
+|-----------|-------------|------------------------|
+| Root (0)  | *(none)*    | `I`                    |
+| 1st (1)   | `6`         | `I` with `6`           |
+| 2nd (2)   | `6/4`       | `I` with `6/4`         |
+
+**Seventh chords:**
+| Inversion | Figured Bass | Example (V7 in C major) |
+|-----------|-------------|--------------------------|
+| Root (0)  | `7`         | `V7` (with `7` as superscript) |
+| 1st (1)   | `6/5`       | `V7` with `6/5`         |
+| 2nd (2)   | `4/3`       | `V7` with `4/3`         |
+| 3rd (3)   | `4/2`       | `V7` with `4/2`         |
+
+The figured bass symbols are rendered as CSS superscripts alongside the chord extension. The `getFiguredBass(chord, inversion)` function returns the appropriate symbol based on whether the chord is a triad (3 intervals) or a seventh chord (4 intervals).
