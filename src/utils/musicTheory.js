@@ -688,6 +688,33 @@ export function getChordRootName(tonicPC, chord, tonic, tonality) {
   return spellNoteName(rootPC, tonic, tonality)
 }
 
+// Spell chord tones using proper third-stacking letter names.
+// Chords are built by stacking thirds, so each tone skips one letter name
+// from the previous (root → 3rd → 5th → 7th).
+// This ensures correct enharmonic spelling (e.g. Fdim = F Ab Cb, not F Ab B).
+const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+const LETTER_NATURAL_PC = [0, 2, 4, 5, 7, 9, 11]
+
+export function spellChordTones(tonicPC, chord, tonic, tonality) {
+  const rootPC = (tonicPC + chord.semitones) % 12
+  const rootName = spellNoteName(rootPC, tonic, tonality)
+  const rootLetterIdx = LETTERS.indexOf(rootName[0])
+
+  return chord.intervals.map((interval, i) => {
+    const letterIdx = (rootLetterIdx + 2 * i) % 7
+    const letter = LETTERS[letterIdx]
+    const targetPC = (rootPC + interval) % 12
+    const naturalPC = LETTER_NATURAL_PC[letterIdx]
+    const offset = (targetPC - naturalPC + 12) % 12
+    let accidental = ''
+    if (offset === 1) accidental = '#'
+    else if (offset === 11) accidental = 'b'
+    else if (offset === 2) accidental = '##'
+    else if (offset === 10) accidental = 'bb'
+    return letter + accidental
+  })
+}
+
 // Get the chord label (e.g. "Ab", "Cm", "Bo", "G7", "Cmaj7", "Bm7b5") with key-aware spelling
 export function getChordLabel(tonicPC, chord, tonic, tonality) {
   const rootName = getChordRootName(tonicPC, chord, tonic, tonality)

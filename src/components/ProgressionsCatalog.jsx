@@ -428,7 +428,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                 <span className="text-white font-semibold">To make changes permanent:</span>
               </p>
               <ol className="list-decimal list-inside space-y-1.5 text-gray-400">
-                <li>Click <span className="text-accent font-semibold">Export JSON</span> {'→'} <span className="text-accent font-semibold">Copy to clipboard</span></li>
+                <li>Click <span className="text-accent font-semibold">Export JSON</span> {'→'} <span className="text-accent font-semibold">Download JSON</span> or <span className="text-accent font-semibold">Copy to clipboard</span></li>
                 <li>Paste the JSON into <code className="text-accent">progressions.json</code> in the project root</li>
                 <li>Run <code className="text-accent">npm run build</code> and deploy</li>
               </ol>
@@ -470,6 +470,23 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
               />
             </div>
             <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => {
+                  const json = JSON.stringify(local, null, 2)
+                  const blob = new Blob([json], { type: 'application/json' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = 'progressions.json'
+                  document.body.appendChild(a)
+                  a.click()
+                  document.body.removeChild(a)
+                  URL.revokeObjectURL(url)
+                }}
+                className="px-5 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+              >
+                Download JSON
+              </button>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(JSON.stringify(local, null, 2))

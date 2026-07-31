@@ -14,6 +14,7 @@ import {
   getChordPitchClasses,
   getChordLabel,
   spellNoteName,
+  spellChordTones,
   midiNoteToPC,
   generateMidiRange,
   isBlackKey
@@ -139,9 +140,7 @@ export default function TheoryOverview({ range, activeNotes, ensureAudioContext,
         index: i,
         roman: chord.roman,
         label: getChordLabel(tonicPC, chord, tonic, tonality),
-        notes: getChordPitchClasses(tonicPC, chord).map(pc =>
-          spellNoteName(pc, tonic, tonality)
-        )
+        notes: spellChordTones(tonicPC, chord, tonic, tonality)
       }))
       return { tonality, label, cells }
     })

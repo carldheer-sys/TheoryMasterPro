@@ -48,7 +48,7 @@ export default function App() {
   const [autoAdvanceDelay, setAutoAdvanceDelay] = useState(300)
 
   // Hold-on-correct: wait for all notes to be released before advancing
-  const [holdOnCorrect, setHoldOnCorrect] = useState(true)
+  const [holdOnCorrect, setHoldOnCorrect] = useState(false)
 
   // Revealed notes (for keyboard visualization when answer is shown)
   const [revealedNotes, setRevealedNotes] = useState(new Set())

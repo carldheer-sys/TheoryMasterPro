@@ -13,6 +13,7 @@ import {
   getChordPitchClasses,
   getChordLabel,
   spellNoteName,
+  spellChordTones,
   midiNoteToPC,
   getKeyDisplay
 } from '../utils/musicTheory'
@@ -101,8 +102,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   }, [tonicPC, currentChord, effectiveTonic, tonality])
   const currentNoteNames = useMemo(() => {
     if (!currentChord) return null
-    const pcs = getChordPitchClasses(tonicPC, currentChord)
-    return pcs.map(pc => spellNoteName(pc, effectiveTonic, tonality))
+    return spellChordTones(tonicPC, currentChord, effectiveTonic, tonality)
   }, [tonicPC, currentChord, effectiveTonic, tonality])
 
   // Build the progression when starting

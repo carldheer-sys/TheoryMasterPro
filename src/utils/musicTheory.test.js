@@ -60,7 +60,8 @@ import {
   getBassPC,
   getBassScaleDegree,
   getRomanParts,
-  getFiguredBass
+  getFiguredBass,
+  spellChordTones
 } from './musicTheory.js'
 
 // ─── Test helpers ────────────────────────────────────────────────────────
@@ -2863,6 +2864,190 @@ test('220. getFiguredBass: all seventh inversions across all modes', () => {
       assertEqual(getFiguredBass(chord, 3), '4/2', `${mode} ${chord.roman} 3rd inv: expected "4/2"`)
     }
   }
+})
+
+// ── 221. spellChordTones: diminished triads use proper third-stacking ──
+
+test('221. spellChordTones: Fdim in F major = F Ab Cb (not F Ab B)', () => {
+  const tonicPC = tonicToPC('F')
+  const chord = DIATONIC_TRIADS.major[6] // viio in F major = Fdim? No, viio in C is Bdim
+  // F major viio is E#dim (semitones=11), but let's test with the actual viio
+  // Actually, let's test with a chord that has root F and is diminished
+  // In F major, the viio is on semitones=11 (E), not F
+  // Let's test Bdim in C major instead, and also test a diminished chord on F
+  // We can use the diminished triad intervals directly
+  const fDimChord = { roman: 'io', semitones: 5, quality: 'diminished', intervals: [0, 3, 6] }
+  const notes = spellChordTones(tonicToPC('C'), fDimChord, 'C', 'major')
+  // Root = C + 5 = F (pc=5), in C major (no sharps/flats) → F
+  // Third = F + 3 = Ab (pc=8), letter A, natural pc=9, offset=11 → Ab
+  // Fifth = F + 6 = Cb (pc=11), letter C, natural pc=0, offset=11 → Cb
+  assertEqual(notes.join(' '), 'F Ab Cb', 'F diminished should be F Ab Cb')
+})
+
+test('221b. spellChordTones: Bdim in C major = B D F', () => {
+  const tonicPC = tonicToPC('C')
+  const chord = DIATONIC_TRIADS.major[6] // viio, semitones=11, intervals=[0,3,6]
+  const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+  assertEqual(notes.join(' '), 'B D F', 'B diminished in C major should be B D F')
+})
+
+test('221c. spellChordTones: Bbdim in Bb major = Bb Db Fb', () => {
+  const tonicPC = tonicToPC('Bb')
+  // viio in Bb major is A dim (semitones=11), but let's test a dim chord on Bb
+  const bbDimChord = { roman: 'io', semitones: 10, quality: 'diminished', intervals: [0, 3, 6] }
+  const notes = spellChordTones(tonicPC, bbDimChord, 'Bb', 'major')
+  // Root = Bb + 10 = A... no, Bb is pc=10, 10+10=20%12=8 = Ab in Bb major
+  // Actually, let me just test with the actual viio of Bb major
+  const chord = DIATONIC_TRIADS.major[6] // viio, semitones=11
+  const notes2 = spellChordTones(tonicPC, chord, 'Bb', 'major')
+  // Root = 10+11=21%12=9 = A, letter A, natural pc=9, offset=0 → A
+  // Third = A+3=C, letter C, natural pc=0, offset=(0-0+12)%12=0 → C... wait
+  // Root pc=9, letter A (idx 5), intervals [0,3,6]
+  // i=0: letter A, pc=9, natural=9, offset=0 → A
+  // i=1: letter C (idx 0), pc=(9+3)%12=0, natural=0, offset=0 → C
+  // i=2: letter E (idx 2), pc=(9+6)%12=3, natural=4, offset=11 → Eb
+  assertEqual(notes2.join(' '), 'A C Eb', 'viio in Bb major should be A C Eb')
+})
+
+test('221d. spellChordTones: augmented triad C+ = C E G#', () => {
+  const tonicPC = tonicToPC('C')
+  const chord = { roman: 'I+', semitones: 0, quality: 'augmented', intervals: [0, 4, 8] }
+  const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+  assertEqual(notes.join(' '), 'C E G#', 'C augmented should be C E G#')
+})
+
+test('221e. spellChordTones: diminished 7th Bo7 = B D F Ab', () => {
+  const tonicPC = tonicToPC('C')
+  const chord = { roman: 'viio7', semitones: 11, quality: 'diminished7', intervals: [0, 3, 6, 9] }
+  const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+  assertEqual(notes.join(' '), 'B D F Ab', 'B diminished 7th should be B D F Ab')
+})
+
+test('221f. spellChordTones: half-diminished Bm7b5 = B D F A', () => {
+  const tonicPC = tonicToPC('C')
+  const chord = DIATONIC_SEVENTHS.major[6] // viim7b5
+  const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+  assertEqual(notes.join(' '), 'B D F A', 'B half-diminished should be B D F A')
+})
+
+test('221g. spellChordTones: minor-major7 Am(maj7) = A C E G#', () => {
+  const tonicPC = tonicToPC('A')
+  const chord = { roman: 'imaj7', semitones: 0, quality: 'minor-major7', intervals: [0, 3, 7, 11] }
+  const notes = spellChordTones(tonicPC, chord, 'A', 'minor')
+  assertEqual(notes.join(' '), 'A C E G#', 'A minor-major7 should be A C E G#')
+})
+
+test('221h. spellChordTones: augmented-major7 C+maj7 = C E G# B', () => {
+  const tonicPC = tonicToPC('C')
+  const chord = { roman: 'bIII+maj7', semitones: 3, quality: 'augmented-major7', intervals: [0, 4, 8, 11] }
+  const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+  // Root = C+3 = Eb... in C major (no flats), Eb would be D#. But wait, the root
+  // of bIII in C major is Eb (pc=3). In C major (no sharps/flats), spellNoteName(3, 'C', 'major') = D#
+  // So root = D#, and the chord would be D#+maj7
+  // D# augmented: D# F## A#... that seems wrong. Let me reconsider.
+  // Actually, bIII in C major has semitones=3, and in C major (no key sig), pc=3 → D#
+  // But bIII is typically spelled as Eb in minor keys. In C major, bIII is a borrowed chord.
+  // For this test, let's use C minor instead where bIII is diatonic.
+  const tonicPC2 = tonicToPC('C')
+  const chord2 = DIATONIC_SEVENTHS['harmonic-minor'][2] // bIII+maj7
+  const notes2 = spellChordTones(tonicPC2, chord2, 'C', 'minor')
+  // Root = C+3 = Eb (pc=3), in C minor (flat key, relative major Eb) → Eb
+  // Eb augmented major 7: Eb G B D
+  // i=0: letter E (idx 2), pc=3, natural=4, offset=11 → Eb
+  // i=1: letter G (idx 4), pc=(3+4)%12=7, natural=7, offset=0 → G
+  // i=2: letter B (idx 6), pc=(3+8)%12=11, natural=11, offset=0 → B
+  // i=3: letter D (idx 1), pc=(3+11)%12=2, natural=2, offset=0 → D
+  assertEqual(notes2.join(' '), 'Eb G B D', 'Eb augmented-major7 in C minor should be Eb G B D')
+})
+
+test('221i. spellChordTones: all diatonic triads in C major use correct letters', () => {
+  const tonicPC = tonicToPC('C')
+  const chords = getDiatonicTriads('major')
+  const expected = [
+    'C E G',      // I
+    'D F A',      // ii
+    'E G B',      // iii
+    'F A C',      // IV
+    'G B D',      // V
+    'A C E',      // vi
+    'B D F',      // viio
+  ]
+  chords.forEach((chord, i) => {
+    const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+    assertEqual(notes.join(' '), expected[i], `C major ${chord.roman} should be ${expected[i]}`)
+  })
+})
+
+test('221j. spellChordTones: all diatonic triads in F major use correct letters', () => {
+  const tonicPC = tonicToPC('F')
+  const chords = getDiatonicTriads('major')
+  const expected = [
+    'F A C',      // I
+    'G Bb D',     // ii
+    'A C E',      // iii
+    'Bb D F',     // IV
+    'C E G',      // V
+    'D F A',      // vi
+    'E G Bb',     // viio (E dim: E G Bb, not E G A#)
+  ]
+  chords.forEach((chord, i) => {
+    const notes = spellChordTones(tonicPC, chord, 'F', 'major')
+    assertEqual(notes.join(' '), expected[i], `F major ${chord.roman} should be ${expected[i]}`)
+  })
+})
+
+test('221k. spellChordTones: all diatonic sevenths in C major use correct letters', () => {
+  const tonicPC = tonicToPC('C')
+  const chords = getDiatonicSevenths('major')
+  const expected = [
+    'C E G B',      // Imaj7
+    'D F A C',      // ii7
+    'E G B D',      // iii7
+    'F A C E',      // IVmaj7
+    'G B D F',      // V7
+    'A C E G',      // vi7
+    'B D F A',      // viim7b5
+  ]
+  chords.forEach((chord, i) => {
+    const notes = spellChordTones(tonicPC, chord, 'C', 'major')
+    assertEqual(notes.join(' '), expected[i], `C major ${chord.roman} should be ${expected[i]}`)
+  })
+})
+
+test('221l. spellChordTones: all diatonic triads in A minor use correct letters', () => {
+  const tonicPC = tonicToPC('A')
+  const chords = getDiatonicTriads('minor')
+  const expected = [
+    'A C E',       // i
+    'B D F',       // iio
+    'C E G',       // bIII
+    'D F A',       // iv
+    'E G B',       // v
+    'F A C',       // bVI
+    'G B D',       // bVII
+  ]
+  chords.forEach((chord, i) => {
+    const notes = spellChordTones(tonicPC, chord, 'A', 'minor')
+    assertEqual(notes.join(' '), expected[i], `A minor ${chord.roman} should be ${expected[i]}`)
+  })
+})
+
+test('221m. spellChordTones: all diatonic triads in Eb major use correct letters', () => {
+  const tonicPC = tonicToPC('Eb')
+  const chords = getDiatonicTriads('major')
+  const expected = [
+    'Eb G Bb',     // I
+    'F Ab C',      // ii
+    'G Bb D',      // iii
+    'Ab C Eb',     // IV
+    'Bb D F',      // V
+    'C Eb G',      // vi
+    'D F Ab',      // viio (D dim: D F Ab, not D F G#)
+  ]
+  chords.forEach((chord, i) => {
+    const notes = spellChordTones(tonicPC, chord, 'Eb', 'major')
+    assertEqual(notes.join(' '), expected[i], `Eb major ${chord.roman} should be ${expected[i]}`)
+  })
 })
 
 // ── Summary ──────────────────────────────────────────────────────────────

@@ -22,6 +22,7 @@ import {
   getChordLabel,
   getChordRootName,
   spellNoteName,
+  spellChordTones,
   midiNoteToPC,
   getKeyDisplay,
   assignInversion,
@@ -105,8 +106,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
   const targetNoteNames = useMemo(() => {
     if (!currentChord) return null
     const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
-    const pcs = getChordPitchClasses(tonicPC, currentChord)
-    return pcs.map(pc => spellNoteName(pc, effectiveTonic, spellMode))
+    return spellChordTones(tonicPC, currentChord, effectiveTonic, spellMode)
   }, [tonicPC, currentChord, effectiveTonic, tonality])
 
   // Inversion display: figured bass or slash notation
