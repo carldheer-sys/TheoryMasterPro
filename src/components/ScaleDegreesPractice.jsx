@@ -93,8 +93,9 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       } else {
         setResult('wrong')
         setScore(s => ({ ...s, answered: s.answered + 1 }))
-        // Reset checked notes so user can try again
+        // Reset result and checked notes so user can try again
         setTimeout(() => {
+          setResult(null)
           checkedNotesRef.current = new Set()
         }, 300)
       }
@@ -127,7 +128,7 @@ export default function ScaleDegreesPractice({ activeNotes, midiSupported, ensur
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
     }
-    if (hasStarted && currentDegree && result === null) {
+    if (hasStarted && currentDegree && (result === null || result === 'wrong')) {
       setResult('revealed')
       // Play the target note (audio only) and visualize on keyboard
       const noteToPlay = targetPC + 60

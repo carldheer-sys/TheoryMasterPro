@@ -1,4 +1,29 @@
 import { useState, useCallback } from 'react'
+
+const PROGRESSIONS_STORAGE_KEY = 'theorymaster_progressions'
+
+function loadProgressionsFromStorage() {
+  try {
+    const saved = localStorage.getItem(PROGRESSIONS_STORAGE_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed)) return parsed
+    }
+  } catch (e) { /* ignore */ }
+  return null
+}
+
+function saveProgressionsToStorage(progs) {
+  try {
+    localStorage.setItem(PROGRESSIONS_STORAGE_KEY, JSON.stringify(progs))
+  } catch (e) { /* ignore */ }
+}
+
+function clearProgressionsFromStorage() {
+  try {
+    localStorage.removeItem(PROGRESSIONS_STORAGE_KEY)
+  } catch (e) { /* ignore */ }
+}
 import MenuBar from './components/MenuBar'
 import PianoRoll from './components/PianoRoll'
 import ScaleDegreesPractice from './components/ScaleDegreesPractice'
@@ -57,8 +82,24 @@ export default function App() {
   const [pianoVolume, setPianoVolume] = useState(0)
   const [droneVolume, setDroneVolume] = useState(0)
 
-  // Progressions catalog (editable via settings)
-  const [progressions, setProgressions] = useState(() => cloneProgressions(DEFAULT_PROGRESSIONS))
+  // Progressions catalog — load from localStorage if available, else defaults
+  const [progressions, setProgressions] = useState(() => {
+    const stored = loadProgressionsFromStorage()
+    return stored || cloneProgressions(DEFAULT_PROGRESSIONS)
+  })
+
+  // Persist to localStorage whenever progressions change
+  const handleProgressionsChange = useCallback((newProgs) => {
+    setProgressions(newProgs)
+    saveProgressionsToStorage(newProgs)
+  }, [])
+
+  // Reset to defaults and clear localStorage
+  const resetProgressionsToDefaults = useCallback(() => {
+    const defaults = cloneProgressions(DEFAULT_PROGRESSIONS)
+    setProgressions(defaults)
+    clearProgressionsFromStorage()
+  }, [])
 
   // MIDI
   const { supported: midiSupported, devices, activeNotes, connectionStatus, ensureAudioContext, simulateNoteOn, simulateNoteOff, playNote, clearAllNotes, setPianoVolume: setMidiPianoVolume } = useMidi({ pianoVolume })
@@ -157,7 +198,8 @@ export default function App() {
         {trainingMode === 'progressions-catalog' && (
           <ProgressionsCatalog
             progressions={progressions}
-            onProgressionsChange={setProgressions}
+            onProgressionsChange={handleProgressionsChange}
+            onResetToDefaults={resetProgressionsToDefaults}
           />
         )}
         {trainingMode === 'theory-overview' && (

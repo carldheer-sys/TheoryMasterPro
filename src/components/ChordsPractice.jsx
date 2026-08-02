@@ -319,7 +319,7 @@ export default function ChordsPractice({ activeNotes, midiSupported, ensureAudio
       clearTimeout(advanceTimerRef.current)
       advanceTimerRef.current = null
     }
-    if (hasStarted && currentChord && result === null) {
+    if (hasStarted && currentChord && (result === null || result === 'wrong')) {
       setResult('revealed')
       // Play all chord notes (audio only) and visualize on keyboard
       const pcs = getChordPitchClasses(tonicPC, currentChord)

@@ -368,11 +368,13 @@ export const TRIAD_INTERVALS = {
 
 // Seventh chord intervals from root by quality
 export const SEVENTH_INTERVALS = {
-  major7:          [0, 4, 7, 11],
-  dominant7:       [0, 4, 7, 10],
-  minor7:          [0, 3, 7, 10],
-  'half-diminished': [0, 3, 6, 10],
-  diminished7:     [0, 3, 6, 9],
+  major7:              [0, 4, 7, 11],
+  dominant7:           [0, 4, 7, 10],
+  minor7:              [0, 3, 7, 10],
+  'half-diminished':   [0, 3, 6, 10],
+  diminished7:         [0, 3, 6, 9],
+  'minor-major7':      [0, 3, 7, 11],
+  'augmented-major7':  [0, 4, 8, 11],
 }
 
 // Diatonic triads for major and minor keys
@@ -905,6 +907,197 @@ export function pickSecondaryChord({ tonicPC, tonality, selectedChordTypes, sele
     const sc = availableSecondary[secureRandomInt(availableSecondary.length)]
     return { ...sc, roman: sc.label, sourceMode: tonality, isSecondary: true }
   }
+}
+
+// ─── Build progression from Roman numerals ───────────────────────────────
+
+// Other (non-diatonic) chords not covered by secondary chords or modal interchange
+// e.g. Neapolitan chord (bII)
+const OTHER_CHORDS = [
+  { roman: 'bII',     semitones: 1, intervals: [0, 4, 7],     quality: 'major' },
+  { roman: 'bIImaj7', semitones: 1, intervals: [0, 4, 7, 11], quality: 'maj7' },
+]
+
+// Helper: try to match a triad secondary chord roman (e.g. "V/vi")
+// to a seventh secondary chord (e.g. "V7/vi") and return a triad version
+function trySecondaryTriad(roman, secondaryChords) {
+  if (!roman.includes('/')) return null
+
+  // Try converting "V/X" → "V7/X" and "viio/X" → "viio7/X"
+  const seventhRoman = roman
+    .replace(/^V\//, 'V7/')
+    .replace(/^viio\//, 'viio7/')
+
+  if (seventhRoman === roman) return null
+
+  const sc = secondaryChords.find(s => s.id === seventhRoman || s.label === seventhRoman)
+  if (!sc) return null
+
+  if (sc.type === 'dominant') {
+    return {
+      ...sc,
+      id: roman,
+      label: roman,
+      roman: roman,
+      intervals: [0, 4, 7],
+      quality: 'major',
+      sourceMode: sc.applicableTonality,
+      isSecondary: true,
+      isBorrowed: false,
+    }
+  } else if (sc.type === 'leading-tone') {
+    return {
+      ...sc,
+      id: roman,
+      label: roman,
+      roman: roman,
+      intervals: [0, 3, 6],
+      quality: 'diminished',
+      sourceMode: sc.applicableTonality,
+      isSecondary: true,
+      isBorrowed: false,
+    }
+  }
+  return null
+}
+
+// Build a progression (array of chord objects) from Roman numerals.
+// Supports diatonic chords, secondary chords (triad & seventh), borrowed chords
+// (modal interchange), and other non-diatonic chords (e.g. Neapolitan).
+export function buildProgressionFromRomans(tonality, chordType, romans, includeHarmMinor = true) {
+  const diatonicChords = chordType === 'sevenths'
+    ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor)
+    : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor)
+
+  const parallelTonality = tonality === 'major' ? 'minor' : 'major'
+  const borrowedChords = chordType === 'sevenths'
+    ? getDiatonicSevenths(parallelTonality)
+    : getDiatonicTriads(parallelTonality)
+
+  const secondaryChords = getAvailableSecondaryChords(tonality)
+
+  return romans.map(roman => {
+    if (!roman) return null
+
+    // 1. Try diatonic chords (including harmonic minor)
+    const diatonic = diatonicChords.find(c => c.roman === roman)
+    if (diatonic) {
+      return { ...diatonic, sourceMode: tonality, isBorrowed: false, isSecondary: false }
+    }
+
+    // 2. Try secondary chords (exact match first, then triad version)
+    const scExact = secondaryChords.find(sc => sc.id === roman || sc.label === roman)
+    if (scExact) {
+      return { ...scExact, roman: scExact.label, sourceMode: tonality, isSecondary: true, isBorrowed: false }
+    }
+
+    const triadMatch = trySecondaryTriad(roman, secondaryChords)
+    if (triadMatch) return triadMatch
+
+    // 3. Try borrowed chords (modal interchange from parallel mode)
+    const borrowed = borrowedChords.find(c => c.roman === roman)
+    if (borrowed) {
+      const isDiatonic = diatonicChords.some(c => c.roman === roman)
+      return { ...borrowed, sourceMode: parallelTonality, isBorrowed: !isDiatonic, isSecondary: false }
+    }
+
+    // 4. Try other chords (Neapolitan, etc.)
+    const other = OTHER_CHORDS.find(c => c.roman === roman)
+    if (other) {
+      return { ...other, sourceMode: tonality, isBorrowed: false, isSecondary: false, isOther: true }
+    }
+
+    // 5. Free-choice fallback: build chord from any roman string
+    const freeChoice = buildFreeChoiceChord(roman)
+    if (freeChoice) {
+      return { ...freeChoice, sourceMode: tonality, isBorrowed: false, isSecondary: false }
+    }
+
+    return null
+  }).filter(Boolean)
+}
+
+// ─── Chord source type detection ─────────────────────────────────────────
+
+// Determine the source type of a chord from its roman string and tonality.
+// Returns: 'diatonic' | 'modal-interchange' | 'secondary-dominants' | 'secondary-leading-tone' | 'free-choice'
+export function getChordSourceType(roman, tonality) {
+  if (!roman) return 'diatonic'
+
+  // Secondary chords contain '/'
+  if (roman.includes('/')) {
+    const parts = getRomanParts(roman)
+    if (parts.base === 'V') return 'secondary-dominants'
+    if (parts.base === 'vii') return 'secondary-leading-tone'
+    return 'secondary-dominants'
+  }
+
+  // Check diatonic (including harmonic minor)
+  const diatonicAll = [
+    ...getDiatonicTriadsWithHarmMinor(tonality, true),
+    ...getDiatonicSeventhsWithHarmMinor(tonality, true),
+  ]
+  if (diatonicAll.some(c => c.roman === roman)) return 'diatonic'
+
+  // Check modal interchange (parallel key)
+  const parallel = tonality === 'major' ? 'minor' : 'major'
+  const parallelAll = [...getDiatonicTriads(parallel), ...getDiatonicSevenths(parallel)]
+  if (parallelAll.some(c => c.roman === roman)) return 'modal-interchange'
+
+  return 'free-choice'
+}
+
+// Map a root string (e.g. 'bII', '#iv', 'V') to semitones from tonic
+const NUMERAL_SEMITONES_MAP = { I: 0, II: 2, III: 4, IV: 5, V: 7, VI: 9, VII: 11 }
+function rootToSemitones(root) {
+  const match = root.match(/^([b#]*)([IViv]+)$/)
+  if (!match) return 0
+  let semitones = NUMERAL_SEMITONES_MAP[match[2].toUpperCase()] ?? 0
+  for (const acc of match[1]) {
+    if (acc === 'b') semitones -= 1
+    if (acc === '#') semitones += 1
+  }
+  return ((semitones % 12) + 12) % 12
+}
+
+// Build a chord object from any roman string (free-choice fallback).
+// Handles all root + extension combinations.
+function buildFreeChoiceChord(roman) {
+  const parts = getRomanParts(roman)
+  const root = parts.base
+  const ext = parts.superscript
+  const semitones = rootToSemitones(root)
+  const isUpper = root[0] === root[0].toUpperCase()
+
+  let quality, intervals
+  if (!ext) {
+    quality = isUpper ? 'major' : 'minor'
+    intervals = isUpper ? [0, 4, 7] : [0, 3, 7]
+  } else if (ext === 'o') {
+    quality = 'diminished'; intervals = [0, 3, 6]
+  } else if (ext === '+') {
+    quality = 'augmented'; intervals = [0, 4, 8]
+  } else if (ext === '7') {
+    quality = isUpper ? 'dominant7' : 'minor7'
+    intervals = isUpper ? [0, 4, 7, 10] : [0, 3, 7, 10]
+  } else if (ext === 'maj7') {
+    if (isUpper) {
+      quality = 'major7'; intervals = [0, 4, 7, 11]
+    } else {
+      quality = 'minor-major7'; intervals = [0, 3, 7, 11]
+    }
+  } else if (ext === '+maj7') {
+    quality = 'augmented-major7'; intervals = [0, 4, 8, 11]
+  } else if (ext === 'm7b5') {
+    quality = 'half-diminished'; intervals = [0, 3, 6, 10]
+  } else if (ext === 'o7') {
+    quality = 'diminished7'; intervals = [0, 3, 6, 9]
+  } else {
+    quality = isUpper ? 'major' : 'minor'
+    intervals = isUpper ? [0, 4, 7] : [0, 3, 7]
+  }
+
+  return { roman, semitones, quality, intervals, isFreeChoice: true }
 }
 
 // ─── Piano keyboard helpers ──────────────────────────────────────────────

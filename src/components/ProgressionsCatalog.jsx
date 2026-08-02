@@ -1,61 +1,60 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef } from 'react'
+import MultiSelect from './MultiSelect'
+import ChordPicker from './ChordPicker'
+import RomanNumeral from './RomanNumeral'
 import {
-  PROGRESSION_SECTIONS,
-  sectionKey,
-  sectionLabel,
   romansToLabel,
+  CHORD_TYPE_OPTIONS,
+  NON_DIATONIC_SOURCES,
 } from '../utils/progressions'
 import {
-  getDiatonicTriads,
-  getDiatonicSevenths,
-  HARMONIC_MINOR_V_TRIAD,
-  HARMONIC_MINOR_V7_SEVENTH
+  getChordSourceType,
 } from '../utils/musicTheory'
 
-// Tab labels for each section
-const TAB_LABELS = {
-  'major:triads': 'Major · Triads',
-  'minor:triads': 'Minor · Triads',
-  'major:sevenths': 'Major · Sevenths',
-  'minor:sevenths': 'Minor · Sevenths',
+// Color class for a chord based on its source type
+function chordColorClass(roman, tonality) {
+  const st = getChordSourceType(roman, tonality)
+  switch (st) {
+    case 'modal-interchange': return 'text-blue-400'
+    case 'secondary-dominants':
+    case 'secondary-leading-tone': return 'text-keyred'
+    case 'free-choice': return 'text-purple-400'
+    default: return 'text-gray-200'
+  }
 }
 
 /**
  * ProgressionsCatalog — full-page view for browsing and editing progressions.
  * Props:
- *   - progressions: the current progressions state object
+ *   - progressions: flat array of progression objects
  *   - onProgressionsChange: callback(newProgressions)
  */
-export default function ProgressionsCatalog({ progressions, onProgressionsChange }) {
-  // View vs edit mode
+export default function ProgressionsCatalog({ progressions, onProgressionsChange, onResetToDefaults }) {
   const [editMode, setEditMode] = useState(false)
-
-  // Local working copy for editing (only used in edit mode)
   const [local, setLocal] = useState(null)
 
-  // Active tab — default to first section
-  const [activeTab, setActiveTab] = useState(() => sectionKey(PROGRESSION_SECTIONS[0]))
+  // Filters
+  const [tonality, setTonality] = useState('major')
+  const [chromaticism, setChromaticism] = useState('diatonic')
+  const [chordTypes, setChordTypes] = useState(['triads', 'sevenths'])
+  const [sources, setSources] = useState(NON_DIATONIC_SOURCES.map(s => s.value))
 
-  // Track which progression is being dragged for reordering
   const [dragState, setDragState] = useState(null)
-
-  // Export JSON modal state
   const [showExport, setShowExport] = useState(false)
   const [copied, setCopied] = useState(false)
-
-  // Info popup state
   const [showInfo, setShowInfo] = useState(false)
+  const fileInputRef = useRef(null)
 
   const enterEditMode = () => {
-    const copy = {}
-    for (const key of Object.keys(progressions)) {
-      copy[key] = progressions[key].map(p => ({
-        label: p.label,
-        romans: [...p.romans],
-        ...(p.favorite ? { favorite: true } : {}),
-      }))
-    }
-    setLocal(copy)
+    setLocal(progressions.map(p => ({
+      label: p.label,
+      romans: [...p.romans],
+      tonality: p.tonality,
+      chromaticism: p.chromaticism,
+      chordType: p.chordType,
+      ...(p.source ? { source: p.source } : {}),
+      ...(p.favorite ? { favorite: true } : {}),
+    })))
     setEditMode(true)
   }
 
@@ -70,86 +69,143 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     setLocal(null)
   }
 
-  // Data source: local copy in edit mode, prop in view mode
+  const handleSaveToFile = () => {
+    const dataToSave = editMode ? local : progressions
+    if (!dataToSave) return
+    const json = JSON.stringify(dataToSave, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'progressions.json'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleLoadFromFile = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result)
+        if (!Array.isArray(parsed)) throw new Error('File does not contain a progressions array')
+        if (editMode) {
+          setLocal(parsed)
+        } else {
+          onProgressionsChange(parsed)
+        }
+      } catch (err) {
+        alert('Failed to load file: ' + err.message)
+      }
+    }
+    reader.readAsText(file)
+    event.target.value = ''
+  }
+
+  const handleResetToDefaults = () => {
+    if (!confirm('Reset all progressions to the defaults that ship with the app? This will discard all your changes and clear the browser storage.')) return
+    if (onResetToDefaults) onResetToDefaults()
+    if (editMode) {
+      setEditMode(false)
+      setLocal(null)
+    }
+  }
+
   const data = editMode ? local : progressions
 
-  // --- Per-section operations (edit mode only) ---
+  // Filtered progressions with their full-array indices
+  const filtered = useMemo(() => {
+    const result = []
+    data.forEach((p, idx) => {
+      if (p.tonality !== tonality) return
+      if (p.chromaticism !== chromaticism) return
+      if (!chordTypes.includes(p.chordType)) return
+      if (chromaticism === 'non-diatonic' && sources.length > 0 && (!p.source || !sources.includes(p.source))) return
+      result.push({ prog: p, fullIdx: idx })
+    })
+    return result
+  }, [data, tonality, chromaticism, chordTypes, sources])
 
-  const moveProgression = (sKey, fromIdx, toIdx) => {
+  // --- Edit operations ---
+
+  const moveProgression = (fromFilteredIdx, toFilteredIdx) => {
     setLocal(prev => {
-      const list = [...(prev[sKey] || [])]
-      if (toIdx < 0 || toIdx >= list.length) return prev
-      const [item] = list.splice(fromIdx, 1)
-      list.splice(toIdx, 0, item)
-      return { ...prev, [sKey]: list }
+      const fromFull = filtered[fromFilteredIdx]?.fullIdx
+      const toFull = filtered[toFilteredIdx]?.fullIdx
+      if (fromFull == null || toFull == null) return prev
+      const list = [...prev]
+      const [item] = list.splice(fromFull, 1)
+      const adj = fromFull < toFull ? toFull - 1 : toFull
+      list.splice(adj, 0, item)
+      return list
     })
   }
 
-  const deleteProgression = (sKey, idx) => {
+  const deleteProgression = (fullIdx) => {
     setLocal(prev => {
-      const list = [...(prev[sKey] || [])]
-      list.splice(idx, 1)
-      return { ...prev, [sKey]: list }
+      const list = [...prev]
+      list.splice(fullIdx, 1)
+      return list
     })
   }
 
-  const addProgression = (sKey) => {
-    setLocal(prev => {
-      const list = [...(prev[sKey] || [])]
-      list.push({ label: '', romans: [] })
-      return { ...prev, [sKey]: list }
-    })
+  const addProgression = () => {
+    const newProg = {
+      label: '',
+      romans: [],
+      tonality,
+      chromaticism,
+      chordType: chordTypes[0] || 'triads',
+    }
+    if (chromaticism === 'non-diatonic') {
+      newProg.source = sources[0] || 'secondary-dominants'
+    }
+    setLocal(prev => [...prev, newProg])
   }
 
-  const toggleFavorite = (sKey, idx) => {
-    const updateList = (list) => {
-      const item = { ...list[idx] }
-      if (item.favorite) {
-        delete item.favorite
-      } else {
-        item.favorite = true
-      }
-      return [...list.slice(0, idx), item, ...list.slice(idx + 1)]
+  const toggleFavorite = (fullIdx) => {
+    const updateItem = (item) => {
+      const copy = { ...item }
+      if (copy.favorite) delete copy.favorite
+      else copy.favorite = true
+      return copy
     }
     if (editMode) {
-      setLocal(prev => ({ ...prev, [sKey]: updateList(prev[sKey] || []) }))
+      setLocal(prev => prev.map((p, i) => i === fullIdx ? updateItem(p) : p))
     } else {
-      onProgressionsChange({ ...progressions, [sKey]: updateList(progressions[sKey] || []) })
+      onProgressionsChange(progressions.map((p, i) => i === fullIdx ? updateItem(p) : p))
     }
   }
 
-  // --- Per-chord operations ---
-
-  const deleteChord = (sKey, progIdx, chordIdx) => {
-    setLocal(prev => {
-      const list = [...(prev[sKey] || [])]
-      const romans = [...list[progIdx].romans]
+  const deleteChord = (fullIdx, chordIdx) => {
+    setLocal(prev => prev.map((p, i) => {
+      if (i !== fullIdx) return p
+      const romans = [...p.romans]
       romans.splice(chordIdx, 1)
-      list[progIdx] = { ...list[progIdx], romans, label: romansToLabel(romans) }
-      return { ...prev, [sKey]: list }
-    })
+      return { ...p, romans, label: romansToLabel(romans) }
+    }))
   }
 
-  const addChord = (sKey, progIdx) => {
-    setLocal(prev => {
-      const list = [...(prev[sKey] || [])]
-      const romans = [...list[progIdx].romans, '']
-      list[progIdx] = { ...list[progIdx], romans, label: romansToLabel(romans.filter(r => r)) }
-      return { ...prev, [sKey]: list }
-    })
+  const addChord = (fullIdx) => {
+    setLocal(prev => prev.map((p, i) => {
+      if (i !== fullIdx) return p
+      const romans = [...p.romans, 'I']
+      return { ...p, romans, label: romansToLabel(romans.filter(r => r)) }
+    }))
   }
 
-  const changeChord = (sKey, progIdx, chordIdx, newRoman) => {
-    setLocal(prev => {
-      const list = [...(prev[sKey] || [])]
-      const romans = [...list[progIdx].romans]
+  const changeChord = (fullIdx, chordIdx, newRoman) => {
+    setLocal(prev => prev.map((p, i) => {
+      if (i !== fullIdx) return p
+      const romans = [...p.romans]
       romans[chordIdx] = newRoman
-      list[progIdx] = { ...list[progIdx], romans, label: romansToLabel(romans.filter(r => r)) }
-      return { ...prev, [sKey]: list }
-    })
+      return { ...p, romans, label: romansToLabel(romans.filter(r => r)) }
+    }))
   }
 
-  // Star icon for favorite toggle
   const StarIcon = ({ filled, className }) => (
     <svg className={className} fill={filled ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
@@ -158,37 +214,20 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
 
   // --- Drag and drop ---
 
-  const handleDragStart = (sKey, idx) => {
-    setDragState({ sectionKey: sKey, index: idx })
+  const handleDragStart = (filteredIdx) => {
+    setDragState({ index: filteredIdx })
   }
 
-  const handleDragOver = (e, sKey, idx) => {
+  const handleDragOver = (e, filteredIdx) => {
     e.preventDefault()
-    if (!dragState || dragState.sectionKey !== sKey) return
-    if (dragState.index === idx) return
-    moveProgression(sKey, dragState.index, idx)
-    setDragState({ sectionKey: sKey, index: idx })
+    if (!dragState || dragState.index === filteredIdx) return
+    moveProgression(dragState.index, filteredIdx)
+    setDragState({ index: filteredIdx })
   }
 
   const handleDragEnd = () => {
     setDragState(null)
   }
-
-  // Active section data
-  const activeSection = PROGRESSION_SECTIONS.find(s => sectionKey(s) === activeTab) || PROGRESSION_SECTIONS[0]
-  const sKey = sectionKey(activeSection)
-  const progs = data[sKey] || []
-  const chords = activeSection.chordType === 'sevenths'
-    ? getDiatonicSevenths(activeSection.tonality)
-    : getDiatonicTriads(activeSection.tonality)
-  // For minor sections, add V/V7 from harmonic minor to the chord options
-  const allChords = activeSection.tonality === 'minor'
-    ? [...chords, activeSection.chordType === 'sevenths' ? HARMONIC_MINOR_V7_SEVENTH : HARMONIC_MINOR_V_TRIAD]
-    : chords
-  const chordOptions = [
-    { value: '', label: '— select —' },
-    ...allChords.map(c => ({ value: c.roman, label: c.roman })),
-  ]
 
   return (
     <div className="flex flex-col h-full">
@@ -204,20 +243,41 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
           </p>
         </div>
 
+        {/* Hidden file input for Load from File */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={handleLoadFromFile}
+        />
+
         {editMode ? (
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowInfo(true)}
               className="text-gray-400 hover:text-accent transition-colors min-h-[44px] flex items-center"
-              title="How to save progressions permanently"
+              title="How to save progressions"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
             <button
+              onClick={handleSaveToFile}
+              className="px-4 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+            >
+              Save to File
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+            >
+              Load from File
+            </button>
+            <button
               onClick={() => setShowExport(true)}
-              className="px-5 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+              className="px-4 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
             >
               Export JSON
             </button>
@@ -235,65 +295,115 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
             </button>
           </div>
         ) : (
-          <button
-            onClick={enterEditMode}
-            className="px-5 py-2.5 rounded-lg bg-accent text-white text-sm font-bold hover:bg-accent-hover transition-colors min-h-[44px]"
-          >
-            Edit
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSaveToFile}
+              className="px-4 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+            >
+              Save to File
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+            >
+              Load from File
+            </button>
+            <button
+              onClick={handleResetToDefaults}
+              className="px-4 py-2.5 rounded-lg bg-bg-600 text-white text-sm font-bold hover:bg-bg-500 transition-colors min-h-[44px]"
+            >
+              Reset to Defaults
+            </button>
+            <button
+              onClick={enterEditMode}
+              className="px-5 py-2.5 rounded-lg bg-accent text-white text-sm font-bold hover:bg-accent-hover transition-colors min-h-[44px]"
+            >
+              Edit
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Tabs */}
+      {/* Filter controls */}
       <div className="px-4 sm:px-8 pb-4">
-        <div className="flex flex-wrap gap-1 bg-bg-800 rounded-xl border border-bg-500 p-1">
-          {PROGRESSION_SECTIONS.map((section) => {
-            const key = sectionKey(section)
-            const isActive = key === activeTab
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors min-w-fit
-                  ${isActive
-                    ? 'bg-accent text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-bg-600'
-                  }`}
-              >
-                {TAB_LABELS[key]}
-              </button>
-            )
-          })}
+        <div className="flex flex-wrap items-end gap-3">
+          {/* Tonality: Major / Minor */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tonality</label>
+            <div className="flex gap-1 bg-bg-800 rounded-xl border border-bg-500 p-1">
+              {['major', 'minor'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTonality(t)}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors capitalize
+                    ${tonality === t ? 'bg-accent text-white' : 'text-gray-400 hover:text-white hover:bg-bg-600'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chromaticism: Diatonic / Non-Diatonic */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Chromaticism</label>
+            <div className="flex gap-1 bg-bg-800 rounded-xl border border-bg-500 p-1">
+              {['diatonic', 'non-diatonic'].map(c => (
+                <button
+                  key={c}
+                  onClick={() => setChromaticism(c)}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors capitalize
+                    ${chromaticism === c ? 'bg-accent text-white' : 'text-gray-400 hover:text-white hover:bg-bg-600'}`}
+                >
+                  {c === 'non-diatonic' ? 'Non-Diatonic' : 'Diatonic'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chord Types: MultiSelect */}
+          <MultiSelect
+            label="Chord Types"
+            values={chordTypes}
+            onChange={setChordTypes}
+            options={CHORD_TYPE_OPTIONS}
+          />
+
+          {/* Sources: MultiSelect (only when non-diatonic) */}
+          {chromaticism === 'non-diatonic' && (
+            <MultiSelect
+              label="Sources"
+              values={sources}
+              onChange={setSources}
+              options={NON_DIATONIC_SOURCES}
+            />
+          )}
         </div>
-        {activeSection.tonality === 'minor' && (
-          <p className="text-gray-500 text-xs mt-2 ml-1">includes V/V7 of harmonic minor scale</p>
-        )}
       </div>
 
       {/* Content area */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-8 pb-6">
         <div className="space-y-2 max-w-3xl mx-auto">
-          {progs.length === 0 && !editMode && (
+          {filtered.length === 0 && !editMode && (
             <div className="text-center text-gray-600 py-12">
-              No progressions in this category.
+              No progressions match the current filters.
             </div>
           )}
 
-          {progs.map((prog, progIdx) => (
+          {filtered.map(({ prog, fullIdx }, filteredIdx) => (
             <div
-              key={progIdx}
+              key={fullIdx}
               draggable={editMode}
-              onDragStart={editMode ? () => handleDragStart(sKey, progIdx) : undefined}
-              onDragOver={editMode ? (e) => handleDragOver(e, sKey, progIdx) : undefined}
+              onDragStart={editMode ? () => handleDragStart(filteredIdx) : undefined}
+              onDragOver={editMode ? (e) => handleDragOver(e, filteredIdx) : undefined}
               onDragEnd={editMode ? handleDragEnd : undefined}
               className={`flex flex-col gap-2 p-3 rounded-xl border transition-colors
-                ${editMode && dragState?.sectionKey === sKey && dragState?.index === progIdx
+                ${editMode && dragState?.index === filteredIdx
                   ? 'border-accent bg-accent/10'
                   : 'border-bg-500 bg-bg-800'
                 }`}
             >
               <div className="flex items-center gap-2">
-                {/* Drag handle (edit mode only) */}
                 {editMode && (
                   <div className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 flex-shrink-0">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -302,58 +412,31 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                   </div>
                 )}
 
-                {/* Favorite star toggle */}
                 <button
-                  onClick={() => toggleFavorite(sKey, progIdx)}
+                  onClick={() => toggleFavorite(fullIdx)}
                   className={`flex-shrink-0 transition-colors ${prog.favorite ? 'text-yellow-400 hover:text-yellow-500' : 'text-gray-600 hover:text-gray-400'}`}
                   title={prog.favorite ? 'Unfavorite' : 'Favorite'}
                 >
                   <StarIcon filled={!!prog.favorite} className="w-4 h-4" />
                 </button>
 
-                {/* Progression content — single row */}
-                <div className="flex-1 flex items-center gap-1 flex-wrap">
+                <div className="flex-1 flex flex-col gap-1">
                   {editMode ? (
                     <>
                       {prog.romans.map((roman, chordIdx) => (
-                        <div key={chordIdx} className="flex items-center gap-1">
-                          <div className="relative">
-                            <select
-                              value={roman}
-                              onChange={(e) => changeChord(sKey, progIdx, chordIdx, e.target.value)}
-                              className="appearance-none bg-bg-700 text-white text-xs font-semibold
-                                px-2 py-1.5 pr-7 rounded-lg border border-bg-500
-                                hover:border-accent/50 focus:border-accent focus:outline-none
-                                transition-colors cursor-pointer min-w-[70px] music-notation"
-                            >
-                              {chordOptions.map(opt => (
-                                <option key={opt.value} value={opt.value} className="bg-bg-700 text-white">
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                            <svg
-                              className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none"
-                              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                          <button
-                            onClick={() => deleteChord(sKey, progIdx, chordIdx)}
-                            className="text-gray-600 hover:text-keyred flex-shrink-0"
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
+                        <ChordPicker
+                          key={chordIdx}
+                          tonality={tonality}
+                          chromaticism={chromaticism}
+                          value={roman}
+                          onChange={(newRoman) => changeChord(fullIdx, chordIdx, newRoman)}
+                          onRemove={() => deleteChord(fullIdx, chordIdx)}
+                        />
                       ))}
-                      {/* Add chord button */}
                       <button
-                        onClick={() => addChord(sKey, progIdx)}
+                        onClick={() => addChord(fullIdx)}
                         className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-dashed border-bg-500
-                          text-gray-500 hover:text-accent hover:border-accent/50 transition-colors text-xs font-semibold"
+                          text-gray-500 hover:text-accent hover:border-accent/50 transition-colors text-xs font-semibold w-fit"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -362,19 +445,27 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                       </button>
                     </>
                   ) : (
-                    <span className="text-sm font-semibold text-gray-200">
+                    <span className="text-sm font-semibold">
                       {prog.romans.filter(r => r).length > 0
-                        ? <span className="music-notation">{prog.label}</span>
+                        ? <span className="music-notation flex items-center gap-1.5 flex-wrap">
+                            {prog.romans.filter(r => r).map((roman, i, arr) => (
+                              <span key={i} className="flex items-center gap-1.5">
+                                {i > 0 && <span className="text-gray-600">–</span>}
+                                <span className={chordColorClass(roman, prog.tonality)}>
+                                  <RomanNumeral roman={roman} />
+                                </span>
+                              </span>
+                            ))}
+                          </span>
                         : <span className="text-gray-600 italic">Empty progression</span>
                       }
                     </span>
                   )}
                 </div>
 
-                {/* Delete progression (edit mode only) */}
                 {editMode && (
                   <button
-                    onClick={() => deleteProgression(sKey, progIdx)}
+                    onClick={() => deleteProgression(fullIdx)}
                     className="text-gray-500 hover:text-keyred flex-shrink-0"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -386,10 +477,9 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
             </div>
           ))}
 
-          {/* Add progression button (edit mode only) */}
           {editMode && (
             <button
-              onClick={() => addProgression(sKey)}
+              onClick={addProgression}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-bg-500
                 text-gray-400 hover:text-accent hover:border-accent/50 transition-colors text-sm font-semibold w-full"
             >
@@ -406,7 +496,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
       {showInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowInfo(false)}>
           <div
-            className="bg-bg-800 border border-bg-600 rounded-2xl p-6 max-w-md w-full mx-4"
+            className="bg-bg-800 border border-bg-600 rounded-2xl p-6 max-w-lg w-full mx-4"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -420,21 +510,41 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                 </svg>
               </button>
             </div>
-            <div className="text-gray-300 text-sm space-y-3">
-              <p>
-                Edits made here (via Edit {'→'} Save) persist only for the current session and are lost on page refresh.
-              </p>
-              <p>
-                <span className="text-white font-semibold">To make changes permanent:</span>
-              </p>
-              <ol className="list-decimal list-inside space-y-1.5 text-gray-400">
-                <li>Click <span className="text-accent font-semibold">Export JSON</span> {'→'} <span className="text-accent font-semibold">Download JSON</span> or <span className="text-accent font-semibold">Copy to clipboard</span></li>
-                <li>Paste the JSON into <code className="text-accent">progressions.json</code> in the project root</li>
-                <li>Run <code className="text-accent">npm run build</code> and deploy</li>
-              </ol>
-              <p className="text-gray-500 text-xs pt-2">
-                You can also edit <code className="text-accent">progressions.json</code> directly in the project root.
-              </p>
+            <div className="text-gray-300 text-sm space-y-4">
+              <p className="text-white font-semibold">There are three ways to save your progressions:</p>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">1. Browser Storage (automatic)</p>
+                <p className="text-gray-400">
+                  When you click <span className="text-accent font-semibold">Save</span> in edit mode, your changes are stored in the browser's local storage. They persist across page refreshes and app restarts, but are lost when you clear browser data, switch browsers, or use a different device.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">2. File Backup (manual)</p>
+                <p className="text-gray-400">
+                  Click <span className="text-accent font-semibold">Save to File</span> to download your progressions as a JSON file. Click <span className="text-accent font-semibold">Load from File</span> to restore progressions from a previously saved file. Loading a file also updates the browser storage, so the loaded progressions persist across refreshes.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">3. Source File (permanent)</p>
+                <p className="text-gray-400">
+                  To make your changes part of the app itself, so they are available to all users on all devices:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-gray-400 ml-2">
+                  <li>Click <span className="text-accent font-semibold">Export JSON</span> {'→'} <span className="text-accent font-semibold">Copy to clipboard</span></li>
+                  <li>Paste the JSON into <code className="text-accent">progressions.json</code> in the project root</li>
+                  <li>Run <code className="text-accent">npm run build</code> and deploy (e.g. to Netlify)</li>
+                </ol>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-bg-600">
+                <p className="text-white font-semibold">Reset to Defaults</p>
+                <p className="text-gray-400">
+                  Click <span className="text-accent font-semibold">Reset to Defaults</span> to discard all changes and restore the original progressions that ship with the app. This clears the browser storage.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -465,14 +575,14 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
             <div className="relative flex-1 overflow-hidden">
               <textarea
                 readOnly
-                value={JSON.stringify(local, null, 2)}
+                value={JSON.stringify(data, null, 2)}
                 className="w-full h-full min-h-[300px] bg-bg-900 text-gray-300 text-xs font-mono p-3 rounded-lg border border-bg-600 resize-none focus:outline-none"
               />
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => {
-                  const json = JSON.stringify(local, null, 2)
+                  const json = JSON.stringify(data, null, 2)
                   const blob = new Blob([json], { type: 'application/json' })
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement('a')
@@ -489,7 +599,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
               </button>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(JSON.stringify(local, null, 2))
+                  navigator.clipboard.writeText(JSON.stringify(data, null, 2))
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }}

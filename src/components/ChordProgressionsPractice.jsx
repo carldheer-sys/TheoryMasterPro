@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Select from './Select'
+import MultiSelect from './MultiSelect'
 import TonalitySelect from './TonalitySelect'
 import DroneToggle from './DroneToggle'
 import RomanNumeral from './RomanNumeral'
@@ -9,6 +10,7 @@ import {
   TONALITIES,
   getDiatonicTriadsWithHarmMinor,
   getDiatonicSeventhsWithHarmMinor,
+  buildProgressionFromRomans,
   tonicToPC,
   getChordPitchClasses,
   getChordLabel,
@@ -17,26 +19,7 @@ import {
   midiNoteToPC,
   getKeyDisplay
 } from '../utils/musicTheory'
-import { DEFAULT_PROGRESSIONS } from '../utils/progressions'
-
-const CHORD_TYPE_OPTIONS = [
-  { value: 'triads', label: 'Triads' },
-  { value: 'sevenths', label: 'Sevenths' }
-]
-
-const CHROMATICISM_OPTIONS = [
-  { value: 'diatonic', label: 'Diatonic' }
-]
-
-// Look up a chord by roman numeral from the diatonic chord list
-function findChordByRoman(chords, roman) {
-  return chords.find(c => c.roman === roman)
-}
-
-// Build a progression (array of chord objects) from roman numerals
-function buildProgression(chords, romans) {
-  return romans.map(r => findChordByRoman(chords, r)).filter(Boolean)
-}
+import { DEFAULT_PROGRESSIONS, filterProgressions, CHORD_TYPE_OPTIONS, NON_DIATONIC_SOURCES } from '../utils/progressions'
 
 // Generate a random progression of N chords from the diatonic chord list
 // No two consecutive chords are the same
@@ -55,8 +38,9 @@ function generateRandomProgression(chords, count) {
 
 export default function ChordProgressionsPractice({ activeNotes, midiSupported, ensureAudioContext, autoAdvanceDelay = 600, holdOnCorrect = true, onClearAllNotes, droneVolume = 0, progressions = DEFAULT_PROGRESSIONS, tonic, effectiveTonic, tonality, onTonicChange, onTonalityChange, playNote, setRevealedNotes }) {
   // Settings
-  const [chordType, setChordType] = useState('triads')
   const [chromaticism, setChromaticism] = useState('diatonic')
+  const [chordTypes, setChordTypes] = useState(['triads', 'sevenths'])
+  const [sources, setSources] = useState(NON_DIATONIC_SOURCES.map(s => s.value))
   const [progressionKey, setProgressionKey] = useState('vi – IV – I – V')
   const [randomCount, setRandomCount] = useState(4)
   const [includeHarmMinor, setIncludeHarmMinor] = useState(true)
@@ -71,15 +55,11 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   const lastCheckedKeyRef = useRef('')
 
   const tonicPC = tonicToPC(effectiveTonic)
-  const diatonicChords = useMemo(() =>
-    chordType === 'sevenths' ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor),
-  [chordType, tonality, includeHarmMinor])
 
   // Available progressions for current settings
   const availableProgressions = useMemo(() => {
-    const key = `${tonality}:${chordType}`
-    return progressions[key] || []
-  }, [tonality, chordType, progressions])
+    return filterProgressions(progressions, { tonality, chromaticism, chordTypes, sources })
+  }, [progressions, tonality, chromaticism, chordTypes, sources])
 
   // Progression dropdown options
   const progressionOptions = useMemo(() => {
@@ -90,6 +70,13 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     return opts
   }, [availableProgressions])
 
+  // Update progression key when available progressions change
+  useEffect(() => {
+    if (progressionKey !== 'random' && !availableProgressions.some(p => p.label === progressionKey)) {
+      setProgressionKey(availableProgressions[0]?.label || 'random')
+    }
+  }, [availableProgressions, progressionKey])
+
   // Current chord
   const currentChord = progression[currentIdx] || null
   const targetPCs = useMemo(() => {
@@ -98,11 +85,13 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   }, [tonicPC, currentChord])
   const currentChordLabel = useMemo(() => {
     if (!currentChord) return null
-    return getChordLabel(tonicPC, currentChord, effectiveTonic, tonality)
+    const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
+    return getChordLabel(tonicPC, currentChord, effectiveTonic, spellMode)
   }, [tonicPC, currentChord, effectiveTonic, tonality])
   const currentNoteNames = useMemo(() => {
     if (!currentChord) return null
-    return spellChordTones(tonicPC, currentChord, effectiveTonic, tonality)
+    const spellMode = currentChord.isBorrowed ? currentChord.sourceMode : tonality
+    return spellChordTones(tonicPC, currentChord, effectiveTonic, spellMode)
   }, [tonicPC, currentChord, effectiveTonic, tonality])
 
   // Build the progression when starting
@@ -110,10 +99,13 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     if (ensureAudioContext) ensureAudioContext()
     let prog
     if (progressionKey === 'random') {
-      prog = generateRandomProgression(diatonicChords, randomCount)
+      const chords = chordTypes.flatMap(type =>
+        type === 'sevenths' ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor)
+      )
+      prog = generateRandomProgression(chords, randomCount)
     } else {
       const def = availableProgressions.find(p => p.label === progressionKey)
-      prog = def ? buildProgression(diatonicChords, def.romans) : []
+      prog = def ? buildProgressionFromRomans(tonality, def.chordType, def.romans, includeHarmMinor) : []
     }
     setProgression(prog)
     setCurrentIdx(0)
@@ -123,7 +115,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
     lastCheckedKeyRef.current = ''
     if (onClearAllNotes) onClearAllNotes()
     if (setRevealedNotes) setRevealedNotes(new Set())
-  }, [ensureAudioContext, progressionKey, randomCount, diatonicChords, availableProgressions, onClearAllNotes, setRevealedNotes])
+  }, [ensureAudioContext, progressionKey, randomCount, chordTypes, tonality, includeHarmMinor, availableProgressions, onClearAllNotes, setRevealedNotes])
 
   // Watch active notes and check against current chord
   useEffect(() => {
@@ -259,19 +251,11 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
   }
   const handleTonalityChange = (v) => {
     onTonalityChange(v)
-    const key = `${v}:${chordType}`
-    const progs = progressions[key] || []
-    setProgressionKey(progs[0]?.label || 'random')
     handleSettingChange()
   }
-  const handleChordTypeChange = (v) => {
-    setChordType(v)
-    const key = `${tonality}:${v}`
-    const progs = progressions[key] || []
-    setProgressionKey(progs[0]?.label || 'random')
-    handleSettingChange()
-  }
+  const handleChordTypesChange = (v) => { setChordTypes(v); handleSettingChange() }
   const handleChromaticismChange = (v) => { setChromaticism(v); handleSettingChange() }
+  const handleSourcesChange = (v) => { setSources(v); handleSettingChange() }
   const handleProgressionChange = (v) => { setProgressionKey(v); handleSettingChange() }
 
   const handleRandomCountChange = (v) => {
@@ -303,23 +287,45 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
 
         <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
 
-        {/* Chord Type (single select) */}
-        <Select
-          label="Chord Types"
-          value={chordType}
-          onChange={handleChordTypeChange}
-          options={CHORD_TYPE_OPTIONS}
-        />
+        {/* Chromaticism: Diatonic / Non-Diatonic */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Chromaticism</label>
+          <div className="flex gap-1 bg-bg-800 rounded-xl border border-bg-500 p-1">
+            {['diatonic', 'non-diatonic'].map(c => (
+              <button
+                key={c}
+                onClick={() => handleChromaticismChange(c)}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors
+                  ${chromaticism === c ? 'bg-accent text-white' : 'text-gray-400 hover:text-white hover:bg-bg-600'}`}
+              >
+                {c === 'non-diatonic' ? 'Non-Diatonic' : 'Diatonic'}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
 
-        {/* Chromaticism */}
-        <Select
-          label="Chromaticism"
-          value={chromaticism}
-          onChange={handleChromaticismChange}
-          options={CHROMATICISM_OPTIONS}
+        {/* Chord Types: MultiSelect */}
+        <MultiSelect
+          label="Chord Types"
+          values={chordTypes}
+          onChange={handleChordTypesChange}
+          options={CHORD_TYPE_OPTIONS}
         />
+
+        {/* Sources: MultiSelect (only when non-diatonic) */}
+        {chromaticism === 'non-diatonic' && (
+          <>
+            <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
+            <MultiSelect
+              label="Sources"
+              values={sources}
+              onChange={handleSourcesChange}
+              options={NON_DIATONIC_SOURCES}
+            />
+          </>
+        )}
 
         <div className="hidden sm:flex items-center text-gray-500 text-2xl font-light pb-2.5">·</div>
 
@@ -373,7 +379,7 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
             <div className="text-gray-500 text-lg mb-2">
               Key: <span className="text-accent-light font-bold music-notation">{getKeyDisplay(effectiveTonic, tonality)}</span>
               {' · '}
-              <span className="capitalize">{chordType}</span>
+              <span className="capitalize">{chromaticism === 'non-diatonic' ? 'Non-Diatonic' : 'Diatonic'}</span>
               {' · '}
               <span className="capitalize">{progressionKey}</span>
             </div>
@@ -393,8 +399,12 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
               {progression.map((chord, idx) => {
                 const isCurrent = idx === currentIdx
                 const isPast = idx < currentIdx
-                const label = getChordLabel(tonicPC, chord, effectiveTonic, tonality)
+                const spellMode = chord.isBorrowed ? chord.sourceMode : tonality
+                const label = getChordLabel(tonicPC, chord, effectiveTonic, spellMode)
                 const isHarmMinor = chord.isHarmonicMinor === true
+                const isBorrowed = chord.isBorrowed === true
+                const isSecondary = chord.isSecondary === true
+                const isFreeChoice = chord.isFreeChoice === true || chord.isOther === true
                 return (
                   <div key={idx} className="flex items-center gap-3 sm:gap-4">
                     {idx > 0 && <span className="text-gray-600 text-2xl">→</span>}
@@ -403,7 +413,9 @@ export default function ChordProgressionsPractice({ activeNotes, midiSupported, 
                         ${isCurrent && flashGreen ? 'bg-green-500/20 text-green-400 border-2 border-green-400 scale-110'
                           : isCurrent ? 'bg-accent/20 text-accent-light border-2 border-accent scale-110'
                           : isPast ? 'bg-bg-700/50 text-gray-600 border-2 border-transparent'
-                          : isHarmMinor ? 'bg-bg-700 text-blue-400 border-2 border-transparent'
+                          : isHarmMinor || isBorrowed ? 'bg-bg-700 text-blue-400 border-2 border-transparent'
+                          : isSecondary ? 'bg-bg-700 text-keyred border-2 border-transparent'
+                          : isFreeChoice ? 'bg-bg-700 text-purple-400 border-2 border-transparent'
                           : 'bg-bg-700 text-gray-300 border-2 border-transparent'
                         }`}
                     >
