@@ -43,6 +43,7 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
   const [showExport, setShowExport] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [showFilterInfo, setShowFilterInfo] = useState(false)
   const fileInputRef = useRef(null)
 
   const enterEditMode = () => {
@@ -51,8 +52,8 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
       romans: [...p.romans],
       tonality: p.tonality,
       chromaticism: p.chromaticism,
-      chordType: p.chordType,
-      ...(p.source ? { source: p.source } : {}),
+      chordType: Array.isArray(p.chordType) ? [...p.chordType] : p.chordType,
+      ...(p.sources ? { sources: [...p.sources] } : {}),
       ...(p.favorite ? { favorite: true } : {}),
     })))
     setEditMode(true)
@@ -122,8 +123,8 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     data.forEach((p, idx) => {
       if (p.tonality !== tonality) return
       if (p.chromaticism !== chromaticism) return
-      if (!chordTypes.includes(p.chordType)) return
-      if (chromaticism === 'non-diatonic' && sources.length > 0 && (!p.source || !sources.includes(p.source))) return
+      if (!chordTypes.includes(p.chordType) && !(Array.isArray(p.chordType) && p.chordType.every(t => chordTypes.includes(t)))) return
+      if (chromaticism === 'non-diatonic' && sources.length > 0 && (!p.sources || !p.sources.some(s => sources.includes(s)))) return
       result.push({ prog: p, fullIdx: idx })
     })
     return result
@@ -158,10 +159,10 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
       romans: [],
       tonality,
       chromaticism,
-      chordType: chordTypes[0] || 'triads',
+      chordType: chordTypes.length === 1 ? chordTypes[0] : [...chordTypes],
     }
     if (chromaticism === 'non-diatonic') {
-      newProg.source = sources[0] || 'secondary-dominants'
+      newProg.sources = [sources[0] || 'secondary-dominants']
     }
     setLocal(prev => [...prev, newProg])
   }
@@ -235,12 +236,23 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
       <div className="flex flex-wrap items-center gap-3 px-4 sm:px-8 pt-6 pb-4">
         <div className="flex-1">
           <h2 className="text-lg font-bold text-white">Progressions Catalog</h2>
-          <p className="text-gray-500 text-sm">
-            {editMode
-              ? 'Edit, reorder, or add chord progressions. Click Save to apply changes.'
-              : 'Browse all available chord progressions. Click Edit to modify.'
-            }
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-gray-500 text-sm">
+              {editMode
+                ? 'Edit, reorder, or add chord progressions. Click Save to apply changes.'
+                : 'Browse all available chord progressions. Click Edit to modify.'
+              }
+            </p>
+            <button
+              onClick={() => setShowFilterInfo(true)}
+              className="text-gray-500 hover:text-accent transition-colors"
+              title="How filtering works"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Hidden file input for Load from File */}
@@ -491,6 +503,78 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
           )}
         </div>
       </div>
+
+      {/* Filter info popup */}
+      {showFilterInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowFilterInfo(false)}>
+          <div
+            className="bg-bg-800 border border-bg-600 rounded-2xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Filtering & Progression Settings</h3>
+              <button
+                onClick={() => setShowFilterInfo(false)}
+                className="text-gray-500 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="text-gray-300 text-sm space-y-4">
+              <p className="text-white font-semibold">Each progression is tagged with the following fields:</p>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">Tonality</p>
+                <p className="text-gray-400">
+                  Either <span className="text-accent">Major</span> or <span className="text-accent">Minor</span>. The filter shows only progressions matching the selected tonality. This is an exact match — a major progression will never appear when Minor is selected, and vice versa.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">Chromaticism</p>
+                <p className="text-gray-400">
+                  Either <span className="text-accent">Diatonic</span> (only chords from the scale) or <span className="text-accent">Non-Diatonic</span> (contains chords from outside the scale). This is an exact match.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">Chord Types</p>
+                <p className="text-gray-400">
+                  Multi-select between <span className="text-accent">Triads</span> and <span className="text-accent">Seventh Chords</span>. Most progressions are purely triads or purely sevenths. However, some progressions mix both (e.g. <span className="text-accent">I – IV – V7 – I</span> contains triads I, IV and a seventh V7). These mixed progressions have <code className="text-accent">chordType</code> set to an array like <code className="text-accent">["triads", "sevenths"]</code>.
+                </p>
+                <p className="text-gray-400 pt-1">
+                  The filter uses AND logic: a progression appears only if <span className="text-white font-semibold">all</span> of its chord types are selected. So a mixed progression like I – IV – V7 – I is visible only when both Triads and Seventh Chords are enabled. Selecting only Triads or only Sevenths will hide it.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="text-white font-semibold">Chord Sources <span className="text-gray-500 font-normal">(non-diatonic only)</span></p>
+                <p className="text-gray-400">
+                  Multi-select between four non-diatonic chord sources:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-gray-400 ml-2">
+                  <li><span className="text-accent">Secondary Dominants</span> — e.g. V/vi, V/V</li>
+                  <li><span className="text-accent">Secondary Leading-Tone Chords</span> — e.g. viio/V, viio7/ii</li>
+                  <li><span className="text-accent">Modal Interchange</span> — borrowed chords from the parallel mode, e.g. bVI, bVII, iv in major</li>
+                  <li><span className="text-accent">Free Choice</span> — any chromatic chord not fitting the above, e.g. bII (Neapolitan)</li>
+                </ul>
+                <p className="text-gray-400 pt-1">
+                  A progression can contain chords from multiple sources. Its <code className="text-accent">sources</code> field lists all sources used. The filter uses OR logic: a progression appears if <span className="text-white font-semibold">any</span> of its sources match <span className="text-white font-semibold">any</span> selected source. For example, a progression with sources <code className="text-accent">["secondary-dominants", "modal-interchange"]</code> will appear when either Secondary Dominants or Modal Interchange (or both) is selected.
+                </p>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-bg-600">
+                <p className="text-white font-semibold">Chord Extensions</p>
+                <p className="text-gray-400">
+                  For triads, chords are plain triads (e.g. I, vi, bVI). For seventh chords, each chord includes its diatonic 7th extension (e.g. Imaj7, V7, vi7, iim7b5). Non-diatonic seventh chords use the appropriate extension based on their chord quality (e.g. V7/vi, viio7/V, bVImaj7, bIImaj7).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Info popup */}
       {showInfo && (

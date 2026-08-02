@@ -965,14 +965,20 @@ function trySecondaryTriad(roman, secondaryChords) {
 // Supports diatonic chords, secondary chords (triad & seventh), borrowed chords
 // (modal interchange), and other non-diatonic chords (e.g. Neapolitan).
 export function buildProgressionFromRomans(tonality, chordType, romans, includeHarmMinor = true) {
-  const diatonicChords = chordType === 'sevenths'
-    ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor)
-    : getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor)
+  const types = Array.isArray(chordType) ? chordType : [chordType]
+  const useSevenths = types.includes('sevenths')
+  const useTriads = types.includes('triads')
+
+  const diatonicChords = [
+    ...(useTriads ? getDiatonicTriadsWithHarmMinor(tonality, includeHarmMinor) : []),
+    ...(useSevenths ? getDiatonicSeventhsWithHarmMinor(tonality, includeHarmMinor) : []),
+  ]
 
   const parallelTonality = tonality === 'major' ? 'minor' : 'major'
-  const borrowedChords = chordType === 'sevenths'
-    ? getDiatonicSevenths(parallelTonality)
-    : getDiatonicTriads(parallelTonality)
+  const borrowedChords = [
+    ...(useTriads ? getDiatonicTriads(parallelTonality) : []),
+    ...(useSevenths ? getDiatonicSevenths(parallelTonality) : []),
+  ]
 
   const secondaryChords = getAvailableSecondaryChords(tonality)
 

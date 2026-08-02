@@ -1,6 +1,6 @@
 // Shared progressions catalog data
 // Flat array of progression objects with metadata:
-//   { label, romans, tonality, chromaticism, chordType, source?, favorite? }
+//   { label, romans, tonality, chromaticism, chordType: string|[], sources?: [], favorite? }
 //
 // To edit progressions, modify progressions.json in the project root and rebuild.
 
@@ -38,8 +38,8 @@ export function cloneProgressions(progs) {
     romans: [...p.romans],
     tonality: p.tonality,
     chromaticism: p.chromaticism,
-    chordType: p.chordType,
-    ...(p.source ? { source: p.source } : {}),
+    chordType: Array.isArray(p.chordType) ? [...p.chordType] : p.chordType,
+    ...(p.sources ? { sources: [...p.sources] } : {}),
     ...(p.favorite ? { favorite: true } : {}),
   }))
 }
@@ -50,9 +50,11 @@ export function filterProgressions(progs, { tonality, chromaticism, chordTypes, 
   return progs.filter(p => {
     if (p.tonality !== tonality) return false
     if (p.chromaticism !== chromaticism) return false
-    if (chordTypes && chordTypes.length > 0 && !chordTypes.includes(p.chordType)) return false
+    // Normalize chordType to array for AND logic
+    const progTypes = Array.isArray(p.chordType) ? p.chordType : [p.chordType]
+    if (chordTypes && chordTypes.length > 0 && !progTypes.every(t => chordTypes.includes(t))) return false
     if (chromaticism === 'non-diatonic' && sources && sources.length > 0) {
-      if (!p.source || !sources.includes(p.source)) return false
+      if (!p.sources || !p.sources.some(s => sources.includes(s))) return false
     }
     return true
   })
