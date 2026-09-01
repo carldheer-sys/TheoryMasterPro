@@ -1,11 +1,20 @@
 import { useState, useCallback } from 'react'
 
 const PROGRESSIONS_STORAGE_KEY = 'theorymaster_progressions'
+const PROGRESSIONS_VERSION_KEY = 'theorymaster_progressions_version'
+const PROGRESSIONS_VERSION = 2 // bump when DEFAULT_PROGRESSIONS change structurally
 
 function loadProgressionsFromStorage() {
   try {
     const saved = localStorage.getItem(PROGRESSIONS_STORAGE_KEY)
+    const savedVersion = localStorage.getItem(PROGRESSIONS_VERSION_KEY)
     if (saved) {
+      // If version mismatch, discard stale stored progressions
+      if (String(savedVersion) !== String(PROGRESSIONS_VERSION)) {
+        localStorage.removeItem(PROGRESSIONS_STORAGE_KEY)
+        localStorage.removeItem(PROGRESSIONS_VERSION_KEY)
+        return null
+      }
       const parsed = JSON.parse(saved)
       if (Array.isArray(parsed)) {
         // Migrate old format: sources array → source string, remove mixed chordType
@@ -28,12 +37,14 @@ function loadProgressionsFromStorage() {
 function saveProgressionsToStorage(progs) {
   try {
     localStorage.setItem(PROGRESSIONS_STORAGE_KEY, JSON.stringify(progs))
+    localStorage.setItem(PROGRESSIONS_VERSION_KEY, String(PROGRESSIONS_VERSION))
   } catch (e) { /* ignore */ }
 }
 
 function clearProgressionsFromStorage() {
   try {
     localStorage.removeItem(PROGRESSIONS_STORAGE_KEY)
+    localStorage.removeItem(PROGRESSIONS_VERSION_KEY)
   } catch (e) { /* ignore */ }
 }
 import MenuBar from './components/MenuBar'
