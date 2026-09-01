@@ -57,9 +57,27 @@ function buildSecondaryOptions(tonality, type) {
   })
 }
 
+// Build tritone sub options for a given tonality.
+// Returns array of: { target, label, equivalent, triadRoman, seventhRoman }
+function buildTritoneSubOptions(tonality) {
+  const available = getAvailableSecondaryChords(tonality).filter(sc => sc.type === 'tritone-sub')
+  return available.map(sc => {
+    const triadRoman = `bII/${sc.targetRoman}`
+    const seventhRoman = sc.id // e.g. "bII7/vi"
+    const equivalent = sc.equivalentRoman.replace(/7$/, '')
+    return {
+      target: sc.targetRoman,
+      label: `${triadRoman} (${equivalent})`,
+      equivalent,
+      triadRoman,
+      seventhRoman,
+    }
+  })
+}
+
 // All possible roots for free choice
-const FREE_CHOICE_MAJOR_ROOTS = ['I', 'bII', 'II', 'bIII', 'III', 'IV', 'bV', 'V', 'bVI', 'VI', 'bVII', 'VII']
-const FREE_CHOICE_MINOR_ROOTS = ['i', 'bii', 'ii', 'biii', 'iii', 'iv', 'bv', 'v', 'bvi', 'vi', 'bvii', 'vii']
+const FREE_CHOICE_MAJOR_ROOTS = ['I', 'bII', 'II', 'bIII', 'III', 'IV', '#iv', 'bV', 'V', 'bVI', 'VI', 'bVII', 'VII']
+const FREE_CHOICE_MINOR_ROOTS = ['i', 'bii', 'ii', 'biii', 'iii', 'iv', '#iv', 'bv', 'v', 'bvi', 'vi', 'bvii', 'vii']
 
 // Free choice extension options — root-case-aware (uppercase = major, lowercase = minor)
 const FREE_CHOICE_TRIAD_EXTS_UPPER = [
@@ -88,7 +106,8 @@ const ALL_SEVENTH_EXTS = ['7', 'maj7', 'm7b5', 'o7']
 function qualityLabel(roman) {
   const parts = getRomanParts(roman)
   const ext = parts.superscript
-  const isUpper = parts.base[0] === parts.base[0].toUpperCase()
+  const letterIdx = parts.base.search(/[ivIV]/)
+  const isUpper = letterIdx >= 0 && parts.base[letterIdx] === parts.base[letterIdx].toUpperCase()
 
   if (!ext) return isUpper ? 'Major' : 'Minor'
   if (ext === 'o') return 'Diminished (o)'
@@ -104,9 +123,10 @@ function qualityLabel(roman) {
 // Source type options for non-diatonic mode
 const SOURCE_TYPE_OPTIONS = [
   { value: 'diatonic', label: 'Diatonic' },
-  { value: 'modal-interchange', label: 'Modal Interchange' },
   { value: 'secondary-dominants', label: 'Secondary Dominants' },
   { value: 'secondary-leading-tone', label: 'Secondary Leading-Tone' },
+  { value: 'tritone-substitution', label: 'Tritone Substitution' },
+  { value: 'modal-interchange', label: 'Modal Interchange' },
   { value: 'free-choice', label: 'Free Choice' },
 ]
 
@@ -130,11 +150,26 @@ function parseRoman(roman, tonality, chromaticism) {
   // Non-diatonic
   const sourceType = getChordSourceType(roman, tonality)
 
+  if (sourceType === 'diatonic') {
+    const parts = getRomanParts(roman)
+    const opts = buildRootOptions(tonality)
+    const match = opts.find(o => o.triadRoman === roman || o.seventhRoman === roman)
+    const extensionType = match && match.seventhRoman === roman ? 'seventh' : 'triad'
+    return { sourceType: 'diatonic', root: parts.base, extensionType, freeExtension: '', target: '' }
+  }
+
   if (sourceType === 'secondary-dominants' || sourceType === 'secondary-leading-tone') {
     const parts = getRomanParts(roman)
     const isSeventh = parts.superscript.includes('7')
     const target = parts.secondary.slice(1)
     return { sourceType, root: '', extensionType: isSeventh ? 'seventh' : 'triad', freeExtension: '', target }
+  }
+
+  if (sourceType === 'tritone-substitution') {
+    const parts = getRomanParts(roman)
+    const isSeventh = parts.superscript.includes('7')
+    const target = parts.secondary.slice(1)
+    return { sourceType: 'tritone-substitution', root: '', extensionType: isSeventh ? 'seventh' : 'triad', freeExtension: '', target }
   }
 
   if (sourceType === 'modal-interchange') {
@@ -163,6 +198,9 @@ function buildRoman(state, tonality) {
   }
   if (sourceType === 'secondary-leading-tone') {
     return extensionType === 'seventh' ? `viio7/${target}` : `viio/${target}`
+  }
+  if (sourceType === 'tritone-substitution') {
+    return extensionType === 'seventh' ? `bII7/${target}` : `bII/${target}`
   }
   if (sourceType === 'free-choice') {
     if (extensionType === 'seventh') {
@@ -253,7 +291,8 @@ export default function ChordPicker({ tonality, chromaticism, value, onChange, o
     switch (st) {
       case 'modal-interchange': return 'text-blue-400'
       case 'secondary-dominants':
-      case 'secondary-leading-tone': return 'text-keyred'
+      case 'secondary-leading-tone':
+      case 'tritone-substitution': return 'text-keyred'
       case 'free-choice': return 'text-purple-400'
       default: return 'text-white'
     }
@@ -278,12 +317,22 @@ export default function ChordPicker({ tonality, chromaticism, value, onChange, o
     return null
   }, [tonality, state.sourceType])
 
+  const tritoneSubOptions = useMemo(() => {
+    if (state.sourceType === 'tritone-substitution') {
+      return buildTritoneSubOptions(tonality)
+    }
+    return null
+  }, [tonality, state.sourceType])
+
   // When sourceType changes, reset root/target to first available option
   const handleSourceTypeChange = (newSourceType) => {
     if (newSourceType === 'secondary-dominants' || newSourceType === 'secondary-leading-tone') {
       const opts = newSourceType === 'secondary-dominants'
         ? buildSecondaryOptions(tonality, 'dominant')
         : buildSecondaryOptions(tonality, 'leading-tone')
+      update({ sourceType: newSourceType, target: opts[0]?.target || '', root: '', extensionType: 'triad', freeExtension: '' })
+    } else if (newSourceType === 'tritone-substitution') {
+      const opts = buildTritoneSubOptions(tonality)
       update({ sourceType: newSourceType, target: opts[0]?.target || '', root: '', extensionType: 'triad', freeExtension: '' })
     } else if (newSourceType === 'free-choice') {
       update({ sourceType: newSourceType, root: 'I', extensionType: 'triad', freeExtension: '', target: '' })
@@ -304,7 +353,8 @@ export default function ChordPicker({ tonality, chromaticism, value, onChange, o
 
   // When root changes in free-choice, validate extension is still viable for new root case
   const handleFreeRootChange = (newRoot) => {
-    const isUpper = newRoot[0] === newRoot[0].toUpperCase()
+    const letterIdx = newRoot.search(/[ivIV]/)
+    const isUpper = letterIdx >= 0 && newRoot[letterIdx] === newRoot[letterIdx].toUpperCase()
     const validExts = isUpper
       ? [...FREE_CHOICE_TRIAD_EXTS_UPPER, ...FREE_CHOICE_SEVENTH_EXTS_UPPER]
       : [...FREE_CHOICE_TRIAD_EXTS_LOWER, ...FREE_CHOICE_SEVENTH_EXTS_LOWER]
@@ -372,9 +422,33 @@ export default function ChordPicker({ tonality, chromaticism, value, onChange, o
     )
   }
 
+  // Render extension dropdown for tritone sub chords
+  const renderTritoneSubExtensionDropdown = () => {
+    const opts = tritoneSubOptions
+    const opt = opts?.find(o => o.target === state.target)
+    if (!opt) return null
+
+    return (
+      <MiniSelect
+        value={state.extensionType}
+        onChange={(v) => update({ extensionType: v })}
+        width="160px"
+        colorClass={colorClass}
+      >
+        <optgroup label="Triad">
+          <option value="triad" className="bg-bg-700 text-white">{qualityLabel(opt.triadRoman)}</option>
+        </optgroup>
+        <optgroup label="Seventh">
+          <option value="seventh" className="bg-bg-700 text-white">{qualityLabel(opt.seventhRoman)}</option>
+        </optgroup>
+      </MiniSelect>
+    )
+  }
+
   // Render extension dropdown for free choice — root-case-aware options
   const renderFreeExtensionDropdown = () => {
-    const isUpper = state.root[0] === state.root[0].toUpperCase()
+    const letterIdx = state.root.search(/[ivIV]/)
+    const isUpper = letterIdx >= 0 && state.root[letterIdx] === state.root[letterIdx].toUpperCase()
     const triadExts = isUpper ? FREE_CHOICE_TRIAD_EXTS_UPPER : FREE_CHOICE_TRIAD_EXTS_LOWER
     const seventhExts = isUpper ? FREE_CHOICE_SEVENTH_EXTS_UPPER : FREE_CHOICE_SEVENTH_EXTS_LOWER
 
@@ -454,6 +528,23 @@ export default function ChordPicker({ tonality, chromaticism, value, onChange, o
             ))}
           </MiniSelect>
           {renderSecondaryExtensionDropdown()}
+        </>
+      )}
+
+      {/* Target dropdown for tritone substitutions */}
+      {state.sourceType === 'tritone-substitution' && tritoneSubOptions && (
+        <>
+          <MiniSelect
+            value={state.target}
+            onChange={(v) => update({ target: v })}
+            width="140px"
+            colorClass={colorClass}
+          >
+            {tritoneSubOptions.map(opt => (
+              <option key={opt.target} value={opt.target} className="bg-bg-700 text-white">{opt.label}</option>
+            ))}
+          </MiniSelect>
+          {renderTritoneSubExtensionDropdown()}
         </>
       )}
 

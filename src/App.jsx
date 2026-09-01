@@ -7,7 +7,19 @@ function loadProgressionsFromStorage() {
     const saved = localStorage.getItem(PROGRESSIONS_STORAGE_KEY)
     if (saved) {
       const parsed = JSON.parse(saved)
-      if (Array.isArray(parsed)) return parsed
+      if (Array.isArray(parsed)) {
+        // Migrate old format: sources array → source string, remove mixed chordType
+        return parsed
+          .filter(p => !Array.isArray(p.chordType))
+          .map(p => {
+            const migrated = { ...p }
+            if (migrated.sources) {
+              migrated.source = migrated.sources[0]
+              delete migrated.sources
+            }
+            return migrated
+          })
+      }
     }
   } catch (e) { /* ignore */ }
   return null

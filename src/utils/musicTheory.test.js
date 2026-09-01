@@ -61,7 +61,8 @@ import {
   getBassScaleDegree,
   getRomanParts,
   getFiguredBass,
-  spellChordTones
+  spellChordTones,
+  buildProgressionFromRomans
 } from './musicTheory.js'
 
 // ─── Test helpers ────────────────────────────────────────────────────────
@@ -2213,6 +2214,7 @@ test('143. SECONDARY_CHORDS has correct equivalent spellings for minor key domin
     'V7/bIII': 'bVII7',
     'V7/bVI':  'bIII7',
     'V7/iv':   'I7',
+    'V7/V':    'II7',
   }
   for (const sc of minorDominants) {
     assert(sc.equivalentRoman === expected[sc.id],
@@ -2295,7 +2297,7 @@ test('150. getAvailableSecondaryChords returns correct chords for minor', () => 
   assert(ids.includes('V7/bVI'), 'V7/bVI should be available in minor')
   assert(ids.includes('viio7/iv'), 'viio7/iv should be available in minor')
   // No major-key chords
-  assert(!ids.includes('V7/V'), 'V7/V should NOT be available in minor')
+  assert(!ids.includes('V7/ii'), 'V7/ii should NOT be available in minor')
   assert(!ids.includes('viio7/ii'), 'viio7/ii should NOT be available in minor')
 })
 
@@ -2349,6 +2351,67 @@ test('156. Secondary leading-tone intervals are [0,3,6,9]', () => {
     assert(sc.intervals.length === 4 && sc.intervals[0] === 0 && sc.intervals[1] === 3 && sc.intervals[2] === 6 && sc.intervals[3] === 9,
       `${sc.id}: intervals should be [0,3,6,9]`)
   }
+})
+
+// ── New engine entry regression tests ────────────────────────────────────
+
+test('156a. bII7/I tritone sub exists and is available in major', () => {
+  const sc = SECONDARY_CHORDS.find(s => s.id === 'bII7/I')
+  assert(sc, 'bII7/I should exist in SECONDARY_CHORDS')
+  assert(sc.type === 'tritone-sub', 'bII7/I should be type tritone-sub')
+  assert(sc.applicableTonality === 'major', 'bII7/I should be applicable to major')
+  assert(sc.semitones === 1, 'bII7/I root should be at semitone 1 (bII)')
+  assert(isSecondaryChordAvailable(sc, 'major'), 'bII7/I should be available in major')
+})
+
+test('156b. bII7/i tritone sub exists and is available in minor', () => {
+  const sc = SECONDARY_CHORDS.find(s => s.id === 'bII7/i')
+  assert(sc, 'bII7/i should exist in SECONDARY_CHORDS')
+  assert(sc.type === 'tritone-sub', 'bII7/i should be type tritone-sub')
+  assert(sc.applicableTonality === 'minor', 'bII7/i should be applicable to minor')
+  assert(sc.semitones === 1, 'bII7/i root should be at semitone 1 (bII)')
+  assert(isSecondaryChordAvailable(sc, 'minor'), 'bII7/i should be available in minor')
+})
+
+test('156c. V7/V secondary dominant exists and is available in minor', () => {
+  const sc = SECONDARY_CHORDS.find(s => s.id === 'V7/V' && s.applicableTonality === 'minor')
+  assert(sc, 'V7/V (minor) should exist in SECONDARY_CHORDS')
+  assert(sc.type === 'dominant', 'V7/V should be type dominant')
+  assert(sc.semitones === 2, 'V7/V root should be at semitone 2 (II)')
+  assert(isSecondaryChordAvailable(sc, 'minor'), 'V7/V should be available in minor')
+})
+
+test('156d. buildProgressionFromRomans resolves bII7/I and bII/I in major', () => {
+  const prog7 = buildProgressionFromRomans('major', 'sevenths', ['ii7', 'bII7/I', 'Imaj7'])
+  assert(prog7.length === 3, 'Should return 3 chords')
+  assert(prog7[1] && prog7[1].isTritoneSub === true, 'bII7/I should be marked isTritoneSub')
+  assert(prog7[1].semitones === 1, 'bII7/I should be at semitone 1')
+
+  const progTriad = buildProgressionFromRomans('major', 'triads', ['ii', 'bII/I', 'I'])
+  assert(progTriad.length === 3, 'Should return 3 chords for triad version')
+  assert(progTriad[1] && progTriad[1].isTritoneSub === true, 'bII/I should be marked isTritoneSub')
+  assert(progTriad[1].intervals.length === 3, 'bII/I triad should have 3 intervals')
+})
+
+test('156e. buildProgressionFromRomans resolves V7/V and V/V in minor', () => {
+  const prog7 = buildProgressionFromRomans('minor', 'sevenths', ['i7', 'V7/V', 'V7', 'i7'])
+  assert(prog7.length === 4, 'Should return 4 chords')
+  assert(prog7[1] && prog7[1].isSecondary === true, 'V7/V should be marked isSecondary')
+  assert(prog7[1].semitones === 2, 'V7/V should be at semitone 2')
+
+  const progTriad = buildProgressionFromRomans('minor', 'triads', ['i', 'V/V', 'V', 'i'])
+  assert(progTriad.length === 4, 'Should return 4 chords for triad version')
+  assert(progTriad[1] && progTriad[1].isSecondary === true, 'V/V should be marked isSecondary')
+  assert(progTriad[1].intervals.length === 3, 'V/V triad should have 3 intervals')
+})
+
+test('156f. buildFreeChoiceChord handles #iv (sharp-prefixed root) correctly', () => {
+  const prog = buildProgressionFromRomans('major', 'triads', ['I', 'IV', '#ivo', 'I'])
+  assert(prog.length === 4, 'Should return 4 chords')
+  assert(prog[2] && prog[2].isFreeChoice === true, '#ivo should be free-choice')
+  assert(prog[2].semitones === 6, '#ivo should be at semitone 6')
+  assert(prog[2].quality === 'diminished', '#ivo should be diminished quality')
+  assert(prog[2].intervals.length === 3, '#ivo triad should have 3 intervals')
 })
 
 // ── Inversion Tests ──────────────────────────────────────────────────────

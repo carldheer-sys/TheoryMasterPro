@@ -1,74 +1,3207 @@
 [
-  { "label": "I – IV – V7 – I", "romans": ["I", "IV", "V7", "I"], "tonality": "major", "chromaticism": "diatonic", "chordType": ["triads", "sevenths"] },
-  { "label": "vi – IV – I – V", "romans": ["vi", "IV", "I", "V"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "vi – ii – V – I", "romans": ["vi", "ii", "V", "I"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "I – V – vi – iii – IV – I – IV – V", "romans": ["I", "V", "vi", "iii", "IV", "I", "IV", "V"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads", "favorite": true },
-  { "label": "vi – iii – IV – I – ii – vi – IV – V", "romans": ["vi", "iii", "IV", "I", "ii", "vi", "IV", "V"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "vi – iii – IV – I – V", "romans": ["vi", "iii", "IV", "I", "V"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "IV – V – iii – vi", "romans": ["IV", "V", "iii", "vi"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "ii – V – vi – IV", "romans": ["ii", "V", "vi", "IV"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "vi – ii – V – I", "romans": ["vi", "ii", "V", "I"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "ii – V – iii – vi", "romans": ["ii", "V", "iii", "vi"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "ii – vi – IV – V", "romans": ["ii", "vi", "IV", "V"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "IV – I – iii – vi", "romans": ["IV", "I", "iii", "vi"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads", "favorite": true },
-  { "label": "I – V – iii – ii", "romans": ["I", "V", "iii", "ii"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "iii – IV – vi – V", "romans": ["iii", "IV", "vi", "V"], "tonality": "major", "chromaticism": "diatonic", "chordType": "triads" },
-
-  { "label": "vi7 – IVmaj7 – Imaj7 – V7", "romans": ["vi7", "IVmaj7", "Imaj7", "V7"], "tonality": "major", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "vi7 – ii7 – V7 – Imaj7", "romans": ["vi7", "ii7", "V7", "Imaj7"], "tonality": "major", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "iii7 – vi7 – ii7 – V7 – Imaj7", "romans": ["iii7", "vi7", "ii7", "V7", "Imaj7"], "tonality": "major", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "Imaj7 – IVmaj7 – ii7 – V7 – Imaj7", "romans": ["Imaj7", "IVmaj7", "ii7", "V7", "Imaj7"], "tonality": "major", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "Imaj7 – ii7 – V7 – vi7", "romans": ["Imaj7", "ii7", "V7", "vi7"], "tonality": "major", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "vi7 – IVmaj7 – iii7 – Imaj7", "romans": ["vi7", "IVmaj7", "iii7", "Imaj7"], "tonality": "major", "chromaticism": "diatonic", "chordType": "sevenths" },
-
-  { "label": "I – V/vi – vi – IV", "romans": ["I", "V/vi", "vi", "IV"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "triads" },
-  { "label": "I – V/V – V – I", "romans": ["I", "V/V", "V", "I"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "triads" },
-  { "label": "I – viio/V – V – I", "romans": ["I", "viio/V", "V", "I"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "triads" },
-  { "label": "vi – viio/ii – ii – V", "romans": ["vi", "viio/ii", "ii", "V"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "triads" },
-  { "label": "I – bVI – bVII – I", "romans": ["I", "bVI", "bVII", "I"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "triads" },
-  { "label": "I – IV – iv – I", "romans": ["I", "IV", "iv", "I"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "triads" },
-  { "label": "I – bII – V – I", "romans": ["I", "bII", "V", "I"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "triads" },
-  { "label": "I – bVI – iii – IV", "romans": ["I", "bVI", "iii", "IV"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "triads" },
-
-  { "label": "Imaj7 – V7/vi – vi7 – IVmaj7", "romans": ["Imaj7", "V7/vi", "vi7", "IVmaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "sevenths" },
-  { "label": "Imaj7 – V7/V – V7 – Imaj7", "romans": ["Imaj7", "V7/V", "V7", "Imaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "sevenths" },
-  { "label": "Imaj7 – viio7/V – V7 – Imaj7", "romans": ["Imaj7", "viio7/V", "V7", "Imaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "sevenths" },
-  { "label": "vi7 – viio7/ii – ii7 – V7", "romans": ["vi7", "viio7/ii", "ii7", "V7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "sevenths" },
-  { "label": "Imaj7 – bVImaj7 – bVII7 – Imaj7", "romans": ["Imaj7", "bVImaj7", "bVII7", "Imaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "sevenths" },
-  { "label": "Imaj7 – IVmaj7 – iv7 – Imaj7", "romans": ["Imaj7", "IVmaj7", "iv7", "Imaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "sevenths" },
-  { "label": "Imaj7 – bIImaj7 – V7 – Imaj7", "romans": ["Imaj7", "bIImaj7", "V7", "Imaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "sevenths" },
-  { "label": "Imaj7 – bVImaj7 – iiim7 – IVmaj7", "romans": ["Imaj7", "bVImaj7", "iiim7", "IVmaj7"], "tonality": "major", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "sevenths" },
-
-  { "label": "bVI – iv – i – v", "romans": ["bVI", "iv", "i", "v"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "bVI – bIII – bVII – bIII", "romans": ["bVI", "bIII", "bVII", "bIII"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "i – v – bVI – bIII – iv – i – iv – V", "romans": ["i", "v", "bVI", "bIII", "iv", "i", "iv", "V"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads", "favorite": true },
-  { "label": "bVI – bIII – v – i", "romans": ["bVI", "bIII", "v", "i"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "i – bVI – bIII – bVII", "romans": ["i", "bVI", "bIII", "bVII"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "bVI – iio – v – i", "romans": ["bVI", "iio", "v", "i"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "bIII – i – bVI – bVII", "romans": ["bIII", "i", "bVI", "bVII"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "i – iio – v – i", "romans": ["i", "iio", "v", "i"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "i – bIII – v – i", "romans": ["i", "bIII", "v", "i"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-  { "label": "i – v – bVI – bIII", "romans": ["i", "v", "bVI", "bIII"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "triads" },
-
-  { "label": "bVImaj7 – iv7 – i7 – v7", "romans": ["bVImaj7", "iv7", "i7", "v7"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7", "romans": ["bVImaj7", "bIIImaj7", "bVII7", "bIIImaj7"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "sevenths" },
-  { "label": "iim7b5 – V7 – i7", "romans": ["iim7b5", "V7", "i7"], "tonality": "minor", "chromaticism": "diatonic", "chordType": "sevenths" },
-
-  { "label": "i – V/iv – iv – V – i", "romans": ["i", "V/iv", "iv", "V", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "triads" },
-  { "label": "i – bVI – V/iv – iv – i", "romans": ["i", "bVI", "V/iv", "iv", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "triads" },
-  { "label": "i – viio/bVI – bVI – i", "romans": ["i", "viio/bVI", "bVI", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "triads" },
-  { "label": "i – viio/iv – iv – V – i", "romans": ["i", "viio/iv", "iv", "V", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "triads" },
-  { "label": "i – IV – i", "romans": ["i", "IV", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "triads" },
-  { "label": "i – bVI – IV – V – i", "romans": ["i", "bVI", "IV", "V", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "triads" },
-  { "label": "i – bII – V – i", "romans": ["i", "bII", "V", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "triads" },
-  { "label": "i – bVI – bII – V – i", "romans": ["i", "bVI", "bII", "V", "i"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "triads" },
-
-  { "label": "i7 – V7/iv – iv7 – V7 – i7", "romans": ["i7", "V7/iv", "iv7", "V7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "sevenths" },
-  { "label": "i7 – bVImaj7 – V7/iv – iv7 – i7", "romans": ["i7", "bVImaj7", "V7/iv", "iv7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-dominants"], "chordType": "sevenths" },
-  { "label": "i7 – viio7/bVI – bVImaj7 – i7", "romans": ["i7", "viio7/bVI", "bVImaj7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "sevenths" },
-  { "label": "i7 – viio7/iv – iv7 – V7 – i7", "romans": ["i7", "viio7/iv", "iv7", "V7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["secondary-leading-tone"], "chordType": "sevenths" },
-  { "label": "i7 – IVmaj7 – i7", "romans": ["i7", "IVmaj7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "sevenths" },
-  { "label": "i7 – bVImaj7 – IVmaj7 – V7 – i7", "romans": ["i7", "bVImaj7", "IVmaj7", "V7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["modal-interchange"], "chordType": "sevenths" },
-  { "label": "i7 – bIImaj7 – V7 – i7", "romans": ["i7", "bIImaj7", "V7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "sevenths" },
-  { "label": "i7 – bVImaj7 – bIImaj7 – V7 – i7", "romans": ["i7", "bVImaj7", "bIImaj7", "V7", "i7"], "tonality": "minor", "chromaticism": "non-diatonic", "sources": ["free-choice"], "chordType": "sevenths" }
+  {
+    "label": "I – V – vi – IV",
+    "romans": [
+      "I",
+      "V",
+      "vi",
+      "IV"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "I – vi – IV – V",
+    "romans": [
+      "I",
+      "vi",
+      "IV",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "I – vi – ii – V",
+    "romans": [
+      "I",
+      "vi",
+      "ii",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "I – IV – V – vi",
+    "romans": [
+      "I",
+      "IV",
+      "V",
+      "vi"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "ii – V – vi – IV – I",
+    "romans": [
+      "ii",
+      "V",
+      "vi",
+      "IV",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "vi – IV – I – V",
+    "romans": [
+      "vi",
+      "IV",
+      "I",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "I – V – vi – iii – IV – I – IV – V",
+    "romans": [
+      "I",
+      "V",
+      "vi",
+      "iii",
+      "IV",
+      "I",
+      "IV",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads",
+    "favorite": true
+  },
+  {
+    "label": "vi – iii – IV – I – ii – vi – IV – V",
+    "romans": [
+      "vi",
+      "iii",
+      "IV",
+      "I",
+      "ii",
+      "vi",
+      "IV",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "vi – iii – IV – I – V",
+    "romans": [
+      "vi",
+      "iii",
+      "IV",
+      "I",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "IV – I – iii – vi",
+    "romans": [
+      "IV",
+      "I",
+      "iii",
+      "vi"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads",
+    "favorite": true
+  },
+  {
+    "label": "ii – V – vi – IV",
+    "romans": [
+      "ii",
+      "V",
+      "vi",
+      "IV"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "vi – ii – V – I",
+    "romans": [
+      "vi",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "ii – V – iii – vi",
+    "romans": [
+      "ii",
+      "V",
+      "iii",
+      "vi"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "Imaj7 – V7 – vi7 – IVmaj7",
+    "romans": [
+      "Imaj7",
+      "V7",
+      "vi7",
+      "IVmaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "Imaj7 – vi7 – IVmaj7 – V7",
+    "romans": [
+      "Imaj7",
+      "vi7",
+      "IVmaj7",
+      "V7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "Imaj7 – vi7 – ii7 – V7",
+    "romans": [
+      "Imaj7",
+      "vi7",
+      "ii7",
+      "V7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – V7 – vi7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "V7",
+      "vi7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "ii7 – V7 – vi7 – IVmaj7 – Imaj7",
+    "romans": [
+      "ii7",
+      "V7",
+      "vi7",
+      "IVmaj7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "vi7 – IVmaj7 – Imaj7 – V7",
+    "romans": [
+      "vi7",
+      "IVmaj7",
+      "Imaj7",
+      "V7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "vi7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "vi7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "iii7 – vi7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "iii7",
+      "vi7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "Imaj7 – ii7 – V7 – vi7",
+    "romans": [
+      "Imaj7",
+      "ii7",
+      "V7",
+      "vi7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "vi7 – IVmaj7 – iii7 – Imaj7",
+    "romans": [
+      "vi7",
+      "IVmaj7",
+      "iii7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "I – V/vi – vi – ii – V – I",
+    "romans": [
+      "I",
+      "V/vi",
+      "vi",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – ii – V/V – V – I",
+    "romans": [
+      "I",
+      "ii",
+      "V/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – V/ii – ii – V – I",
+    "romans": [
+      "I",
+      "V/ii",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – V/iii – iii – vi – IV – V – I",
+    "romans": [
+      "I",
+      "V/iii",
+      "iii",
+      "vi",
+      "IV",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – V/vi – vi – V/ii – ii – V/V – V – I",
+    "romans": [
+      "I",
+      "V/vi",
+      "vi",
+      "V/ii",
+      "ii",
+      "V/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "IV – V/V – V – I",
+    "romans": [
+      "IV",
+      "V/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "vi – V/ii – ii – V – I",
+    "romans": [
+      "vi",
+      "V/ii",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – vi – V/V – V – I",
+    "romans": [
+      "I",
+      "vi",
+      "V/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – V/vi – vi – IV",
+    "romans": [
+      "I",
+      "V/vi",
+      "vi",
+      "IV"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – V/V – V – I",
+    "romans": [
+      "I",
+      "V/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "I – viio/vi – vi – IV – V – I",
+    "romans": [
+      "I",
+      "viio/vi",
+      "vi",
+      "IV",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "vi – IV – I – viio/V – V – I",
+    "romans": [
+      "vi",
+      "IV",
+      "I",
+      "viio/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "I – viio/iii – iii – vi – ii – V – I",
+    "romans": [
+      "I",
+      "viio/iii",
+      "iii",
+      "vi",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "I – vi – viio/ii – ii – V – I",
+    "romans": [
+      "I",
+      "vi",
+      "viio/ii",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "I – IV – viio/V – V – I",
+    "romans": [
+      "I",
+      "IV",
+      "viio/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "I – viio/V – V – I",
+    "romans": [
+      "I",
+      "viio/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "vi – viio/ii – ii – V",
+    "romans": [
+      "vi",
+      "viio/ii",
+      "ii",
+      "V"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "I – vi – ii – bII/I – I",
+    "romans": [
+      "I",
+      "vi",
+      "ii",
+      "bII/I",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "I – bII/V – V – I",
+    "romans": [
+      "I",
+      "bII/V",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "I – bII/IV – IV – V – I",
+    "romans": [
+      "I",
+      "bII/IV",
+      "IV",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "I – iii – bII/vi – vi – ii – V – I",
+    "romans": [
+      "I",
+      "iii",
+      "bII/vi",
+      "vi",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "I – bII/ii – ii – V – I",
+    "romans": [
+      "I",
+      "bII/ii",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "I – bVII – IV – I",
+    "romans": [
+      "I",
+      "bVII",
+      "IV",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – IV – bVII – I",
+    "romans": [
+      "I",
+      "IV",
+      "bVII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – bVI – bIII – bVII – I",
+    "romans": [
+      "I",
+      "bVI",
+      "bIII",
+      "bVII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – bIII – bVI – bVII – I",
+    "romans": [
+      "I",
+      "bIII",
+      "bVI",
+      "bVII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – bIII – bVII – IV – I",
+    "romans": [
+      "I",
+      "bIII",
+      "bVII",
+      "IV",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – iv – bVII – I",
+    "romans": [
+      "I",
+      "iv",
+      "bVII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – bVI – iv – I",
+    "romans": [
+      "I",
+      "bVI",
+      "iv",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – vi – iv – V – I",
+    "romans": [
+      "I",
+      "vi",
+      "iv",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – iii – iv – V – I",
+    "romans": [
+      "I",
+      "iii",
+      "iv",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – V – bVI – bVII – I",
+    "romans": [
+      "I",
+      "V",
+      "bVI",
+      "bVII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – bVI – bVII – I",
+    "romans": [
+      "I",
+      "bVI",
+      "bVII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – IV – iv – I",
+    "romans": [
+      "I",
+      "IV",
+      "iv",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "I – III – bVI – bIII – I",
+    "romans": [
+      "I",
+      "III",
+      "bVI",
+      "bIII",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "I – bVI – III – I – IV – V – I",
+    "romans": [
+      "I",
+      "bVI",
+      "III",
+      "I",
+      "IV",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "I – bIII+ – bVI+ – I – IV – V – I",
+    "romans": [
+      "I",
+      "bIII+",
+      "bVI+",
+      "I",
+      "IV",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "I – VI – IV – V – I",
+    "romans": [
+      "I",
+      "VI",
+      "IV",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "vi – III – I – bVI – ii – V – I",
+    "romans": [
+      "vi",
+      "III",
+      "I",
+      "bVI",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "I – bVI – iii – IV",
+    "romans": [
+      "I",
+      "bVI",
+      "iii",
+      "IV"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "I – bVI – bII – V – I",
+    "romans": [
+      "I",
+      "bVI",
+      "bII",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "I – IV – bII – V – I",
+    "romans": [
+      "I",
+      "IV",
+      "bII",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "I – vi – IV – bII – V – I",
+    "romans": [
+      "I",
+      "vi",
+      "IV",
+      "bII",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "I – bII – V – I",
+    "romans": [
+      "I",
+      "bII",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "I – IV – #ivo – I – V – I",
+    "romans": [
+      "I",
+      "IV",
+      "#ivo",
+      "I",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "I – vi – IV – #ivo – I – ii – V – I",
+    "romans": [
+      "I",
+      "vi",
+      "IV",
+      "#ivo",
+      "I",
+      "ii",
+      "V",
+      "I"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "Imaj7 – ii7 – V7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "ii7",
+      "V7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/ii – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7/ii",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/vi – vi7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7/vi",
+      "vi7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/iii – iii7 – vi7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7/iii",
+      "iii7",
+      "vi7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/vi – vi7 – V7/ii – ii7 – V7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7/vi",
+      "vi7",
+      "V7/ii",
+      "ii7",
+      "V7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "IVmaj7 – V7/V – V7 – Imaj7",
+    "romans": [
+      "IVmaj7",
+      "V7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "vi7 – V7/ii – ii7 – V7 – Imaj7",
+    "romans": [
+      "vi7",
+      "V7/ii",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/IV – IVmaj7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7/IV",
+      "IVmaj7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/vi – vi7 – IVmaj7",
+    "romans": [
+      "Imaj7",
+      "V7/vi",
+      "vi7",
+      "IVmaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – V7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "Imaj7 – viio7/vi – vi7 – IVmaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "viio7/vi",
+      "vi7",
+      "IVmaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "vi7 – IVmaj7 – Imaj7 – viio7/V – V7 – Imaj7",
+    "romans": [
+      "vi7",
+      "IVmaj7",
+      "Imaj7",
+      "viio7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "Imaj7 – viio7/iii – iii7 – vi7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "viio7/iii",
+      "iii7",
+      "vi7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "Imaj7 – vi7 – viio7/ii – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "vi7",
+      "viio7/ii",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – viio7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "viio7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "Imaj7 – viio7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "viio7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "vi7 – viio7/ii – ii7 – V7",
+    "romans": [
+      "vi7",
+      "viio7/ii",
+      "ii7",
+      "V7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "Imaj7 – ii7 – bII7/I – Imaj7",
+    "romans": [
+      "Imaj7",
+      "ii7",
+      "bII7/I",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "Imaj7 – bII7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bII7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "Imaj7 – bII7/IV – IVmaj7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bII7/IV",
+      "IVmaj7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "Imaj7 – bII7/vi – vi7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bII7/vi",
+      "vi7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "Imaj7 – ii7 – V7 – vi7 – bII7/V – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "ii7",
+      "V7",
+      "vi7",
+      "bII7/V",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "Imaj7 – bVII7 – IVmaj7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bVII7",
+      "IVmaj7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – bVImaj7 – bIIImaj7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bVImaj7",
+      "bIIImaj7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – bIIImaj7 – bVImaj7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bIIImaj7",
+      "bVImaj7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – bIIImaj7 – bVII7 – IVmaj7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bIIImaj7",
+      "bVII7",
+      "IVmaj7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – iv7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "iv7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – bVImaj7 – iv7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bVImaj7",
+      "iv7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – vi7 – iv7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "vi7",
+      "iv7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – iii7 – iv7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "iii7",
+      "iv7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – V7 – bVImaj7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "V7",
+      "bVImaj7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – bVImaj7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bVImaj7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – iv7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "iv7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "Imaj7 – IIImaj7 – bVImaj7 – bIIImaj7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IIImaj7",
+      "bVImaj7",
+      "bIIImaj7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "Imaj7 – bVImaj7 – IIImaj7 – Imaj7 – IVmaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bVImaj7",
+      "IIImaj7",
+      "Imaj7",
+      "IVmaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "Imaj7 – VImaj7 – IVmaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "VImaj7",
+      "IVmaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "vi7 – IIImaj7 – Imaj7 – bVImaj7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "vi7",
+      "IIImaj7",
+      "Imaj7",
+      "bVImaj7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "Imaj7 – IIImaj7 – Imaj7 – bVImaj7 – bIIImaj7 – bVII7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IIImaj7",
+      "Imaj7",
+      "bVImaj7",
+      "bIIImaj7",
+      "bVII7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "Imaj7 – bVImaj7 – iiim7 – IVmaj7",
+    "romans": [
+      "Imaj7",
+      "bVImaj7",
+      "iiim7",
+      "IVmaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "Imaj7 – bVImaj7 – bIImaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bVImaj7",
+      "bIImaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – bIImaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "bIImaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "Imaj7 – vi7 – IVmaj7 – bIImaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "vi7",
+      "IVmaj7",
+      "bIImaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "Imaj7 – bIImaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "bIImaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "Imaj7 – IVmaj7 – #ivo7 – Imaj7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "IVmaj7",
+      "#ivo7",
+      "Imaj7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "Imaj7 – vi7 – IVmaj7 – #ivo7 – Imaj7 – ii7 – V7 – Imaj7",
+    "romans": [
+      "Imaj7",
+      "vi7",
+      "IVmaj7",
+      "#ivo7",
+      "Imaj7",
+      "ii7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "major",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "i – bVII – bVI – V",
+    "romans": [
+      "i",
+      "bVII",
+      "bVI",
+      "V"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – iv – V – bVI",
+    "romans": [
+      "i",
+      "iv",
+      "V",
+      "bVI"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – iv – bVII – bIII – bVI – iio – v – i",
+    "romans": [
+      "i",
+      "iv",
+      "bVII",
+      "bIII",
+      "bVI",
+      "iio",
+      "v",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – bIII – iv – v – i",
+    "romans": [
+      "i",
+      "bIII",
+      "iv",
+      "v",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – bVI – iv – bVII – i",
+    "romans": [
+      "i",
+      "bVI",
+      "iv",
+      "bVII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "bVI – iv – i – v",
+    "romans": [
+      "bVI",
+      "iv",
+      "i",
+      "v"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "bVI – bIII – bVII – bIII",
+    "romans": [
+      "bVI",
+      "bIII",
+      "bVII",
+      "bIII"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – v – bVI – bIII – iv – i – iv – V",
+    "romans": [
+      "i",
+      "v",
+      "bVI",
+      "bIII",
+      "iv",
+      "i",
+      "iv",
+      "V"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads",
+    "favorite": true
+  },
+  {
+    "label": "bVI – bIII – v – i",
+    "romans": [
+      "bVI",
+      "bIII",
+      "v",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – bVI – bIII – bVII",
+    "romans": [
+      "i",
+      "bVI",
+      "bIII",
+      "bVII"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "bVI – iio – v – i",
+    "romans": [
+      "bVI",
+      "iio",
+      "v",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "bIII – i – bVI – bVII",
+    "romans": [
+      "bIII",
+      "i",
+      "bVI",
+      "bVII"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – iio – v – i",
+    "romans": [
+      "i",
+      "iio",
+      "v",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – bIII – v – i",
+    "romans": [
+      "i",
+      "bIII",
+      "v",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i – v – bVI – bIII",
+    "romans": [
+      "i",
+      "v",
+      "bVI",
+      "bIII"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "triads"
+  },
+  {
+    "label": "i7 – bVII7 – bVImaj7 – V7",
+    "romans": [
+      "i7",
+      "bVII7",
+      "bVImaj7",
+      "V7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "i7 – iv7 – V7 – bVImaj7",
+    "romans": [
+      "i7",
+      "iv7",
+      "V7",
+      "bVImaj7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "i7 – iv7 – bVII7 – bIIImaj7 – bVImaj7 – iim7b5 – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "bVII7",
+      "bIIImaj7",
+      "bVImaj7",
+      "iim7b5",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "i7 – bIIImaj7 – iv7 – v7 – i7",
+    "romans": [
+      "i7",
+      "bIIImaj7",
+      "iv7",
+      "v7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "i7 – bVImaj7 – iv7 – bVII7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "iv7",
+      "bVII7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "bVImaj7 – iv7 – i7 – v7",
+    "romans": [
+      "bVImaj7",
+      "iv7",
+      "i7",
+      "v7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "bVImaj7 – bIIImaj7 – bVII7 – bIIImaj7",
+    "romans": [
+      "bVImaj7",
+      "bIIImaj7",
+      "bVII7",
+      "bIIImaj7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "iim7b5 – V7 – i7",
+    "romans": [
+      "iim7b5",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "diatonic",
+    "chordType": "sevenths"
+  },
+  {
+    "label": "i – V/V – V – i",
+    "romans": [
+      "i",
+      "V/V",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – V/bIII – bIII – bVII – i",
+    "romans": [
+      "i",
+      "V/bIII",
+      "bIII",
+      "bVII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – iv – V/bVI – bVI – V – i",
+    "romans": [
+      "i",
+      "iv",
+      "V/bVI",
+      "bVI",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – V/bVI – bVI – V/bIII – bIII – V – i",
+    "romans": [
+      "i",
+      "V/bVI",
+      "bVI",
+      "V/bIII",
+      "bIII",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – bIII – V/iv – iv – bVI – V – i",
+    "romans": [
+      "i",
+      "bIII",
+      "V/iv",
+      "iv",
+      "bVI",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – V/iv – iv – V/bIII – bIII – i",
+    "romans": [
+      "i",
+      "V/iv",
+      "iv",
+      "V/bIII",
+      "bIII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – iv – V/V – V – i",
+    "romans": [
+      "i",
+      "iv",
+      "V/V",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – bVI – V/bIII – bIII – i",
+    "romans": [
+      "i",
+      "bVI",
+      "V/bIII",
+      "bIII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – V/iv – iv – V – i",
+    "romans": [
+      "i",
+      "V/iv",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – bVI – V/iv – iv – i",
+    "romans": [
+      "i",
+      "bVI",
+      "V/iv",
+      "iv",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i – viio/bIII – bIII – bVII – i",
+    "romans": [
+      "i",
+      "viio/bIII",
+      "bIII",
+      "bVII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – iv – viio/bVI – bVI – V – i",
+    "romans": [
+      "i",
+      "iv",
+      "viio/bVI",
+      "bVI",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – bIII – viio/iv – iv – V – i",
+    "romans": [
+      "i",
+      "bIII",
+      "viio/iv",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – viio/iv – iv – viio/bVI – bVI – i",
+    "romans": [
+      "i",
+      "viio/iv",
+      "iv",
+      "viio/bVI",
+      "bVI",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – viio/bIII – bIII – viio/iv – iv – V – i",
+    "romans": [
+      "i",
+      "viio/bIII",
+      "bIII",
+      "viio/iv",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – viio/bVI – bVI – i",
+    "romans": [
+      "i",
+      "viio/bVI",
+      "bVI",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – viio/iv – iv – V – i",
+    "romans": [
+      "i",
+      "viio/iv",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i – iv – bII/i – i",
+    "romans": [
+      "i",
+      "iv",
+      "bII/i",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i – bII/iv – iv – V – i",
+    "romans": [
+      "i",
+      "bII/iv",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i – bII/bIII – bIII – bVII – i",
+    "romans": [
+      "i",
+      "bII/bIII",
+      "bIII",
+      "bVII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i – bVI – bII/bVI – bVI – V – i",
+    "romans": [
+      "i",
+      "bVI",
+      "bII/bVI",
+      "bVI",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i – bVI – iv – bII/i – i",
+    "romans": [
+      "i",
+      "bVI",
+      "iv",
+      "bII/i",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i – ii – V – i",
+    "romans": [
+      "i",
+      "ii",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – bVI – ii – V – i",
+    "romans": [
+      "i",
+      "bVI",
+      "ii",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – ii – iv – V – i",
+    "romans": [
+      "i",
+      "ii",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – iv – ii – V – i",
+    "romans": [
+      "i",
+      "iv",
+      "ii",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – bVII – ii – V – i",
+    "romans": [
+      "i",
+      "bVII",
+      "ii",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – IV – bVII – i",
+    "romans": [
+      "i",
+      "IV",
+      "bVII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – IV – i",
+    "romans": [
+      "i",
+      "IV",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – bVI – IV – V – i",
+    "romans": [
+      "i",
+      "bVI",
+      "IV",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i – III – bVI – iv – V – i",
+    "romans": [
+      "i",
+      "III",
+      "bVI",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i – VI – bIII – bVII – i",
+    "romans": [
+      "i",
+      "VI",
+      "bIII",
+      "bVII",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i – bIII+ – i – bVI+ – i",
+    "romans": [
+      "i",
+      "bIII+",
+      "i",
+      "bVI+",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i – VI – iv – V – i",
+    "romans": [
+      "i",
+      "VI",
+      "iv",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i – III – bVII – VI – i",
+    "romans": [
+      "i",
+      "III",
+      "bVII",
+      "VI",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i – iv – bII – V – i",
+    "romans": [
+      "i",
+      "iv",
+      "bII",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i – bIII – bII – V – i",
+    "romans": [
+      "i",
+      "bIII",
+      "bII",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i – bVI – iv – bII – V – i",
+    "romans": [
+      "i",
+      "bVI",
+      "iv",
+      "bII",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i – bII – V – i",
+    "romans": [
+      "i",
+      "bII",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i – bVI – bII – V – i",
+    "romans": [
+      "i",
+      "bVI",
+      "bII",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i – iv – V – I",
+    "romans": [
+      "i",
+      "iv",
+      "V",
+      "I"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Picardy Third"
+  },
+  {
+    "label": "i – bVI – bIII – iv – V – I",
+    "romans": [
+      "i",
+      "bVI",
+      "bIII",
+      "iv",
+      "V",
+      "I"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Picardy Third"
+  },
+  {
+    "label": "i – iv – #ivo – i – V – i",
+    "romans": [
+      "i",
+      "iv",
+      "#ivo",
+      "i",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "i – bVI – iv – #ivo – i – V – i",
+    "romans": [
+      "i",
+      "bVI",
+      "iv",
+      "#ivo",
+      "i",
+      "V",
+      "i"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "triads",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "i7 – V7/V – V7 – i7",
+    "romans": [
+      "i7",
+      "V7/V",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – V7/bIII – bIIImaj7 – bVII7 – i7",
+    "romans": [
+      "i7",
+      "V7/bIII",
+      "bIIImaj7",
+      "bVII7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – iv7 – V7/bVI – bVImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "V7/bVI",
+      "bVImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – V7/bVI – bVImaj7 – V7/bIII – bIIImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "V7/bVI",
+      "bVImaj7",
+      "V7/bIII",
+      "bIIImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – bIIImaj7 – V7/iv – iv7 – bVImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bIIImaj7",
+      "V7/iv",
+      "iv7",
+      "bVImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – V7/iv – iv7 – V7/bIII – bIIImaj7 – i7",
+    "romans": [
+      "i7",
+      "V7/iv",
+      "iv7",
+      "V7/bIII",
+      "bIIImaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – iv7 – V7/V – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "V7/V",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – bVImaj7 – V7/bIII – bIIImaj7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "V7/bIII",
+      "bIIImaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – V7/iv – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "V7/iv",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – bVImaj7 – V7/iv – iv7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "V7/iv",
+      "iv7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-dominants"
+  },
+  {
+    "label": "i7 – viio7/bIII – bIIImaj7 – bVII7 – i7",
+    "romans": [
+      "i7",
+      "viio7/bIII",
+      "bIIImaj7",
+      "bVII7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – iv7 – viio7/bVI – bVImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "viio7/bVI",
+      "bVImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – bIIImaj7 – viio7/iv – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bIIImaj7",
+      "viio7/iv",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – viio7/iv – iv7 – viio7/bVI – bVImaj7 – i7",
+    "romans": [
+      "i7",
+      "viio7/iv",
+      "iv7",
+      "viio7/bVI",
+      "bVImaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – viio7/bIII – bIIImaj7 – viio7/iv – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "viio7/bIII",
+      "bIIImaj7",
+      "viio7/iv",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – viio7/bVI – bVImaj7 – i7",
+    "romans": [
+      "i7",
+      "viio7/bVI",
+      "bVImaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – viio7/iv – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "viio7/iv",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "secondary-leading-tone"
+  },
+  {
+    "label": "i7 – iv7 – bII7/i – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "bII7/i",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i7 – bII7/iv – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bII7/iv",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i7 – bII7/bIII – bIIImaj7 – bVII7 – i7",
+    "romans": [
+      "i7",
+      "bII7/bIII",
+      "bIIImaj7",
+      "bVII7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i7 – bVImaj7 – bII7/bVI – bVImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "bII7/bVI",
+      "bVImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i7 – bVImaj7 – iv7 – bII7/i – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "iv7",
+      "bII7/i",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "tritone-substitution"
+  },
+  {
+    "label": "i7 – ii7 – V7 – i7",
+    "romans": [
+      "i7",
+      "ii7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – bVImaj7 – ii7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "ii7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – ii7 – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "ii7",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – iv7 – ii7 – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "ii7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – bVII7 – ii7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bVII7",
+      "ii7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – IVmaj7 – bVII7 – i7",
+    "romans": [
+      "i7",
+      "IVmaj7",
+      "bVII7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – IVmaj7 – i7",
+    "romans": [
+      "i7",
+      "IVmaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – bVImaj7 – IVmaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "IVmaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "modal-interchange"
+  },
+  {
+    "label": "i7 – IIImaj7 – bVImaj7 – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "IIImaj7",
+      "bVImaj7",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i7 – VImaj7 – bIIImaj7 – bVII7 – i7",
+    "romans": [
+      "i7",
+      "VImaj7",
+      "bIIImaj7",
+      "bVII7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i7 – IIImaj7 – i7 – VImaj7 – i7",
+    "romans": [
+      "i7",
+      "IIImaj7",
+      "i7",
+      "VImaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i7 – VImaj7 – iv7 – V7 – i7",
+    "romans": [
+      "i7",
+      "VImaj7",
+      "iv7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i7 – IIImaj7 – bVII7 – VImaj7 – i7",
+    "romans": [
+      "i7",
+      "IIImaj7",
+      "bVII7",
+      "VImaj7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Chromatic Mediants"
+  },
+  {
+    "label": "i7 – iv7 – bIImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "bIImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i7 – bIIImaj7 – bIImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bIIImaj7",
+      "bIImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i7 – bVImaj7 – iv7 – bIImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "iv7",
+      "bIImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i7 – bIImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bIImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i7 – bVImaj7 – bIImaj7 – V7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "bIImaj7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Neapolitan"
+  },
+  {
+    "label": "i7 – iv7 – V7 – Imaj7",
+    "romans": [
+      "i7",
+      "iv7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Picardy Third"
+  },
+  {
+    "label": "i7 – bVImaj7 – bIIImaj7 – iv7 – V7 – Imaj7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "bIIImaj7",
+      "iv7",
+      "V7",
+      "Imaj7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Picardy Third"
+  },
+  {
+    "label": "i7 – iv7 – #ivo7 – i7 – V7 – i7",
+    "romans": [
+      "i7",
+      "iv7",
+      "#ivo7",
+      "i7",
+      "V7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  },
+  {
+    "label": "i7 – bVImaj7 – iv7 – #ivo7 – i7",
+    "romans": [
+      "i7",
+      "bVImaj7",
+      "iv7",
+      "#ivo7",
+      "i7"
+    ],
+    "tonality": "minor",
+    "chromaticism": "non-diatonic",
+    "chordType": "sevenths",
+    "source": "free-choice",
+    "tag": "Common-Tone Diminished"
+  }
 ]

@@ -830,10 +830,23 @@ export const SECONDARY_CHORDS = [
   { id: 'V7/bIII', label: 'V7/bIII', type: 'dominant',      targetRoman: 'bIII', targetSemitones: 3,  semitones: 10, intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'bVII7', applicableTonality: 'minor' },
   { id: 'V7/bVI',  label: 'V7/bVI',  type: 'dominant',      targetRoman: 'bVI',  targetSemitones: 8,  semitones: 3,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'bIII7', applicableTonality: 'minor' },
   { id: 'V7/iv',   label: 'V7/iv',   type: 'dominant',      targetRoman: 'iv',   targetSemitones: 5,  semitones: 0,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'I7',    applicableTonality: 'minor' },
+  { id: 'V7/V',    label: 'V7/V',    type: 'dominant',      targetRoman: 'V',   targetSemitones: 7,  semitones: 2,  intervals: [0, 4, 7, 10], quality: 'dominant7',   equivalentRoman: 'II7',   applicableTonality: 'minor' },
   // ── Minor Key — Secondary Leading-Tone Chords ──
   { id: 'viio7/bIII', label: 'viio7/bIII', type: 'leading-tone', targetRoman: 'bIII', targetSemitones: 3, semitones: 2, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: 'iio7',  applicableTonality: 'minor' },
   { id: 'viio7/bVI',  label: 'viio7/bVI',  type: 'leading-tone', targetRoman: 'bVI',  targetSemitones: 8, semitones: 7, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: 'vo7',   applicableTonality: 'minor' },
   { id: 'viio7/iv',   label: 'viio7/iv',   type: 'leading-tone', targetRoman: 'iv',   targetSemitones: 5, semitones: 4, intervals: [0, 3, 6, 9],  quality: 'diminished7', equivalentRoman: 'iiio7', applicableTonality: 'minor' },
+  // ── Major Key — Tritone Substitutions ──
+  { id: 'bII7/V',   label: 'bII7/V',   type: 'tritone-sub', targetRoman: 'V',   targetSemitones: 7, semitones: 8,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bVI7',  applicableTonality: 'major' },
+  { id: 'bII7/ii',  label: 'bII7/ii',  type: 'tritone-sub', targetRoman: 'ii',  targetSemitones: 2, semitones: 3,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bIII7', applicableTonality: 'major' },
+  { id: 'bII7/iii', label: 'bII7/iii', type: 'tritone-sub', targetRoman: 'iii', targetSemitones: 4, semitones: 5,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'IV7',    applicableTonality: 'major' },
+  { id: 'bII7/vi',  label: 'bII7/vi',  type: 'tritone-sub', targetRoman: 'vi',  targetSemitones: 9, semitones: 10, intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bVII7', applicableTonality: 'major' },
+  { id: 'bII7/IV',  label: 'bII7/IV',  type: 'tritone-sub', targetRoman: 'IV',  targetSemitones: 5, semitones: 6,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bV7',   applicableTonality: 'major' },
+  { id: 'bII7/I',   label: 'bII7/I',   type: 'tritone-sub', targetRoman: 'I',   targetSemitones: 0, semitones: 1,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bII7',  applicableTonality: 'major' },
+  // ── Minor Key — Tritone Substitutions ──
+  { id: 'bII7/bIII', label: 'bII7/bIII', type: 'tritone-sub', targetRoman: 'bIII', targetSemitones: 3, semitones: 4,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'iv7',   applicableTonality: 'minor' },
+  { id: 'bII7/bVI',  label: 'bII7/bVI',  type: 'tritone-sub', targetRoman: 'bVI',  targetSemitones: 8, semitones: 9,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'v7',    applicableTonality: 'minor' },
+  { id: 'bII7/iv',   label: 'bII7/iv',   type: 'tritone-sub', targetRoman: 'iv',   targetSemitones: 5, semitones: 6,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bV7',   applicableTonality: 'minor' },
+  { id: 'bII7/i',   label: 'bII7/i',   type: 'tritone-sub', targetRoman: 'i',   targetSemitones: 0, semitones: 1,  intervals: [0, 4, 7, 10], quality: 'dominant7', equivalentRoman: 'bII7',  applicableTonality: 'minor' },
 ]
 
 // Check if a secondary chord's target is diatonic to the given tonality
@@ -911,9 +924,8 @@ export function pickSecondaryChord({ tonicPC, tonality, selectedChordTypes, sele
 
 // ─── Build progression from Roman numerals ───────────────────────────────
 
-// Other (non-diatonic) chords not covered by secondary chords or modal interchange
-// e.g. Neapolitan chord (bII)
-const OTHER_CHORDS = [
+// Neapolitan chords (bII) — non-diatonic chords not covered by secondary chords or modal interchange
+const NEAPOLITAN_CHORDS = [
   { roman: 'bII',     semitones: 1, intervals: [0, 4, 7],     quality: 'major' },
   { roman: 'bIImaj7', semitones: 1, intervals: [0, 4, 7, 11], quality: 'maj7' },
 ]
@@ -961,6 +973,33 @@ function trySecondaryTriad(roman, secondaryChords) {
   return null
 }
 
+// Helper: try to match a triad tritone sub roman (e.g. "bII/vi")
+// to a seventh tritone sub (e.g. "bII7/vi") and return a triad version
+function tryTritoneSubTriad(roman, secondaryChords) {
+  if (!roman.includes('/')) return null
+
+  // Try converting "bII/X" → "bII7/X"
+  const seventhRoman = roman.replace(/^bII\//, 'bII7/')
+
+  if (seventhRoman === roman) return null
+
+  const sc = secondaryChords.find(s => s.id === seventhRoman || s.label === seventhRoman)
+  if (!sc) return null
+
+  return {
+    ...sc,
+    id: roman,
+    label: roman,
+    roman: roman,
+    intervals: [0, 4, 7],
+    quality: 'major',
+    sourceMode: sc.applicableTonality,
+    isTritoneSub: true,
+    isSecondary: false,
+    isBorrowed: false,
+  }
+}
+
 // Build a progression (array of chord objects) from Roman numerals.
 // Supports diatonic chords, secondary chords (triad & seventh), borrowed chords
 // (modal interchange), and other non-diatonic chords (e.g. Neapolitan).
@@ -994,11 +1033,18 @@ export function buildProgressionFromRomans(tonality, chordType, romans, includeH
     // 2. Try secondary chords (exact match first, then triad version)
     const scExact = secondaryChords.find(sc => sc.id === roman || sc.label === roman)
     if (scExact) {
+      if (scExact.type === 'tritone-sub') {
+        return { ...scExact, roman: scExact.label, sourceMode: tonality, isTritoneSub: true, isSecondary: false, isBorrowed: false }
+      }
       return { ...scExact, roman: scExact.label, sourceMode: tonality, isSecondary: true, isBorrowed: false }
     }
 
     const triadMatch = trySecondaryTriad(roman, secondaryChords)
     if (triadMatch) return triadMatch
+
+    // 2b. Try tritone sub triad (e.g. "bII/vi" → match "bII7/vi")
+    const tritoneTriadMatch = tryTritoneSubTriad(roman, secondaryChords)
+    if (tritoneTriadMatch) return tritoneTriadMatch
 
     // 3. Try borrowed chords (modal interchange from parallel mode)
     const borrowed = borrowedChords.find(c => c.roman === roman)
@@ -1007,10 +1053,10 @@ export function buildProgressionFromRomans(tonality, chordType, romans, includeH
       return { ...borrowed, sourceMode: parallelTonality, isBorrowed: !isDiatonic, isSecondary: false }
     }
 
-    // 4. Try other chords (Neapolitan, etc.)
-    const other = OTHER_CHORDS.find(c => c.roman === roman)
-    if (other) {
-      return { ...other, sourceMode: tonality, isBorrowed: false, isSecondary: false, isOther: true }
+    // 4. Try Neapolitan chords (bII, bIImaj7)
+    const neapolitan = NEAPOLITAN_CHORDS.find(c => c.roman === roman)
+    if (neapolitan) {
+      return { ...neapolitan, sourceMode: tonality, isBorrowed: false, isSecondary: false, isOther: true }
     }
 
     // 5. Free-choice fallback: build chord from any roman string
@@ -1026,7 +1072,7 @@ export function buildProgressionFromRomans(tonality, chordType, romans, includeH
 // ─── Chord source type detection ─────────────────────────────────────────
 
 // Determine the source type of a chord from its roman string and tonality.
-// Returns: 'diatonic' | 'modal-interchange' | 'secondary-dominants' | 'secondary-leading-tone' | 'free-choice'
+// Returns: 'diatonic' | 'modal-interchange' | 'secondary-dominants' | 'secondary-leading-tone' | 'tritone-substitution' | 'free-choice'
 export function getChordSourceType(roman, tonality) {
   if (!roman) return 'diatonic'
 
@@ -1035,6 +1081,7 @@ export function getChordSourceType(roman, tonality) {
     const parts = getRomanParts(roman)
     if (parts.base === 'V') return 'secondary-dominants'
     if (parts.base === 'vii') return 'secondary-leading-tone'
+    if (parts.base === 'bII') return 'tritone-substitution'
     return 'secondary-dominants'
   }
 
@@ -1073,7 +1120,8 @@ function buildFreeChoiceChord(roman) {
   const root = parts.base
   const ext = parts.superscript
   const semitones = rootToSemitones(root)
-  const isUpper = root[0] === root[0].toUpperCase()
+  const letterIdx = root.search(/[ivIV]/)
+  const isUpper = letterIdx >= 0 && root[letterIdx] === root[letterIdx].toUpperCase()
 
   let quality, intervals
   if (!ext) {

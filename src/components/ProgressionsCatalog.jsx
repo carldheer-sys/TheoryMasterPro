@@ -1,11 +1,12 @@
-import { useState, useMemo, useRef } from 'react'
-import MultiSelect from './MultiSelect'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import Select from './Select'
+import GroupedSelect from './GroupedSelect'
 import ChordPicker from './ChordPicker'
 import RomanNumeral from './RomanNumeral'
 import {
   romansToLabel,
   CHORD_TYPE_OPTIONS,
-  NON_DIATONIC_SOURCES,
+  getSourceGroups,
 } from '../utils/progressions'
 import {
   getChordSourceType,
@@ -17,7 +18,8 @@ function chordColorClass(roman, tonality) {
   switch (st) {
     case 'modal-interchange': return 'text-blue-400'
     case 'secondary-dominants':
-    case 'secondary-leading-tone': return 'text-keyred'
+    case 'secondary-leading-tone':
+    case 'tritone-substitution': return 'text-keyred'
     case 'free-choice': return 'text-purple-400'
     default: return 'text-gray-200'
   }
@@ -36,10 +38,12 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
   // Filters
   const [tonality, setTonality] = useState('major')
   const [chromaticism, setChromaticism] = useState('diatonic')
-  const [chordTypes, setChordTypes] = useState(['triads', 'sevenths'])
-  const [sources, setSources] = useState(NON_DIATONIC_SOURCES.map(s => s.value))
+  const [chordType, setChordType] = useState('triads')
+  const [source, setSource] = useState('secondary-dominants')
 
   const [dragState, setDragState] = useState(null)
+  const dragStateRef = useRef(null)
+  const itemRefs = useRef([])
   const [showExport, setShowExport] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
@@ -52,8 +56,9 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
       romans: [...p.romans],
       tonality: p.tonality,
       chromaticism: p.chromaticism,
-      chordType: Array.isArray(p.chordType) ? [...p.chordType] : p.chordType,
-      ...(p.sources ? { sources: [...p.sources] } : {}),
+      chordType: p.chordType,
+      ...(p.source != null ? { source: p.source } : p.sources ? { source: p.sources[0] } : {}),
+      ...(p.tag != null ? { tag: p.tag } : {}),
       ...(p.favorite ? { favorite: true } : {}),
     })))
     setEditMode(true)
@@ -123,24 +128,31 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     data.forEach((p, idx) => {
       if (p.tonality !== tonality) return
       if (p.chromaticism !== chromaticism) return
-      if (!chordTypes.includes(p.chordType) && !(Array.isArray(p.chordType) && p.chordType.every(t => chordTypes.includes(t)))) return
-      if (chromaticism === 'non-diatonic' && sources.length > 0 && (!p.sources || !p.sources.some(s => sources.includes(s)))) return
+      if (p.chordType !== chordType) return
+      const pSource = p.source || (p.sources ? p.sources[0] : undefined)
+      if (chromaticism === 'non-diatonic' && pSource !== source) return
       result.push({ prog: p, fullIdx: idx })
     })
     return result
-  }, [data, tonality, chromaticism, chordTypes, sources])
+  }, [data, tonality, chromaticism, chordType, source])
 
   // --- Edit operations ---
 
-  const moveProgression = (fromFilteredIdx, toFilteredIdx) => {
+  const moveProgressionTo = (fromFilteredIdx, insertAtFilteredIdx) => {
     setLocal(prev => {
       const fromFull = filtered[fromFilteredIdx]?.fullIdx
-      const toFull = filtered[toFilteredIdx]?.fullIdx
-      if (fromFull == null || toFull == null) return prev
+      if (fromFull == null) return prev
       const list = [...prev]
       const [item] = list.splice(fromFull, 1)
-      const adj = fromFull < toFull ? toFull - 1 : toFull
-      list.splice(adj, 0, item)
+      // Map insertAtFilteredIdx to a full-array index
+      if (insertAtFilteredIdx >= filtered.length) {
+        list.push(item)
+      } else {
+        const toFull = filtered[insertAtFilteredIdx]?.fullIdx
+        if (toFull == null) { list.splice(fromFull, 0, item); return prev }
+        const adj = fromFull < toFull ? toFull - 1 : toFull
+        list.splice(adj, 0, item)
+      }
       return list
     })
   }
@@ -159,10 +171,11 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
       romans: [],
       tonality,
       chromaticism,
-      chordType: chordTypes.length === 1 ? chordTypes[0] : [...chordTypes],
+      chordType,
     }
     if (chromaticism === 'non-diatonic') {
-      newProg.sources = [sources[0] || 'secondary-dominants']
+      newProg.source = source
+      if (source === 'free-choice') newProg.tag = ''
     }
     setLocal(prev => [...prev, newProg])
   }
@@ -207,28 +220,72 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
     }))
   }
 
+  const changeTag = (fullIdx, newTag) => {
+    setLocal(prev => prev.map((p, i) => {
+      if (i !== fullIdx) return p
+      return { ...p, tag: newTag || undefined }
+    }))
+  }
+
   const StarIcon = ({ filled, className }) => (
     <svg className={className} fill={filled ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
     </svg>
   )
 
-  // --- Drag and drop ---
+  // --- Drag and drop (pointer-based, works on touch + mouse) ---
 
   const handleDragStart = (filteredIdx) => {
-    setDragState({ index: filteredIdx })
+    const ds = { fromFilteredIdx: filteredIdx, dropTargetIdx: filteredIdx }
+    dragStateRef.current = ds
+    setDragState(ds)
   }
 
-  const handleDragOver = (e, filteredIdx) => {
-    e.preventDefault()
-    if (!dragState || dragState.index === filteredIdx) return
-    moveProgression(dragState.index, filteredIdx)
-    setDragState({ index: filteredIdx })
-  }
+  const handlePointerMove = useCallback((e) => {
+    const ds = dragStateRef.current
+    if (!ds) return
+    const clientY = e.clientY
+    let target = filtered.length
+    for (let i = 0; i < filtered.length; i++) {
+      const el = itemRefs.current[filtered[i].fullIdx]
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      if (clientY < rect.top + rect.height / 2) {
+        target = i
+        break
+      }
+    }
+    if (target !== ds.dropTargetIdx) {
+      const next = { ...ds, dropTargetIdx: target }
+      dragStateRef.current = next
+      setDragState(next)
+    }
+  }, [filtered])
 
-  const handleDragEnd = () => {
+  const handlePointerUp = useCallback(() => {
+    const ds = dragStateRef.current
+    if (ds && ds.dropTargetIdx !== ds.fromFilteredIdx && ds.dropTargetIdx !== ds.fromFilteredIdx + 1) {
+      moveProgressionTo(ds.fromFilteredIdx, ds.dropTargetIdx)
+    }
+    dragStateRef.current = null
     setDragState(null)
-  }
+  }, [])
+
+  // Document-level pointer listeners while dragging
+  useEffect(() => {
+    if (!dragState) return
+    document.addEventListener('pointermove', handlePointerMove)
+    document.addEventListener('pointerup', handlePointerUp)
+    document.addEventListener('pointercancel', handlePointerUp)
+    const prevUserSelect = document.body.style.userSelect
+    document.body.style.userSelect = 'none'
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointerup', handlePointerUp)
+      document.removeEventListener('pointercancel', handlePointerUp)
+      document.body.style.userSelect = prevUserSelect
+    }
+  }, [dragState, handlePointerMove, handlePointerUp])
 
   return (
     <div className="flex flex-col h-full">
@@ -373,21 +430,21 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
             </div>
           </div>
 
-          {/* Chord Types: MultiSelect */}
-          <MultiSelect
+          {/* Chord Types */}
+          <Select
             label="Chord Types"
-            values={chordTypes}
-            onChange={setChordTypes}
+            value={chordType}
+            onChange={setChordType}
             options={CHORD_TYPE_OPTIONS}
           />
 
-          {/* Sources: MultiSelect (only when non-diatonic) */}
+          {/* Sources: GroupedSelect (only when non-diatonic) */}
           {chromaticism === 'non-diatonic' && (
-            <MultiSelect
+            <GroupedSelect
               label="Sources"
-              values={sources}
-              onChange={setSources}
-              options={NON_DIATONIC_SOURCES}
+              value={source}
+              onChange={setSource}
+              groups={getSourceGroups(chordType)}
             />
           )}
         </div>
@@ -403,21 +460,27 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
           )}
 
           {filtered.map(({ prog, fullIdx }, filteredIdx) => (
-            <div
-              key={fullIdx}
-              draggable={editMode}
-              onDragStart={editMode ? () => handleDragStart(filteredIdx) : undefined}
-              onDragOver={editMode ? (e) => handleDragOver(e, filteredIdx) : undefined}
-              onDragEnd={editMode ? handleDragEnd : undefined}
-              className={`flex flex-col gap-2 p-3 rounded-xl border transition-colors
-                ${editMode && dragState?.index === filteredIdx
-                  ? 'border-accent bg-accent/10'
-                  : 'border-bg-500 bg-bg-800'
-                }`}
-            >
+            <div key={fullIdx}>
+              {/* Drop indicator line before this item */}
+              {editMode && dragState && dragState.dropTargetIdx === filteredIdx &&
+                dragState.dropTargetIdx !== dragState.fromFilteredIdx &&
+                dragState.dropTargetIdx !== dragState.fromFilteredIdx + 1 && (
+                <div className="h-0.5 bg-accent rounded-full mb-2 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+              )}
+              <div
+                ref={el => { itemRefs.current[fullIdx] = el }}
+                className={`flex flex-col gap-2 p-3 rounded-xl border transition-opacity
+                  ${editMode && dragState?.fromFilteredIdx === filteredIdx
+                    ? 'border-bg-500 bg-bg-800 opacity-50'
+                    : 'border-bg-500 bg-bg-800'
+                  }`}
+              >
               <div className="flex items-center gap-2">
                 {editMode && (
-                  <div className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 flex-shrink-0">
+                  <div
+                    onPointerDown={(e) => { e.preventDefault(); handleDragStart(filteredIdx) }}
+                    className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 flex-shrink-0 touch-none"
+                  >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
                     </svg>
@@ -455,6 +518,19 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                         </svg>
                         Add
                       </button>
+                      {prog.source === 'free-choice' && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tag</label>
+                          <input
+                            type="text"
+                            value={prog.tag || ''}
+                            onChange={(e) => changeTag(fullIdx, e.target.value)}
+                            placeholder="e.g. Neapolitan, Chromatic Mediants"
+                            className="bg-bg-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-bg-500
+                              hover:border-accent/50 focus:border-accent focus:outline-none transition-colors w-64"
+                          />
+                        </div>
+                      )}
                     </>
                   ) : (
                     <span className="text-sm font-semibold">
@@ -473,6 +549,11 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                       }
                     </span>
                   )}
+                  {!editMode && prog.tag && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400/70 ml-2">
+                      {prog.tag}
+                    </span>
+                  )}
                 </div>
 
                 {editMode && (
@@ -487,7 +568,15 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
                 )}
               </div>
             </div>
+            </div>
           ))}
+
+          {/* Drop indicator after the last item */}
+          {editMode && dragState && dragState.dropTargetIdx === filtered.length &&
+            dragState.dropTargetIdx !== dragState.fromFilteredIdx &&
+            dragState.dropTargetIdx !== dragState.fromFilteredIdx + 1 && (
+            <div className="h-0.5 bg-accent rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+          )}
 
           {editMode && (
             <button
@@ -542,26 +631,24 @@ export default function ProgressionsCatalog({ progressions, onProgressionsChange
               <div className="space-y-1.5">
                 <p className="text-white font-semibold">Chord Types</p>
                 <p className="text-gray-400">
-                  Multi-select between <span className="text-accent">Triads</span> and <span className="text-accent">Seventh Chords</span>. Most progressions are purely triads or purely sevenths. However, some progressions mix both (e.g. <span className="text-accent">I – IV – V7 – I</span> contains triads I, IV and a seventh V7). These mixed progressions have <code className="text-accent">chordType</code> set to an array like <code className="text-accent">["triads", "sevenths"]</code>.
-                </p>
-                <p className="text-gray-400 pt-1">
-                  The filter uses AND logic: a progression appears only if <span className="text-white font-semibold">all</span> of its chord types are selected. So a mixed progression like I – IV – V7 – I is visible only when both Triads and Seventh Chords are enabled. Selecting only Triads or only Sevenths will hide it.
+                  Select either <span className="text-accent">Triads</span> or <span className="text-accent">Seventh Chords</span>. Each progression is purely one type — no mixing. The filter shows only progressions matching the selected type.
                 </p>
               </div>
 
               <div className="space-y-1.5">
                 <p className="text-white font-semibold">Chord Sources <span className="text-gray-500 font-normal">(non-diatonic only)</span></p>
                 <p className="text-gray-400">
-                  Multi-select between four non-diatonic chord sources:
+                  Select one non-diatonic chord source from the following groups:
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-gray-400 ml-2">
                   <li><span className="text-accent">Secondary Dominants</span> — e.g. V/vi, V/V</li>
                   <li><span className="text-accent">Secondary Leading-Tone Chords</span> — e.g. viio/V, viio7/ii</li>
+                  <li><span className="text-accent">Tritone Substitution</span> — e.g. bII7/V, bII/vi (dominant a tritone away)</li>
                   <li><span className="text-accent">Modal Interchange</span> — borrowed chords from the parallel mode, e.g. bVI, bVII, iv in major</li>
-                  <li><span className="text-accent">Free Choice</span> — any chromatic chord not fitting the above, e.g. bII (Neapolitan)</li>
+                  <li><span className="text-accent">Free Choice</span> — any chromatic chord not fitting the above, e.g. bII (Neapolitan), chromatic mediants</li>
                 </ul>
                 <p className="text-gray-400 pt-1">
-                  A progression can contain chords from multiple sources. Its <code className="text-accent">sources</code> field lists all sources used. The filter uses OR logic: a progression appears if <span className="text-white font-semibold">any</span> of its sources match <span className="text-white font-semibold">any</span> selected source. For example, a progression with sources <code className="text-accent">["secondary-dominants", "modal-interchange"]</code> will appear when either Secondary Dominants or Modal Interchange (or both) is selected.
+                  Each progression belongs to exactly one source. The filter shows only progressions matching the selected source. When <span className="text-accent">Free Choice</span> is selected, an optional <span className="text-accent">Sub-type</span> filter appears (on the practice page) to further narrow by tag (e.g. Neapolitan, Chromatic Mediants).
                 </p>
               </div>
 
